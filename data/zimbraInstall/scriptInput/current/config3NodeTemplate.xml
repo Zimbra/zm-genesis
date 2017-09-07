@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <!--cluster name="qa-cluster"-->
+            <host name="qa50.lab.zimbra.com">
+                <package name="zimbra-logger">
+                    <option name="enabled">
+                        Enabled
+                    </option>
+                </package>
+                <package name="zimbra-mta"> 
+                </package>
+                <package name="zimbra-snmp">
+                </package>
+                <package name="zimbra-store">
+            	    <option name="ADMINPASS">
+                        test123
+                    </option>
+                    <option name="USEIMAPPROXY">
+                        no
+                    </option>
+                </package>
+                <package name="zimbra-apache">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-archiving">
+                    <option name="RUNARCHIVING">
+                        yes
+                    </option>
+                </package>
+                <package name="zimbra-spell">
+                </package>
+                <package name="zimbra-convertd">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <option name="zimbraPrefTimeZoneName">
+                    America/Chicago
+                </option>
+            </host>
+            <host name="qa51.lab.zimbra.com">
+                <package name="zimbra-mta"> 
+                </package>
+                <package name="zimbra-snmp">
+                </package>
+                <package name="zimbra-store">
+                    <option name="USEIMAPPROXY">
+                        no
+                    </option>
+                </package>
+                <package name="zimbra-apache">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-archiving">
+                    <option name="RUNARCHIVING">
+                        yes
+                    </option>
+                </package>
+                <package name="zimbra-spell">
+                </package>
+                <option name="zimbraPrefTimeZoneName">
+                    America/Chicago
+                </option>
+            </host>
+            <host name="qa52.lab.zimbra.com">
+                <package name="zimbra-ldap">
+                    <option name="LDAPPASS">
+                         zimbra
+                    </option>
+                    <option name="LDAPADMINPASS">
+                        test123
+                    </option>
+                    <option name="LDAPPOSTPASS">
+                        test123
+                    </option>
+                    <option name="LDAPAMAVISPASS">
+                        test123
+                    </option>
+                    <option name="LDAPREPLPASS">
+                        test123
+                    </option>
+                </package>
+                <option name="zimbraPrefTimeZoneName">
+                    America/Chicago
+                </option>
+            </host>
+        <!--/cluster-->
+    </config>
+    <plugins>
+        <plugins>
+        <!--plugin name="certInstall">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+        </plugin-->
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">qa50.lab.zimbra.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms qa50.lab.zimbra.com zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">qa51.lab.zimbra.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms qa51.lab.zimbra.com zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin>
+    </plugins>
+</plan>

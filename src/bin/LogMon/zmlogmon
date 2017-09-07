@@ -1,0 +1,216 @@
+#!/usr/bin/perl
+
+chomp (my $FQDN_HOSTNAME=`hostname`);
+chomp (my $USER_ID=`id -u -n`);
+
+
+
+sub read_known_exceptions
+{
+
+
+	# Read the 'known' exceptions list
+	#
+	open ACCEPTABLE, "<zmlogmon_config"
+		or warn "Unable to open zmlogmon_config: $!";
+
+	while (<ACCEPTABLE>)
+	{
+		chomp;
+
+		if ( /^acceptable_list:/ ) {
+			s/^acceptable_list://;
+			push (@acceptable_list, $_);
+		}
+		elsif ( /^qa_suite_list:/ ) {
+			s/^qa_suite_list://;
+			push (@qa_suite_list, $_);
+		}
+		elsif ( /^not_exception_list:/ )
+		{
+			s/^not_exception_list://;
+			push (@not_exception_list, $_);
+		}
+		elsif ( /^debugging_list:/ )
+		{
+			s/^debugging_list://;
+			push (@debugging_list, $_);
+		}
+		elsif ( /^known_list:/ )
+		{
+			# TODO
+		}
+		elsif ( /^email_address:/ )
+		{
+			s/^email_address://;
+			push (@email_address_list, $_);
+			print "@email_address_list\n";
+		}
+
+	}
+
+
+
+	@known_list = ("ParsedMessage - exception while analyzing message; message will be partially indexed", "SendMsg - javax.mail.SendFailedException: Invalid Addresses");
+
+	close ACCEPTABLE;
+
+}
+
+sub mail_exception
+{
+	my ($stack_trace) = (@_);
+
+	my $sendmail = "/usr/sbin/sendmail -t";
+
+	if ( defined @email_address_list )
+	{
+
+		print "sending email to @email_address_list for $stack_trace ...\n";
+
+		if ( open(SENDMAIL, "|$sendmail") )
+		{
+
+			print SENDMAIL "To: @email_address_list\n";
+			print SENDMAIL "From: $USER_ID\@$FQDN_HOSTNAME\n";
+			print SENDMAIL "Subject: Exception email from $FQDN_HOSTNAME\n";
+			print SENDMAIL "Content-type: text/plain\n\n";
+
+			if ( open STACK_FP, "<$stack_trace" )
+			{
+
+				while (<STACK_FP>)
+				{
+					print SENDMAIL "$_";
+				}
+
+				close STACK_FP;
+
+			}
+			else
+			{
+				warn "Unable to open $stack_trace : $!";
+			}
+
+			close SENDMAIL;
+
+		}
+		else
+		{
+			warn "Cannot open $sendmail: $!";
+		}
+
+	}
+	else
+	{
+		print "No email addresses configured.  Not sending mail.\n";
+	}
+
+}
+
+sub watch_for_exceptions
+{
+
+	# flag whether we are processing an exception
+	my $except_flag=0;
+
+	# Unique id for each exception and
+	# temp file containing the stack trace
+	my $except_counter=0;
+	my $except_filename="/tmp/except$except_counter";
+
+
+
+
+	# read input from a tail -f ...
+	#
+	WHILE_LOOP: while (<>)
+	{
+		chomp;
+
+		if ( $except_flag )
+		{
+
+			# We are already processing a stack trace
+
+			if ( /^2005-/ )
+			{
+
+				# We just hit a new line.  End the trace
+				#
+				$except_flag = 0;
+				close (TEMP_FP);
+
+				# Send a mail to the email_address_list
+				#
+				&mail_exception($except_filename); 
+
+				# TODO: need to push $_ back into the queue
+
+			}
+			else
+			{
+
+				# continue logging the trace ...
+				print TEMP_FP "$_\n";
+				print "$_\n";
+
+			}
+		}
+		else
+		{
+
+			# Look for new lines only
+			if ( /^2005-/ || /^com/ )
+			{
+
+				# Watch for the text 'exception'
+				if ( /exception/i )
+				{
+
+
+					# Skip any known issues or acceptable exceptions
+					#
+					foreach my $acceptable (@acceptable_list, @qa_suite_list, @debugging_list, @not_exception_list, @known_list)
+					{
+						if ( /$acceptable/ )
+						{
+							next WHILE_LOOP;
+						}
+					}
+
+
+					# Made it here, it's a real, new exception
+					#
+					$except_flag = 1;
+					$except_counter++;
+					$except_filename="/tmp/except$except_counter";
+
+					open TEMP_FP, ">$except_filename"
+						or die "Unable to open $except_filename : $!";
+
+					print TEMP_FP "$_\n";
+					print "$_\n";
+
+				}
+
+			}
+
+		}
+
+	}
+
+}
+
+sub main
+{
+
+	&read_known_exceptions
+
+	&watch_for_exceptions
+
+}
+
+&main;
+
+exit 0;

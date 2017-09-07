@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>   
+    <defaultcall function="runGenesis"/>
+    <function name="runGenesis" scope="local"> 
+        <function-prolog>
+            Run genesis test script
+        </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa04'">
+                Name of the target machine
+            </function-optional-arg>
+            <function-optional-arg name="OS" default="'RHEL4'">
+                Name of the operation system
+            </function-optional-arg>        
+            <function-optional-arg name="build" default="'foo'">
+                Name of the build
+            </function-optional-arg>        
+            <function-optional-arg name="branch" default="'mebranch'">
+                Name of the branch
+            </function-optional-arg>
+            <function-optional-arg name="timestamp" default="'whenever'">
+                Time Stamp
+            </function-optional-arg>
+            <function-optional-arg name="needNotify" default="'1'">
+                Is notification required? 1= yes others = no
+            </function-optional-arg>  
+            <function-optional-arg name="notificationAlias" default="'qa-automation@zimbra.com'">
+                This is email notification alias
+            </function-optional-arg>
+            <function-optional-arg name="plan" default="'smoke'">
+               Need setting up test ware
+            </function-optional-arg>
+            <function-optional-arg name="tms" default="'tms.lab.zimbra.com'">
+               Location of TMS server
+            </function-optional-arg>
+            <function-optional-arg name="tmsStax" default="'tms-stax.lab.zimbra.com'">
+               Location of STAX server
+            </function-optional-arg>
+            <function-optional-arg name="needSetUp" default="'1'">
+               Need setting up test ware
+            </function-optional-arg>
+        </function-map-args>
+        <sequence>
+            <if expr="needSetUp=='1'">
+                <sequence>
+                    <process name ="'Remove Current Testware'">
+                        <location>machine</location>
+                        <command>'/bin/rm'</command>
+                        <workdir>'/opt/qa'</workdir>
+                        <parms>'-r -f genesis'</parms>
+                    </process> 
+                    <process name ="'Create Log Directory'">
+                        <location>machine</location> 
+                        <command>'/bin/mkdir'</command>
+                        <workdir>'/opt/qa'</workdir>
+                        <parms>'-p testlogs/%s/%s/%s/genesis/%s/%s'% (OS, branch, build, timestamp, machine)</parms>
+                    </process>
+                    <script>
+                        origDir = "/qa/%s/genesis" % branch
+                        cutDir = "2"
+                    </script>
+        	        <stafcmd>
+        	            <location>tms</location>
+        	            <service>'fs'</service>
+        	            <request>'query entry /opt%s'%origDir</request>
+        	        </stafcmd>
+        	        <if expr="RC != 0">
+        	            <script>
+        	               origDir = "/qa/genesis"
+                           cutDir = "1"
+                        </script>
+        	        </if>
+                    <!--stafcmd name="'Copy Testware'">
+                        <location>tms</location>
+                        <service>'fs'</service>
+                        <request>'COPY DIRECTORY %s TODIRECTORY /opt/qa/genesis TOMACHINE %s RECURSE' % (origDir, machine)</request>
+                    </stafcmd-->
+                    <process name="'Copy Testware'">
+                        <location>machine</location>
+                        <command>'wget'</command>
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'--no-proxy -r http://%s%s/ --level=0 --waitretry=1 --tries=0 -q -nH -np -P /opt/qa -R index.html --cut-dir=%s' % (tms, origDir, cutDir)
+                        </parms>
+                        <stdout>'/tmp/wget.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                    <if expr="RC != STAFRC.Ok">
+                        <log>'Copy testware failed, exit code %s, for more details see /tmp/wget.out.' %(RC)</log>
+                    </if>
+                    <log>'wget --no-proxy -r http://%s%s/ --level=0 --waitretry=1 --tries=0 -q -nH -np -P /opt/qa -R index.html --cut-dir=%s' % (tms, origDir, cutDir)</log>
+                </sequence>
+            </if>
+            <script>
+                flavor = 'oss'
+                if build.find('NETWORK') != -1:
+                    flavor = 'network'
+                elif build.find('OCTOPUS') != -1:
+                    flavor = 'octopus'
+                runString = 'ruby runtest.rb --plan /opt/qa/genesis/conf/genesis/%s%s.txt --log /opt/qa/testlogs/%s/%s/%s/genesis/%s/%s'% (plan, flavor, OS, branch, build, timestamp, machine)
+            </script>
+            <process name ="'Run Genesis'">
+                <location>machine</location>
+                <command>'/bin/env'</command>
+                <workdir>'/opt/qa/genesis'</workdir>
+                <parms>runString</parms> 
+                <stdout mode="'append'" >'/opt/qa/testlogs/%s/%s/%s/genesis/%s/%s/summary.txt'% (OS, branch, build, timestamp,machine)</stdout> 
+                <stderr mode="'stdout'"/>               
+            </process>       
+
+            <stafcmd>
+                <location>machine</location>
+                <service>'fs'</service>
+                <request>'GET FILE /opt/qa/testlogs/%s/%s/%s/genesis/%s/%s/report.txt'% (OS, branch, build, timestamp,machine)</request> 
+            </stafcmd>             
+            <script>soapres=STAFResult</script>
+            <script>omessage = "Build %s tested on machine %s.  Log file is at http://%s/testlogs/%s/%s/%s/genesis/%s/%s/" % (build, machine, tms, OS, branch, build, timestamp, machine)</script>
+            <script>omessage = "%s\n\n%s" % (omessage, soapres)</script>
+            <message>'rg %s'%omessage</message>
+            <script>logDir = '/opt/qa/testlogs/%s/%s/%s/genesis/%s/%s' % (OS, branch, build, timestamp, machine)</script>   
+            <script>httpRef = 'http://%s/testlogs/%s/%s/%s/genesis/%s/%s/' % (tms, OS, branch, build, timestamp,machine)</script>
+	    <process name="'Bug Check'">
+	      <location>tms</location>
+	      <command>'/bin/env'</command>
+	      <workdir>logDir</workdir>
+	      <parms>'ruby /opt/qa/main/genesis/bugcheck.rb --log %s --database /opt/qa/testlogs/BugReports'% (logDir)</parms>
+	      <stdout mode="'append'">'%s/bugrun.txt'%(logDir)</stdout>
+	      <stderr mode="'stdout'"/>
+	    </process>
+            <if expr="needNotify == '1'">
+                <sequence>
+                    <log message="1">'Publish Result'</log>   
+                    <process name="'Test Summary'">
+                        <location>tms</location>
+                        <command>'/bin/env'</command>
+                        <workdir>logDir</workdir>
+                        <parms>'ruby /opt/qa/main/genesis/reportResult.rb testsummary.txt GENESIS %s %s %s SMOKE %s'% (OS, build, branch, httpRef)</parms>
+                    </process>
+		    <script>bugReport = '%s/BugReport.txt'%(logDir)</script>
+		    <stafcmd>
+		      <location>machine</location>
+		      <service>'fs'</service>
+		      <request>'GET FILE %s'% (bugReport)</request> 
+		    </stafcmd>    
+		    <script>bugres=STAFResult</script>
+		    <script>omessage = "%s\n\n%s" % (omessage, bugres)</script>
+                    <timer duration="'5m'">
+                        <stafcmd name="'Send Completion Email'">
+                            <location>tmsStax</location>
+                            <service>'EMAIL'</service>
+                            <request>'SEND TO %s FROM qa-tms@zimbra.com message "%s" SUBJECT "%s %s genesis test completed"'% (notificationAlias, omessage, OS, branch)</request>
+                        </stafcmd>
+                    </timer> 
+                </sequence>
+            </if>
+            <return>'%s\nLog files located at %s'% (soapres, httpRef)</return>
+        </sequence>
+    </function>
+</stax>

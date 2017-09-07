@@ -1,0 +1,506 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+
+<t:property name="domain.admin.user" value="domainadmin.${TIME}.${COUNTER}@${defaultdomain.name}"/>
+<t:property name="domain.admin.password" value="${defaultpassword.value}"/>
+
+<t:property name="account1.name" value="test.${TIME}.${COUNTER}@${defaultdomain.name}"/>
+<t:property name="account1.password" value="${defaultpassword.value}"/>
+<t:property name="account1.server" value="NOT_DEFINED"/>
+<t:property name="account1.dir" value="${testMailRaw.root}/email04"/>
+
+<t:property name="account2.name" value="test.${TIME}.${COUNTER}@${defaultdomain.name}"/>
+<t:property name="account2.password" value="${defaultpassword.value}"/>
+<t:property name="account2.server" value="NOT_DEFINED"/>
+<t:property name="account2.dir" value="${testMailRaw.root}/email04"/>
+
+
+
+
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+
+<t:test_case testcaseid="PostUpgradeFeatures_BackupRequest" type="smoke" areas="open">
+    <t:objective>Verify that Network SOAP requests return "unknown document" after upgrade to OSS (BackupRequest)</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <BackupRequest xmlns="urn:zimbraAdmin">
+            </BackupRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//zimbra:Code" match="^service.UNKNOWN_DOCUMENT$"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgradeFeatures_BackupQueryRequest" type="smoke" areas="open">
+    <t:objective>Verify that Network SOAP requests return "unknown document" after upgrade to OSS (BackupQueryRequest)</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <BackupQueryRequest xmlns="urn:zimbraAdmin">
+            </BackupQueryRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//zimbra:Code" match="^service.UNKNOWN_DOCUMENT$"/>
+        </t:response>
+    </t:test>
+    
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgradeFeatures_BackupAccountQueryRequest" type="smoke" areas="open">
+    <t:objective>Verify that Network SOAP requests return "unknown document" after upgrade to OSS (BackupAccountQueryRequest)</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <BackupAccountQueryRequest xmlns="urn:zimbraAdmin">
+            </BackupAccountQueryRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//zimbra:Code" match="^service.UNKNOWN_DOCUMENT$"/>
+        </t:response>
+    </t:test>
+    
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgradeFeatures_RestoreRequest" type="smoke" areas="open">
+    <t:objective>Verify that Network SOAP requests return "unknown document" after upgrade to OSS (RestoreRequest)</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <RestoreRequest xmlns="urn:zimbraAdmin">
+            </RestoreRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//zimbra:Code" match="^service.UNKNOWN_DOCUMENT$"/>
+        </t:response>
+    </t:test>
+    
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgradeFeatures_DomainAdmin" type="functional" areas="open" bugids="7569">
+    <t:objective>Verify that Network features are disabled after upgrade to OSS (Domain Admin)</t:objective>
+	<t:steps>
+	1. Login as a valid admin
+	2. Create a domain admin account with zimbraIsDomainAdminAccount=TRUE (this may fail, which is acceptable, too)
+	3. Login as the newly created account.  Expect: auth failed
+	</t:steps>
+
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${domain.admin.user}</name>
+                <password>${domain.admin.password}</password>
+                <a n="zimbraIsDomainAdminAccount">TRUE</a>
+            </CreateAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="domain.admin.id"/>
+            <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct2.server"/>
+        </t:response>
+    </t:test>
+    
+    <t:test >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${domain.admin.user}</name>
+                <password>${domain.admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+			<t:select emptyset="1" path="//zimbra:Code"  match="^account.AUTH_FAILED$"/>
+        </t:response>
+    </t:test>
+
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgradeFeatures_Convertd01pre" type="always" areas="open" bugids="7569">
+    <t:objective>determine the zimbraAttachmentsViewInHtmlOnly original setting</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <GetConfigRequest xmlns="urn:zimbraAdmin">
+                <a n="zimbraAttachmentsViewInHtmlOnly"/>
+            </GetConfigRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetConfigResponse/admin:a[@n='zimbraAttachmentsViewInHtmlOnly']" set="zimbraAttachmentsViewInHtmlOnly"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+<t:test_case testcaseid="PostUpgradeFeatures_Convertd01" type="functional" areas="open" bugids="7569">
+    <t:objective>Verify that Network features are disabled after upgrade to OSS (Unable to set zimbraAttachmentsViewInHtmlOnly=TRUE)</t:objective>
+	<t:steps>
+	1. Create a new account
+	2. Send the account an email with an attached word doc
+	3. Login as the account
+	4. Search for content in the word doc.  Expect: no results
+	</t:steps>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <ModifyConfigRequest  xmlns="urn:zimbraAdmin">
+                <a n="zimbraAttachmentsViewInHtmlOnly">TRUE</a>
+            </ModifyConfigRequest>
+        </t:request>
+        <t:response>
+            <t:select emptyset="1" path="//zimbra:Code" match="^account.INVALID_ATTR_VALUE"/>
+        </t:response>
+    </t:test>
+
+
+</t:test_case>
+
+<t:test_case testcaseid="PostUpgradeFeatures_Convertd01post" type="always" areas="open">
+    <t:objective>change the zimbraAttachmentsViewInHtmlOnly back to the original setting</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <ModifyConfigRequest  xmlns="urn:zimbraAdmin">
+<!--
+                <a n="zimbraAttachmentsViewInHtmlOnly">${zimbraAttachmentsViewInHtmlOnly}</a>
+-->
+                <a n="zimbraAttachmentsViewInHtmlOnly">FALSE</a>
+            </ModifyConfigRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:ModifyConfigResponse"/>
+        </t:response>
+    </t:test>
+
+
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgradeFeatures_Convertd02" type="smoke" areas="open">
+    <t:objective>Verify that Network features are disabled after upgrade to OSS (Attachment Search)</t:objective>
+	<t:steps>
+	1. Create a new account
+	2. Send the account an email with an attached word doc
+	3. Login as the account
+	4. Search for content in the word doc.  Expect: no results
+	</t:steps>
+
+	<!--t:property name="uri" value="${admin.uri}"/-->
+    <t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+ 	<t:test required="true" >
+	 <t:request>
+	  <CreateAccountRequest xmlns="urn:zimbraAdmin">
+	    <name>${account1.name}</name>
+	    <password>${account1.password}</password>
+	  </CreateAccountRequest>
+	 </t:request>
+	 <t:response>
+		<t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="account1.id"/>
+	       <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>
+	 </t:response>
+	</t:test>
+
+    <t:mailinjecttest >
+        <t:lmtpInjectRequest>
+		<foldername>${account1.dir}</foldername>
+		<to>${account1.name}</to>
+		<from>${nonZimbraUser.name}</from>
+		<server>${account1.server}</server>
+        </t:lmtpInjectRequest>
+    </t:mailinjecttest>
+
+	<!--t:property name="uri" value="https://${account1.server}:${soapservice.port}/${soapservice.path}"/-->
+        <t:property name="server.zimbraAccount" value="${account1.server}"/>	
+	<t:test required="true">
+	 <t:request>
+	  <AuthRequest xmlns="urn:zimbraAccount">
+	    <account by="name">${account1.name}</account>
+	    <password>${account1.password}</password>
+	  </AuthRequest>
+	 </t:request>
+	 <t:response>
+		<t:select path="//acct:AuthResponse/acct:lifetime" match="^\d+$"/>
+		<t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+	 </t:response>
+	</t:test>
+
+	<t:test>
+	 <t:request>
+	   <SearchRequest xmlns="urn:zimbraMail" types="message">
+		<query> content:(exception dialog boxes and integrate it with the existing scripts) </query>
+	   </SearchRequest>
+	 </t:request>
+	  <t:response>
+		<t:select path="//mail:SearchResponse/mail:m" emptyset="1"/>
+	 </t:response>
+	</t:test>
+
+	<t:test>
+	 <t:request>
+	   <SearchRequest xmlns="urn:zimbraMail" types="message">
+		<query> exception dialog boxes and integrate it with the existing scripts </query>
+	   </SearchRequest>
+	 </t:request>
+	  <t:response>
+		<t:select path="//mail:SearchResponse/mail:m" emptyset="1"/>
+	 </t:response>
+	</t:test>
+
+
+
+</t:test_case>
+
+<t:test_case testcaseid="PostUpgradeFeatures_Convertd03" type="smoke" areas="open" bugids="9958">
+    <t:objective>Verify that Network features are disabled after upgrade to OSS (Unable to view attachment as HTML)</t:objective>
+	<t:steps>
+	1. Create a new account
+	2. Send the account an email with an attached word doc
+	3. Login as the account
+	4. View the attachment with "view=html" appended to the URL.  Expect: HTTP Error, such as page not found
+	</t:steps>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+ 	<t:test required="true" >
+	 <t:request>
+	  <CreateAccountRequest xmlns="urn:zimbraAdmin">
+	    <name>${account2.name}</name>
+	    <password>${account2.password}</password>
+	  </CreateAccountRequest>
+	 </t:request>
+	 <t:response>
+		<t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="account2.id"/>
+	       <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account2.server"/>
+	 </t:response>
+	</t:test>
+
+    <t:mailinjecttest >
+        <t:lmtpInjectRequest>
+		<foldername>${account2.dir}</foldername>
+		<to>${account2.name}</to>
+		<from>${nonZimbraUser.name}</from>
+		<server>${account2.server}</server>
+        </t:lmtpInjectRequest>
+    </t:mailinjecttest>
+
+        <t:property name="server.zimbraAccount" value="${account2.server}"/>
+	<t:property name="server.restServlet" value="${test_acct2.server}"/>
+
+	<t:test required="true">
+	 <t:request>
+	  <AuthRequest xmlns="urn:zimbraAccount">
+	    <account by="name">${account2.name}</account>
+	    <password>${account2.password}</password>
+	  </AuthRequest>
+	 </t:request>
+	 <t:response>
+		<t:select path="//acct:AuthResponse/acct:lifetime" match="^\d+$"/>
+		<t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+	 </t:response>
+	</t:test>
+
+	<t:test>
+	 <t:request>
+	   <SearchRequest xmlns="urn:zimbraMail" types="message">
+		<query> subject:(email04N) </query>
+	   </SearchRequest>
+	 </t:request>
+	  <t:response>
+		<t:select path="//mail:SearchResponse/mail:m" attr="id" set="message2a.id"/>
+	 </t:response>
+	</t:test>
+
+	<t:test>
+	 <t:request>
+	   <GetMsgRequest xmlns="urn:zimbraMail">
+                <m id="${message2a.id}"/>
+	   </GetMsgRequest>
+	 </t:request>
+	  <t:response>
+		<t:select path="//mail:GetMsgResponse/mail:m/mail:mp/mail:mp[@ct='application/msword']" attr="part" set="message2a.part"/>
+	 </t:response>
+	</t:test>
+
+        <t:resttest>
+           <t:restServletRequest>
+                <type>get</type>
+                <id>${message2a.id}</id>
+                <part>${message2a.part}</part>
+                <sync>1</sync>
+           </t:restServletRequest>
+           <t:restServletResponse>
+                <!-- feature is disabled in the UI(web client) not in the server -->
+		<t:select emptyset="1" attr="StatusCode" match="401"/>
+           </t:restServletResponse>
+        </t:resttest>
+
+
+</t:test_case>
+
+
+</t:tests>
+

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <host name="zqa-120.eng.vmware.com">
+            <package name="zimbra-snmp">
+            </package>
+            <!--package name="zimbra-store">
+                <option name="SMTPHOST">
+                    zqa-124.eng.vmware.com
+                </option>
+                <option name="ADMINPASS">
+                    test123
+                </option>
+                <option name="zimbraMailProxy">
+                    TRUE
+                </option>
+          `     <option name="zimbraWebProxy">
+                    TRUE
+                </option>
+                <option name="MODE">
+                    http
+                </option>
+                <option name="HTTPPORT">
+                    8080
+                </option>
+                <option name="HTTPSPORT">
+                    8443
+                </option>
+            </package-->
+            <package name="zimbra-proxy">
+                <option name="HTTPPROXY">
+                    TRUE
+                </option>
+                <!--option name="PROXYMODE">
+                    http
+                </option>
+                <option name="HTTPPROXYPORT">
+                    80
+                </option>
+                <option name="HTTPSPROXYPORT">
+                    443
+                </option-->
+	        </package>
+            <!--package name="zimbra-memcached">
+            </package>
+            <package name="zimbra-spell">
+            </package>
+            <package name="zimbra-apache">
+                <option name="blah">
+                    foo
+                </option>
+            </package>
+            <package name="zimbra-convertd">
+                <option name="blah">
+                    foo
+                </option>
+            </package-->
+            <option name="zimbraPrefTimeZoneName">
+                America/Chicago
+            </option>
+            <option name="beta-support">
+                yes
+            </option>
+        </host>
+    </config>
+</plan>

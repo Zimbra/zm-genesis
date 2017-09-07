@@ -1,0 +1,550 @@
+#!/usr/bin/perl
+#
+
+use DirHandle;
+use File::Copy;
+
+# Parse the arguments
+#
+if ( ($#ARGV + 1) != 2 ) {
+        warn "\n\nYou typed $0 @ARGV\n";
+        warn "Usage:\n";
+        warn "\t$0 <zimbra install dir> <ZimbraQA dir>\n";
+        warn "where:\n";
+        warn "\t<zimbra install dir> is the install directory for zimbra, i.e. /opt/zimbra\n";
+        warn "\t<ZimbraQA dir> is the root directory for ZimbraQA, i.e. /home/matt/depot/main/ZimbraQA\n";
+
+        exit(1);
+}
+
+$ZIMBRAINSTALL_ROOT="$ARGV[0]";
+$ZIMBRAQA_ROOT="$ARGV[1]";
+
+# 
+$ZMPROV_COM="$ZIMBRAINSTALL_ROOT/bin/zmprov";
+$ZMPROV_FILE="/tmp/setup_server_zmprov.txt";
+
+$ZMLMTPINJECT_COM="$ZIMBRAINSTALL_ROOT/bin/zmlmtpinject";
+$ZMLMTPINJECT_SENDER='foo@foo.com';
+$ZMLMTPINJECT_FILE="/tmp/setup_server_zmlmtpinject.txt";
+
+$SOAPTESTCORE_COM="$ZIMBRAINSTALL_ROOT/java/bin/java -cp $ZIMBRAQA_ROOT/build/classes:$ZIMBRAINSTALL_ROOT/lib/zimbrastore.jar:$ZIMBRAINSTALL_ROOT/lib/commons-cli-1.2.jar:$ZIMBRAINSTALL_ROOT/lib/dom4j-1.5.jar:$ZIMBRAINSTALL_ROOT/lib/log4j-1.2.8.jar:$ZIMBRAINSTALL_ROOT/lib/commons-httpclient-2.0.1.jar:$ZIMBRAINSTALL_ROOT/lib/commons-logging.jar:$ZIMBRAINSTALL_ROOT/lib/jaxen-1.1-beta-3.jar com.zimbra.qa.soap.SoapTestCore -l $ZIMBRAQA_ROOT/conf/log4j.properties -d -p $ZIMBRAQA_ROOT/conf/global.properties";
+$SOAPTESTCORE_FILE="/tmp/setup_server_soaptestcore.txt";
+
+$PROPS_FILE="$ZIMBRAQA_ROOT/conf/global.properties";
+$TEMPLATE_FOLDER="$ZIMBRAQA_ROOT/src/bin/ServerSetup/templates/";
+$TEMPLATE_TAG_CREATE="$TEMPLATE_FOLDER/tag_create.xml.tmpl";
+$TEMPLATE_FOLDER_CREATE="$TEMPLATE_FOLDER/folder_create.xml.tmpl";
+
+$DEBUG_FILE="/tmp/debug_QAsetup";
+open DEBUG_PTR, (">>" . $DEBUG_FILE)
+		or warn "Cannot open $DEBUG_FILE: $!\n";
+
+$COUNTER=1;
+
+sub debug_log
+{
+	print DEBUG_PTR "debug: $_[0]\n";
+}
+
+sub local_system
+{
+	debug_log "local_system [$_[0]] ...";
+
+	system ($_[0]);
+}
+
+sub props_add_definition
+{
+	debug_log "props_add_definition [$_[0]] ...";
+
+	# Write the definition into the file
+	#
+	print PROPS_PTR "$_[0]\n";
+
+}
+
+sub zmprov_add_command
+{
+	debug_log "zmprov_add_command [$_[0]] ...";
+
+	# Write the command into the file
+	#
+	print ZMPROV_PTR "$_[0]\n";
+
+}
+
+sub zmlmtpinject_add_command
+{
+	debug_log "zmlmtpinject_add_command [$_[0]] ...";
+
+	# Write the command into the file
+	#
+	print ZMLMTPINJECT_PTR "$_[0]\n";
+
+}
+
+sub soaptestcore_add_command
+{
+	debug_log "soaptestcore_add_command [$_[0]] ...";
+
+	# Write the command into the file
+	#
+	print SOAPTESTCORE_PTR "$SOAPTESTCORE_COM -f $_[0]\n";
+}
+
+sub domain_create
+{
+	debug_log "domain_create [$_[0]] ...";
+
+	my @args = split /\s+/, $_[0];
+
+	# If the domain already exists, delete it
+	if (local_system("$ZMPROV_COM gd $args[3] >/dev/null 2>/dev/null") == 0)
+	{
+
+		# TODO:  Need to delete the accounts
+		@accounts = `zmprov gaa $args[3]`;
+
+		foreach $account_id (@accounts)
+		{
+			chomp($account_id);
+
+			debug_log "Deleting account $account_id ...";
+			zmprov_add_command "da $account_id";
+		}
+
+		debug_log "Deleting domain $args[3] ...";
+		zmprov_add_command "dd $args[3]";
+
+	}
+
+	debug_log "Creating domain $args[3] ...";
+	zmprov_add_command "cd $args[3]";
+
+	debug_log "Adding $args[2]=$args[3] to global.properties ...";
+	props_add_definition "$args[2]=$args[3]";
+
+	# Keep this information for later use
+	$domain_list{$args[2]} = $args[3];
+	debug_log "Keeping: domain_list{$args[2]} = $args[3] ...";
+
+	print "Created $args[2] ... $args[3]\n";
+	$domain_create_count++;
+}
+
+sub account_create
+{
+	debug_log "account_create [$_[0]] ...";
+
+	my @args = split /\s+/, $_[0];
+
+	# If the account already exists, delete it
+	if (local_system("$ZMPROV_COM ga $args[3]\@$domain_list{$args[5]} >/dev/null 2>/dev/null") == 0)
+	{
+
+		# TODO:
+		# It is highly likely that the account will be deleted
+		# as part of a prior domain deletion.
+		# For now, the impact is just that the da fails
+		# But eventually, the script should be smarter to 
+		# know that the account delete will already occur, so
+		# don't delete again.
+		#
+		debug_log "Deleting account $args[3]\@$domain_list{$args[5]} ...";
+		zmprov_add_command "da $args[3]\@$domain_list{$args[5]}";
+	}
+
+	debug_log "Creating account $args[3]\@$domain_list{$args[5]} ...";
+	zmprov_add_command "ca $args[3]\@$domain_list{$args[5]} $args[4]";
+
+	debug_log "Adding $args[2] to global.properties ...";
+	props_add_definition "$args[2].user=$args[3]\@$domain_list{$args[5]}";
+	props_add_definition "$args[2].password=$args[4]";
+
+	$account_list{$args[2]} = "$args[3]\@$domain_list{$args[5]}";
+	$account_passwd_list{$args[2]} = "$args[4]";
+	debug_log "Keeping: account_list{$args[2]} = $args[3]\@$domain_list{$args[5]} ...";
+
+	print "Created $args[2] ... $args[3]\@$domain_list{$args[5]} $args[4]\n";
+	$account_create_count++;
+}
+
+sub email_inject
+{
+	debug_log "email_inject [$_[0]] ...";
+
+	my @args = split /\s+/, $_[0];
+
+	if ( -d "$ZIMBRAQA_ROOT/$args[3]" )
+	{
+
+		zmlmtpinject_add_command "$ZMLMTPINJECT_COM -r $account_list{$args[4]} -s $ZMLMTPINJECT_SENDER -d $ZIMBRAQA_ROOT/$args[3]";
+
+		print "injected $args[2] ... $ZIMBRAQA_ROOT/$args[3] into $account_list{$args[4]}\n";
+		$email_inject_count++;
+
+	}
+	elsif ( -T "$ZIMBRAQA_ROOT/$args[3]" )
+	{
+
+		zmlmtpinject_add_command "$ZMLMTPINJECT_COM -r $account_list{$args[4]} -s $ZMLMTPINJECT_SENDER $ZIMBRAQA_ROOT/$args[3]";
+
+		print "injected $args[2] ... $ZIMBRAQA_ROOT/$args[3] into $account_list{$args[4]}\n";
+		$email_inject_count++;
+
+	}
+	else
+	{
+		warn "$ZIMBRAQA_ROOT/$args[3] does not exist!\n";
+	}
+
+
+}
+
+# Inject emails, but offset the time from a specified amount
+sub email_offset
+{
+	debug_log "email_offset [$_[0]] ...";
+
+	my @args = split /\s+/, $_[0];
+
+	# Determine what the new X-Zimbra-Received should be
+	my @weekdays = qw/Sun Mon Tue Wed Thu Fri Sat/;
+	my @months = qw/Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec/;
+	($sec, $min, $hour, $day, $mon, $year, $weekday, $doy, $dst) = gmtime(time - $args[4]);
+
+	# TODO: need to get the time zone
+	my $new_date=sprintf("%s, %02d %s %d %02d:%02d:%02d %05d",
+		@weekdays[$weekday],
+		$day,
+		@months[$mon],
+		$year + 1900,
+		$hour,
+		$min,
+		$sec);
+
+
+	if ( -d "$ZIMBRAQA_ROOT/$args[3]" )
+	{
+		
+		# For each file in the folder, remove the old X-Zimbra-Received line
+		# insert the new X-Zimbra-Received data
+		$dir_ptr = new DirHandle "$ZIMBRAQA_ROOT/$args[3]";
+		if (!defined($dir_ptr)) {
+			print "Unable to open directory $ZIMBRAQA_ROOT/$args[3]\n";
+			return;
+		}
+
+			
+		my $temp_dir=rand 100;
+		mkdir "$ZIMBRAQA_ROOT/$args[3]/$temp_dir"
+			or die "Unable to create directory $ZIMBRAQA_ROOT/$args[3]/$temp_dir: $!";
+		
+		while (defined($_ = $dir_ptr->read))
+		{	
+			if (-T "$ZIMBRAQA_ROOT/$args[3]/$_")
+			{
+				open OUT_PTR, ">$ZIMBRAQA_ROOT/$args[3]/$temp_dir/$_"
+					or die "Unable to open $ZIMBRAQA_ROOT/$args[3]/$temp_dir/$_ for writing: $!";
+				open IN_PTR, "<$ZIMBRAQA_ROOT/$args[3]/$_"
+					or die "Unable to open $ZIMBRAQA_ROOT/$args[3]/$_ for reading: $!";
+			
+				while (<IN_PTR>)
+				{
+					$_ =~ s/^X-Zimbra-Received:.*/X-Zimbra-Received: $new_date/;
+					$_ =~ s/^Date:.*/Date: $new_date/;
+					print OUT_PTR "$_";
+				}
+				
+				close OUT_PTR;
+				close IN_PTR;
+				
+			}
+			
+		}
+		
+		
+		# Now, call the email inject with the temp folder
+		email_inject "$args[0] INJECT $args[2] $args[3]/$temp_dir $args[5]";
+		
+	}
+	elsif ( -T "$ZIMBRAQA_ROOT/$args[3]" )
+	{
+		my $temp_file=rand 100;
+
+		open OUT_PTR, ">$ZIMBRAQA_ROOT/$args[3].$temp_file"
+			or die "Unable to open $ZIMBRAQA_ROOT/$args[3].$temp_file for writing: $!";
+		open IN_PTR, "<$ZIMBRAQA_ROOT/$args[3]"
+			or die "Unable to open $ZIMBRAQA_ROOT/$args[3] for reading: $!";
+
+		while (<IN_PTR>)
+		{
+			$_ =~ s/^X-Zimbra-Received:.*/X-Zimbra-Received: $new_date/;
+			$_ =~ s/^Date:.*/Date: $new_date/;
+			print OUT_PTR "$_";
+		}
+		
+		close OUT_PTR;
+		close IN_PTR;
+
+		# Now, call the email inject with the temp folder
+		email_inject "$args[0] INJECT $args[2] $args[3].$temp_file $args[5]";
+
+	}
+	else
+	{
+		warn "$ZIMBRAQA_ROOT/$args[3] does not exist!\n";
+	}
+
+
+}
+
+sub tag_create
+{
+	debug_log "tag_create [$_[0]] ...";
+	my @args = split /\s+/, $_[0];
+
+	# Create a file name to write the info to
+	$OUTPUT_FILE="$TEMPLATE_FOLDER/$COUNTER.xml";
+	$COUNTER++;
+	open OUTPUT_PTR, ">$OUTPUT_FILE"
+		or die "Unable to open $OUTPUT_FILE $!";
+
+	open TMPL_PTR, "<$TEMPLATE_TAG_CREATE"
+		or die "Unable to open $TEMPLATE_TAG_CREATE $!";
+
+	# Modify the tag create template
+	while (<TMPL_PTR>)
+	{
+		$_ =~ s/CHANGE_ME_USER_NAME/$account_list{$args[5]}/;
+		$_ =~ s/CHANGE_ME_USER_PASSWORD/$account_passwd_list{$args[5]}/;
+		$_ =~ s/CHANGE_ME_TAG_NAME/$args[3]/;
+		$_ =~ s/CHANGE_ME_TAG_COLOR/$args[4]/;
+
+		print OUTPUT_PTR "$_";
+	}
+
+	# Save the information for later execution
+	soaptestcore_add_command $OUTPUT_FILE;
+
+
+	close(FILE_PTR);
+	close(TMPL_PTR);
+
+	$tag_create_count++;
+
+}
+
+sub folder_create
+{
+	debug_log "folder_create [$_[0]] ...";
+	my @args = split /\s+/, $_[0];
+
+	# Create a file name to write the info to
+	$OUTPUT_FILE="$TEMPLATE_FOLDER/Folder$COUNTER.xml";
+	$COUNTER++;
+	open OUTPUT_PTR, ">$OUTPUT_FILE"
+		or die "Unable to open $OUTPUT_FILE $!";
+
+	open TMPL_PTR, "<$TEMPLATE_FOLDER_CREATE"
+		or die "Unable to open $TEMPLATE_FOLDER_CREATE $!";
+
+	# Modify the folder create template
+	while (<TMPL_PTR>)
+	{
+		$_ =~ s/CHANGE_ME_USER_NAME/$account_list{$args[5]}/;
+		$_ =~ s/CHANGE_ME_USER_PASSWORD/$account_passwd_list{$args[5]}/;
+		$_ =~ s/CHANGE_ME_FOLDER_NAME/$args[3]/;
+		$_ =~ s/CHANGE_ME_FOLDER_PARENT/$args[4]/;
+
+		print OUTPUT_PTR "$_";
+	}
+
+	# Save the information for later execution
+	soaptestcore_add_command $OUTPUT_FILE;
+
+
+	close(FILE_PTR);
+	close(TMPL_PTR);
+
+	$folder_create_count++;
+
+}
+
+sub process_line
+{
+	debug_log "process_line [$_[0]] ...";
+
+
+	domain_create $_[0]		if (/^DOMAIN\b/ && /\bCREATE\b/);
+	account_create $_[0]	if (/^ACCOUNT\b/ && /\bCREATE\b/);
+	email_inject $_[0]		if (/^EMAIL\b/ && /\bINJECT\b/);
+	email_offset $_[0]		if (/^EMAIL\b/ && /\bTIME_OFFSET\b/);
+	tag_create $_[0]		if (/^TAG\b/ && /\bCREATE\b/);
+	folder_create $_[0]		if (/^FOLDER\b/ && /\bCREATE\b/);
+
+}
+
+# This subroutine reads the data file and builds
+# zmprov, zmlmtpinject, and SOAPTestCore commands
+#
+
+sub process_input
+{
+	debug_log "process_input [$_[0]] ...";
+
+	# TODO: these definition need to be more robust
+	#
+	chmod 0644, $PROPS_FILE;	# by default, its mode is 444
+	open PROPS_PTR, (">>" . $PROPS_FILE)
+		or die "Cannot open $PROPS_FILE: $!\n";
+	open ZMPROV_PTR, (">" . $ZMPROV_FILE)
+		or die "Cannot open $ZMPROV_FILE: $!\n";
+	open ZMLMTPINJECT_PTR, (">" . $ZMLMTPINJECT_FILE)
+		or die "Cannot open $ZMLMTPINJECT_FILE: $!\n";
+	open SOAPTESTCORE_PTR, (">" . $SOAPTESTCORE_FILE)
+		or die "Cannot open $SOAPTESTCORE_FILE: $!\n";
+
+	# The props file could start on the last line
+	# Inject an extra \n to make sure we start on a new line
+	print PROPS_PTR "\n";
+
+
+	# Process each input line
+	while ( <STDIN> )
+	{
+
+		# Remove end of line
+		chomp;
+
+		# Remove comments
+		s/#.*//;
+
+
+		# Process each line unless blank
+		&process_line($_)	unless /^$/;
+
+	}
+
+	close ZMPROV_PTR;
+	close ZMLMTPINJECT_PTR;
+	close SOAPTESTCORE_PTR;
+
+}
+
+sub process_zmprov
+{
+	debug_log "process_zmprov [$_[0]] ...";
+
+	local_system("$ZMPROV_COM < $ZMPROV_FILE");
+
+	print "Executed system: $ZMPROV_COM < $ZMPROV_FILE\n";
+}
+
+sub process_zmlmtpinject
+{
+	debug_log "process_zmlmtpinject [$_[0]] ...";
+
+	open ZMLMTPINJECT_PTR, ("<" . $ZMLMTPINJECT_FILE)
+		or die "Cannot open $ZMLMTPINJECT_FILE: $!\n";
+
+	while (<ZMLMTPINJECT_PTR>)
+	{
+		chomp;
+
+		debug_log "Executing [$_]";
+
+		local_system("$_");
+
+		print "Executed system: $_\n";
+
+	}
+
+
+	close ZMLMTPINJECT_PTR;
+
+}
+
+sub process_soaptestcore
+{
+	debug_log "process_soaptestcore [$_[0]] ...";
+
+	open SOAPTESTCORE_PTR, ("<" . $SOAPTESTCORE_FILE)
+		or die "Cannot open $SOAPTESTCORE_FILE: $!\n";
+
+	while (<SOAPTESTCORE_PTR>)
+	{
+		chomp;
+
+		debug_log "Executing [$_]";
+
+		local_system("$_");
+
+		print "Executed system: $_\n";
+
+	}
+
+
+	close SOAPTESTCORE_PTR;
+
+}
+
+
+# This subroutine executes all the built commands
+#
+sub process_output
+{
+	debug_log "process_output [$_[0]] ...";
+
+	&process_zmprov;
+	&process_zmlmtpinject;
+	&process_soaptestcore;
+
+}
+
+sub main
+{
+
+	debug_log "main ...";
+
+	$domain_create_count=0;
+	$account_create_count=0;
+	$email_inject_count=0;
+	$tag_create_count=0;
+	$folder_create_count=0;
+
+	&process_input;
+
+#	A hack to get around the zmprov problem
+#
+#	local_system("zmcontrol shutdown");
+#	local_system("zmcontrol startup");
+
+	&process_output;
+
+	print "\n\n**** Results:\n\n";
+	print "$domain_create_count:\tDomains created\n";
+	print "$account_create_count:\tAccounts created\n";
+	print "$email_inject_count:\tEmails injected\n";
+	print "$tag_create_count:\tTags created\n";
+	print "$folder_create_count:\tFolders created\n";
+	print "\n\n";
+
+}
+
+
+sub do_alarm {
+	print "TIMEOUT EXCEEDED, EXITING\n\n\n";
+	exit (1);
+}
+
+$SIG{ALRM} = \&do_alarm;
+
+alarm (60*60*2);  # Two hours is plenty.
+
+&main;
+
+print "Done!\n";
+exit 0
+

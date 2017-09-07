@@ -1,0 +1,43 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+
+
+<t:property name="user.name" value="CHANGE_ME_USER_NAME"/>
+<t:property name="user.password" value="CHANGE_ME_USER_PASSWORD"/>
+
+<t:property name="folder.name" value="CHANGE_ME_FOLDER_NAME"/>
+<t:property name="folder.parent" value="CHANGE_ME_FOLDER_PARENT"/>
+
+
+
+<t:property name="uri" value="${mailclient.uri}"/>
+
+
+<t:test>
+	<t:request>
+		<AuthRequest xmlns="urn:zimbraAccount">
+			<account by="name">${user.name}</account>
+			<password>${user.password}</password>
+		</AuthRequest>
+	</t:request>
+
+	<t:response>
+		<t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+		<t:select path="//acct:AuthResponse/acct:sessionId" set="sessionId"/>
+	</t:response>
+
+</t:test>
+
+<t:test >
+	<t:request>
+		<CreateFolderRequest xmlns="urn:zimbraMail">
+			<folder name="${folder.name}" l="${folder.parent}"/>
+		</CreateFolderRequest>
+	</t:request>
+	<t:response>
+		<t:select path="//mail:CreateFolderResponse/mail:folder"/>
+	</t:response>
+</t:test>
+
+</t:tests>
+

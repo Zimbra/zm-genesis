@@ -1,0 +1,157 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<!-- domainAdminAccount1.name is keyed off the zimbraNotes field.  zimbraNotes=bug9402account -->
+<t:property name="domainAdminAccount1.server" value="NOT_DEFINED"/>
+
+<t:property name="domainAdminAccount2.name" value="domainAdmin.${TIME}.${COUNTER}@${defaultdomain.name}"/>
+<t:property name="domainAdminAccount2.server" value="NOT_DEFINED"/>
+
+
+<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgrade_domainAdminLogin_CreateAccounts" type="always" >
+    <t:objective>Create the upgrade test accounts</t:objective>
+
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+
+    <t:test required="true">
+        <t:request>
+			<SearchDirectoryRequest xmlns="urn:zimbraAdmin" offset="0" limit="1" sortBy="dateDesc" sortAscending="0" attrs="zimbraNotes" types="accounts">
+				<query>zimbraNotes=bug9402account</query>
+			</SearchDirectoryRequest>
+        </t:request>
+		<t:response>
+			<t:select path="//admin:SearchDirectoryResponse/admin:account" attr="name" set="domainAdminAccount1.name"/>
+		</t:response>
+    </t:test>  
+
+	<t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${domainAdminAccount1.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="domainAdminAccount1.id"/>
+			<t:select path="//admin:GetAccountResponse/admin:account/admin:a[@n='zimbraMailHost']" set="domainAdminAccount1.server"/>
+		</t:response>
+	</t:test>
+
+    <t:test required="true">
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${domainAdminAccount2.name}</name>
+                <password>${defaultpassword.value}</password>
+				<a n="zimbraIsDomainAdminAccount">${globals.true}</a>
+            </CreateAccountRequest>
+        </t:request>
+		<t:response>
+			<t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="domainAdminAccount2.id"/>
+			<t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="domainAdminAccount2.server"/>
+		</t:response>
+    </t:test>  
+
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgrade_domainAdminLogin_01" type="smoke" bugids="9402">
+    <t:objective>Verify the domain admin can log in correctly</t:objective>
+
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${domainAdminAccount1.name}</name>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:property name="server.zimbraAccount" value="${domainAdminAccount1.server}"/>
+
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${domainAdminAccount1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+            </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:lifetime"  match="^\d+$"/>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+
+</t:test_case>
+
+
+<t:test_case testcaseid="PostUpgrade_domainAdminLogin_02" type="smoke" bugids="9402">
+    <t:objective>Verify the domain admin can log in correctly</t:objective>
+
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${domainAdminAccount2.name}</name>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:property name="server.zimbraAccount" value="${domainAdminAccount2.server}"/>
+
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${domainAdminAccount2.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+            </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:lifetime"  match="^\d+$"/>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+
+</t:test_case>
+
+
+</t:tests>
+

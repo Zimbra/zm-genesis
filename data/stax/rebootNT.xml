@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>  
+    <defaultcall function="rebootNT"/>
+    <function name="rebootNT" scope="local">
+        <function-prolog>
+            This function is to reboot the machine
+            Only Unix machine is supported at the moment
+        </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="nmachine" default="'qapc04'">
+                Name of the target machine
+            </function-optional-arg>        
+        </function-map-args>
+        <sequence>  
+            <process name="'Reboot Machine'">
+                <location>nmachine</location>
+                <command>'shutdown'</command>
+			   <parms>'-r -f -t 5 -c "staf reboot"'</parms> 
+                <workdir>'C:\\'</workdir>                 
+            </process>             
+            <stafcmd name="'Sleep 60 seconds'">
+                <location>"tms"</location>
+                <service>'DELAY'</service>
+                <request>'DELAY 60000'</request>
+            </stafcmd>
+            <stafcmd name="'Purge Cache'">
+                        <location>"tms"</location>
+                        <service>'misc'</service>
+                        <request>'purge endpointcache tcp://%s' % nmachine</request>
+            </stafcmd>
+                    
+            <timer duration="'15m'">
+                <loop>
+                    <sequence>
+                    <stafcmd name="'Ping'">
+                        <location>nmachine</location>
+                        <service>'PING'</service>
+                        <request>'PING'</request>
+                    </stafcmd>
+                    <if expr="RC == STAFRC.Ok">
+                        <break/>
+                    </if>
+                    <stafcmd name="'Sleep 5 seconds'">
+                        <location>"tms"</location>
+                        <service>'DELAY'</service>
+                        <request>'DELAY 5000'</request>
+                    </stafcmd>
+                    </sequence>
+                </loop>               
+            </timer> 
+
+        </sequence>
+
+    </function>
+</stax>

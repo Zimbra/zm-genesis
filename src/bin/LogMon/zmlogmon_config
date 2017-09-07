@@ -1,0 +1,71 @@
+# Define which email addresses will receive notifications when there
+# are exceptions
+#
+#email_address:matt@zimbra.com
+#email_address:qa-group@zimbra.com
+
+# This list contains acceptable exceptions that are part
+# of normal user error
+#
+acceptable_list:AccountServiceException: no such account
+acceptable_list:AccountServiceException: authentication failed for 
+acceptable_list:AccountServiceException: must change password
+acceptable_list:AccountServiceException: invalid password: too short
+acceptable_list:AccountServiceException: invalid password: too long
+acceptable_list:AccountServiceException: password was recently used
+acceptable_list:AccountServiceException: password is locked and can't be changed
+
+# These are exceptions that occur during the QA SOAP suite,
+# since the SOAP tests include negative tests that could cause server
+# exceptoins
+#
+qa_suite_list:NoSuchItemException: no such 
+qa_suite_list:NoSuchItemException: no such 
+qa_suite_list:ServiceException: invalid request: missing required element
+qa_suite_list:ServiceException: invalid request: missing required attribute
+qa_suite_list:ServiceException: invalid request: unknown value for
+qa_suite_list:ServiceException: invalid request: .* is immutable
+qa_suite_list:ServiceException: invalid request: invalid name:
+qa_suite_list:ServiceException: invalid request: folders can only be marked read
+qa_suite_list:ServiceException: invalid request: pref name must start with zimbraPref
+qa_suite_list:ServiceException: invalid request: error in syntax of message ID list
+qa_suite_list:ServiceException: invalid request: unknown operation:
+qa_suite_list:AccountServiceException: no such 
+qa_suite_list:AccountServiceException: no such 
+qa_suite_list:AccountServiceException: invalid attr name
+qa_suite_list:AccountServiceException: invalid attr value
+qa_suite_list:AccountServiceException: .* must be one of: 
+qa_suite_list:AccountServiceException: .* already exists
+qa_suite_list:AccountServiceException: .* must be a valid port:
+qa_suite_list:AccountServiceException: .* must be a valid generalized time:
+qa_suite_list:AccountServiceException: .* must be a valid duration:
+qa_suite_list:MailServiceException: invalid tag/folder name:
+qa_suite_list:MailServiceException: cannot put object in that folder
+qa_suite_list:MailServiceException: object with that name already exists:
+qa_suite_list:MailServiceException: couldn't parse query:
+
+# The debugging list helps in removing certain exceptions
+# while debugging the scripts
+#
+#debugging_list:ParsedMessage - exception while analyzing message; message will be partially indexed
+#debugging_list:SoapEngine - handler exception
+
+# These logs are debugging logs that include the term 'exception'
+# ignore them, since they are just log messages
+#
+not_exception_list:ArrayStoreException when using RMI
+not_exception_list:This operation requires xqrl.jar
+not_exception_list:exception dialog boxes and integrate it with the existing scripts
+
+
+
+# These are exceptions that are logged as bugs
+# TODO: if the bug number is RESOLVED or CLOSED and
+# the exception is seen, still send the email notification
+#
+# FORMAT:
+# known_list:<BUG-ID>:<message>
+known_list:kchen_tbd1:ParsedMessage - exception while analyzing message; message will be partially indexed
+known_list:tim_tbd1:SoapEngine - handler exception
+
+

@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>
+    <defaultcall function="runTest"/>
+    <function name="runTest">
+        <function-prolog> Run test script </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa07'"> Name of the target machine </function-optional-arg>
+            
+            <function-optional-arg name="OS" default="'RHEL4'"> Name of the operation system </function-optional-arg>
+            
+            <function-optional-arg name="build" default="'foo'"> Name of the build </function-optional-arg>
+            
+            <function-optional-arg name="branch" default="'main'"> Name of the branch </function-optional-arg>
+            
+            <function-optional-arg name="timestamp" default="'whenever'"> Time Stamp </function-optional-arg>
+            
+            <function-optional-arg name="needNotify" default="'1'"> Is notification required? 1= yes others = no </function-optional-arg>
+            
+            <function-optional-arg name="notificationAlias" default="'qa-group@zimbra.com'"> This is email notification alias </function-optional-arg>
+            
+            <function-optional-arg name="runSoapSmoke" default="'0'">
+            </function-optional-arg>
+            
+            <function-optional-arg name="runRuby" default="'0'">
+            </function-optional-arg>
+            
+            <function-optional-arg name="runMapi" default="'0'">
+            </function-optional-arg>
+            
+            <function-optional-arg name="needInstall" default="'0'"> Need server installation 1 yes 0 no </function-optional-arg>
+            
+            <function-optional-arg name="mapiMsi" default="'NONE'"> msi to be used by run mapi test </function-optional-arg>
+            
+            <function-optional-arg name="runQtp" default="'0'">
+            </function-optional-arg>
+            
+            <function-optional-arg name="runPerf" default="'0'">
+            </function-optional-arg>
+            
+            <function-optional-arg name="runSoapFull" default="'0'">
+            </function-optional-arg>
+            
+            <function-optional-arg name="smokeOrFull" default="'1'">
+                
+            </function-optional-arg>
+            
+            <function-optional-arg name="pjobID" default="'-1'"> JobID to signal job termination </function-optional-arg>
+            
+            
+            <function-optional-arg name="browser" default="'FF2.0'"> Browser to use </function-optional-arg>
+            
+            <function-optional-arg name="cmachine" default="'qapc02'">Client machine for the test </function-optional-arg>
+            
+            <function-optional-arg name="pmachine" default="'qa07'"> Name of machine group the request is for.  This is same for single node deployment </function-optional-arg>
+            <function-optional-arg name="tms" default="'tms.lab.zimbra.com'">Location of TMS server </function-optional-arg>
+            <function-optional-arg name="tmsStax" default="'tms-stax.lab.zimbra.com'">Location of STAX server </function-optional-arg>
+            <function-optional-arg name="admin" default="'NONE'">ADMIN server</function-optional-arg>           
+            <function-optional-arg name="domain" default="'NONE'">DOMAIN</function-optional-arg>
+	    <function-optional-arg name="excludes" default="'NONE'">EXCLUDES</function-optional-arg>
+            
+        </function-map-args>
+        <sequence>
+            <script> savedpjobID = pjobID </script> 
+            <script>         
+             	srcDir = "/opt/qa/%s/staf/"%branch
+            </script>  
+            <if expr="build.find('FOSS') == -1">
+            	<script>mBit = "network"</script>  
+                	<else>
+                		<script>mBit="open"</script>  
+                    </else>
+             </if>
+            <parallel>        
+	            <if expr="(runSoapSmoke == '1') or (runSoapFull == '1')">
+	                <sequence>
+	                	<import machine="tmsStax" file="srcDir+'runSoap.xml'"/>   
+	                    <if expr="runSoapSmoke == '1'">
+	                        <script> smokeOrFull = '1'</script>
+	                        <else>
+	                            <script> smokeOrFull = '0'</script>
+	                        </else>
+	                    </if> 
+	                    
+	                    <process name="'Create Install Log Directory'">
+	                        <location>tms</location>
+	                        <command>'/bin/mkdir'</command>
+	                        <workdir>'/opt/qa'</workdir>
+	                        <parms>'-p testlogs/%s/%s/%s/install/%s/%s/one'% (OS, branch, build, timestamp, machine)</parms>
+	                    </process>
+	                    
+	                    <script>logList = ['/opt/zimbra/log/zimbra.log', '/tmp/install.out']</script>
+	                    <loop var="funcIndex" from="0" to="1">
+	                        <sequence>
+	                            <process name="'Copy Install Logs'">
+	                                <location>machine</location>
+	                                <command>'/bin/cp'</command>
+	                                <workdir>'/tmp'</workdir>
+	                                <parms>'%s /opt/qa/testlogs/%s/%s/%s/install/%s/%s/one'% (logList[funcIndex], OS, branch, build, timestamp, machine)</parms>
+	                            </process>
+	                            <process name="'Chmod'">
+	                                <location>machine</location>
+	                                <command>'/bin/env'</command>
+	                                <workdir>'/tmp'</workdir>
+	                                <parms>'chmod -r o+r /opt/qa/testlogs/%s/%s/%s/install/%s/%s/one'% (OS, branch, build, timestamp, machine)</parms>
+	                            </process>
+	                        </sequence>
+	                    </loop>
+	                    <script>sut = machine</script>
+	                    <call function="'runSoap'"> {'tms' : tms, 'tmsStax' : tmsStax, 'excludes' : excludes, 'sut' : sut, 'machine' : machine, 'OS' : OS, 'build' : build, 'branch' : branch, 'timestamp' : timestamp, 'needNotify' : '%s'%needNotify, 'smokeOrFull' : '%s'%smokeOrFull, 'bits' : mBit, 'admin' : admin, 'domain' : domain } </call>
+	                     
+	                </sequence>
+	            </if>
+	            
+	            <if expr="runMapi == '1'">
+	                 <sequence>       
+	                    
+	                    <import machine="tmsStax" file="srcDir+'runMapi.xml'"/>
+	                    <log>'Run Mapi test'</log>
+	                    <call function="'runMapi'"> {'mapiMsi': mapiMsi, 'machine' : machine, 'sut' : machine , 'OS' : OS, 'build' : build, 'branch' : branch, 'timestamp' : timestamp, 'needNotify' : '%s'%needNotify, 'bits' : 'network' } </call>
+	                </sequence>
+	            </if>
+	            
+	            <if expr="runQtp == '1'">
+	                <sequence>
+	                    
+	                    <import machine="tmsStax" file="srcDir+'runQTP.xml'"/>
+	                    <log>'Run QTP test'</log>
+	                    <call function="'runQtp'"> {'browser' : browser, 'machine' : cmachine, 'sut' : machine , 'OS' : OS, 'build' : build, 'branch' : branch, 'timestamp' : timestamp, 'needNotify' : '%s'%needNotify, 'smokeOrFull' : '%s'%smokeOrFull, 'bits' : mBit } </call>
+	                </sequence>
+	            </if> 
+	            
+	            <if expr="runRuby == '1'">
+	                <sequence>
+	                    
+	                    <import machine="tmsStax" file="srcDir+'runGenesis.xml'"/>
+	                    <log>'Run genesis test'</log>
+	                    <call function="'runGenesis'"> {'tms' : tms, 'tmsStax' : tmsStax, 'machine' : machine, 'OS' : OS, 'build' : build, 'branch' : branch, 'timestamp' : timestamp, 'needNotify' : '%s'%needNotify } </call>
+	                </sequence>
+	            </if>
+            </parallel>
+            
+            <if expr="savedpjobID != '-1'">
+                <sequence>
+                    <log>'Notify termination of job %s' % savedpjobID</log>
+                    <process name="'End Job'">
+                        <location>tmsStax</location>
+                        <command>'/bin/env'</command>
+                        <workdir>'/opt/qa/tools'</workdir>
+                        <parms>'ruby /opt/qa/tools/endJob.rb %s %s' % (savedpjobID, tms)</parms>
+                        <stdout mode="'append'">'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                </sequence>
+            </if>
+            
+        </sequence>
+    </function>
+</stax>

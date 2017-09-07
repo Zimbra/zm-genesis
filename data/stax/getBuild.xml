@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>  
+    <defaultcall function="main"/>
+    <function name="main">
+        <function-prolog>
+            This function is used to fetch build from Zimbra build server
+        </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa04'">
+                Name of the target machine
+            </function-optional-arg>
+            <function-optional-arg name="url" default="'http://build.lab.zimbra.com:8000/links/RHEL4/CRAY/20060224070101_NETWORK/ZimbraBuild/i386/zcs.tgz'">
+                URL of the file
+            </function-optional-arg>
+            <function-optional-arg name="targetFileName" default="'zcs.tgz'">
+                Target file name
+            </function-optional-arg>
+            <function-optional-arg name="targetFileDirectory" default="'/var/tmp'">
+                Target file name
+            </function-optional-arg>
+
+            <function-optional-arg name="pjobID" default="'-1'">
+                JobID to signal job termination
+            </function-optional-arg>
+            
+            <function-optional-arg name="tms" default="'tms.lab.zimbra.com'">Location of TMS server </function-optional-arg>
+            <function-optional-arg name="tmsStax" default="'tms-stax.lab.zimbra.com'">Location of STAX server </function-optional-arg>
+
+        </function-map-args>
+        <sequence>
+            <process name="'Create Directory'">
+                <location>machine</location>
+                <command>'/bin/mkdir'</command>
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-p %s' % (targetFileDirectory)</parms> 
+                <stdout>'/tmp/getbuild.out'</stdout>
+                <stderr mode="'stdout'"/> 
+            </process>
+            <process name="'Remove Old File'">
+                <location>machine</location>
+                <command>'/bin/rm'</command>
+                <workdir>'%s'%(targetFileDirectory)</workdir>               
+                <parms>'%s'% (targetFileName)</parms> 
+                <stdout>'/tmp/getbuild.out'</stdout>
+                <stderr mode="'stdout'"/> 
+            </process>
+            <log>'Fetch -r -nv -O %s --tries=50 --progress=bar %s' % (targetFileName, url)</log>
+            <process name="'Get Build'">
+                <location>machine</location>
+                <command>'wget'</command>
+                <workdir>'%s' %(targetFileDirectory)</workdir>
+                <parms>'-r -nv -O %s --tries=50 --progress=bar %s' % (targetFileName, url)</parms> 
+                <stdout mode="'append'">'/tmp/getbuild.out'</stdout>
+                <stderr mode="'stdout'"/> 
+                <returnstdout/>
+            </process>
+            <script>passFail = STAXResult</script>
+            <log>'fetch result %s'%passFail</log> 
+            
+            <if expr="pjobID != '-1'">
+                <sequence>
+                    <log>'Notify termination of job %s %s' % (tms, pjobID)</log>
+                    <process name="'End Job'">
+                        <location>tmsStax</location>
+                        <command>'/bin/env'</command>
+                        <workdir>'/opt/qa/tools'</workdir>
+                        <parms>'ruby /opt/qa/tools/endJob.rb %s %s' % (pjobID, tms)</parms>
+                        <stdout>'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                </sequence>
+            </if>
+            
+
+            <if expr="RC != 0">
+                <message>'Error: RC=%s, STAXResult=%s' % (RC, STAXResult)</message>
+                <else>
+                    <message>'Process RC was 0.  STAXResult=%s' %STAXResult</message>
+                </else>
+            </if>
+            <return>passFail</return>
+        </sequence>
+    </function>
+</stax>

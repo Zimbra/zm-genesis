@@ -1,0 +1,389 @@
+Feature			Request					Folder\File
+
+		
+CONVERSATION		GetConvRequest				\MailClient\Conversation\conversation_get
+CONVERSATION		SearchConvRequest			\MailClient\Conversation\conversation_search
+CONVERSATION		ConvActionRequest			\MailClient\Conversation\conversation_action
+CONVERSATION		ConvActionRequest			\MailClient\Conversation\conversation_basic
+CONVERSATION		SearchConvRequest			\MailClient\Conversation\conversation_search_fetch
+CONVERSATION		SearchConvRequest			\MailClient\Conversation\conversation
+CONVERSATION		ConvActionRequest			\MailClient\Conversation\tcon\convactionrequest_tcon
+CONVERSATION		ConvActionRequest			\MailClient\Conversation\tcon\convactionrequest_tcon_j
+CONVERSATION		ConvActionRequest			\MailClient\Conversation\tcon\convactionrequest_tcon_s
+CONVERSATION		ConvActionRequest			\MailClient\Conversation\tcon\convactionrequest_tcon_t
+
+MISCELLANEOUS		SyncGalRequest				\MailClient\Misc\ (*In progress*)
+MISCELLANEOUS		GetInfoRequest				\MailClient\Misc\getinfo_request
+MISCELLANEOUS		NoOpRequest				\MailClient\Misc\no_operation
+MISCELLANEOUS		CheckSpellingRequest			\MailClient\Misc\spell_check
+MISCELLANEOUS							\MailClient\Misc\mailbox_limits
+
+		
+CONTACTS		ImportContactsRequest			\MailClient\Contacts\contacts_import
+CONTACTS		ExportContactsRequest			\MailClient\Contacts\contacts_export
+CONTACTS		CreateContactRequest			\MailClient\Contacts\contacts_create
+CONTACTS		ContactActionRequest			\MailClient\Contacts\contacts_action
+CONTACTS		GetContactsRequest			\MailClient\Contacts\contacts_get
+CONTACTS		ModifyContactRequest			\MailClient\Contacts\contacts_modify
+CONTACTS		FolderActionRequest			\MailClient\Contacts\Sharing\permissions_basic
+CONTACTS		FolderActionRequest			\MailClient\Contacts\Sharing\share_contact
+
+
+FOLDERS			CreateFolderRequest			\MailClient\Folders\folders_create
+FOLDERS			FolderActionRequest			\MailClient\Folders\folders_action
+FOLDERS			GetFolderRequest			\MailClient\Folders\folders_get
+FOLDERS			CreateFolderRequest			\MailClient\Folders\folders
+FOLDERS			FolderActionRequest			\MailClient\Folders\folders
+FOLDERS			CreateSearchFolderRequest		\MailClient\Folders\searchfolder_create
+FOLDERS			GetSearchFolderRequest			\MailClient\Folders\searchfolders_get
+FOLDERS			FolderActionRequest			\MailClient\Folders\searchfolder_action
+FOLDERS			ModifySearchFolderRequest
+FOLDERS			CreateMountpointRequest			\MailClient\Folders\Mountpoints\create_mountpoint
+FOLDERS			FolderActionRequest			\MailClient\Folders\Sharing\sharing_combine
+FOLDERS			CreateMountpointRequest			\MailClient\Folders\Sharing\sharing_combine
+FOLDERS			FolderActionRequest			\MailClient\Folders\Sharing\sharing_inherit	
+FOLDERS			CreateMountpointRequest			\MailClient\Folders\Sharing\sharing_inherit
+FOLDERS			FolderActionRequest			\MailClient\Folders\Sharing\sharing_rights		
+FOLDERS			CreateMountpointRequest			\MailClient\Folders\Sharing\sharing_rights
+
+TAGS			TagActionRequest			\MailClient\Tags\tags_action
+TAGS			CreateTagRequest			\MailClient\Tags\tags_create
+TAGS			GetTagRequest				\MailClient\Tags\tags_get
+TAGS			MsgActionRequest			\MailClient\Tags\Mail\tag_mail
+TAGS			ItemActionRequest			\MailClient\Tags\Mail\tag_mail
+TAGS			ConvActionRequest			\MailClient\Tags\Conversations\tag_conversation
+TAGS			ContactActionRequest			\MailClient\Tags\Contacts\tag_contacts
+		
+PREFERENCES		GetPrefsRequest				\MailClient\Prefs\pref_get
+PREFERENCES		ModifyPrefsRequest			\MailClient\Prefs\prefs_modify
+PREFERENCES		ModifyPrefsRequest			\MailClient\Prefs\prefs_modify2
+PREFERENCES		SearchRequest				\MailClient\Prefs\AutoAddAddress\auto_add_address_basic
+PREFERENCES		csvServletRequest			\MailClient\Prefs\externalContacts\exportContacts
+PREFERENCES		ImportContactsRequest			\MailClient\Prefs\externalContacts\importContacts
+PREFERENCES		ImportContactsRequest			\MailClient\Prefs\externalContacts\importGmailContacts
+PREFERENCES		ImportContactsRequest			\MailClient\Prefs\externalContacts\importOutlookContacts
+PREFERENCES		ImportContactsRequest			\MailClient\Prefs\externalContacts\importYahooContacts
+PREFERENCES		ImportContactsRequest			\MailClient\Prefs\externalContacts\importZimbraContacts
+PREFERENCES		ModifyPrefsRequest			\MailClient\Prefs\MessageSentToSelf\message_sentto_self_basic
+PREFERENCES		SendMsgRequest				\MailClient\Prefs\MessageSentToSelf\message_sentto_self_basic
+PREFERENCES		ModifyPrefsRequest			\MailClient\Prefs\NewMailNotification\new_mail_notification_basic
+PREFERENCES		ModifyPrefsRequest			\MailClient\Prefs\OutOfOffice\out_of_office_basic
+PREFERENCES		ModifyPrefsRequest			\MailClient\Prefs\SaveToSent\save_to_sent_basic
+		
+MESSAGES		MsgActionRequest			\MailClient\Mail\message_action
+MESSAGES		GetMsgRequest				\MailClient\Mail\message_get
+MESSAGES		SendMsgRequest				\MailClient\Mail\message_send
+MESSAGES		GetMsgPartRequest	
+MESSAGES		SaveDraftRequest			\MailClient\Mail\message_saveDraft
+MESSAGES		AddMsgRequest				\MailClient\Mail\message_add
+MESSAGES		SendMsgRequest				\MailClient\Mail\message_routing
+MESSAGES		SendMsgRequest				\MailClient\Mail\message_send_wAttach
+MESSAGES		lmtpInjectRequest			\MailClient\Mail\lmtp\AppleMail\AppleMail_MIME_basic
+MESSAGES		GetMsgRequest				\MailClient\Mail\lmtp\AppleMail\AppleMail_MIME_basic
+MESSAGES		lmtpInjectRequest			\MailClient\Mail\lmtp\Attachments\mime_attachment
+MESSAGES		GetMsgRequest				\MailClient\Mail\lmtp\Attachments\mime_attachment
+MESSAGES		lmtpInjectRequest			\MailClient\Mail\lmtp\InvalidMime\lmtp_invalid_mime
+MESSAGES		GetMsgRequest				\MailClient\Mail\lmtp\InvalidMime\lmtp_invalid_mime
+MESSAGES		lmtpInjectRequest			\MailClient\Mail\lmtp\MimeBasic\lmtp_basic
+MESSAGES		GetMsgRequest				\MailClient\Mail\lmtp\MissingAttribute\lmtp_missingattribute_mime
+MESSAGES		GetMsgRequest				\MailClient\Mail\lmtp\Outlook2003\Outlook_MIME_basic
+MESSAGES		GetMsgRequest				\MailClient\Mail\lmtp\OutlookExpress6\OE6_MIME_basic
+MESSAGES		GetMsgRequest				\MailClient\Mail\lmtp\ThunderBird\ThunderBird_MIME_basic
+MESSAGES		smtpInjectRequest			\MailClient\Mail\SMTP\smtpBasic
+MESSAGES		SendMsgRequest				\MultiNode\MailClient\Mail\MessageSendMultinode
+MESSAGES		lmtpInjectRequest			\MultiNode\MailClient\Mail\MsglmtpinjectMultinode
+
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\aged_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\password_basic
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\locked_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\length_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\history_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\change_password
+PASSWORD		SetPasswordRequest	
+		
+AUTHENTICATION		AuthRequest				\MailClient\Auth\auth_basic
+AUTHENTICATION		AuthRequest				\MailClient\Auth\auth_expired
+AUTHENTICATION		AuthRequest				\MailClient\Auth\auth_invalid
+AUTHENTICATION		AuthRequest				\MailClient\Auth\auth_negative
+AUTHENTICATION		AuthRequest				\MailClient\Auth\auth_virtualhost
+AUTHENTICATION		AuthRequest				\MailClient\Auth\test_authtoken
+AUTHENTICATION		AuthRequest				\MailClient\Auth\ExternalAuthentication\auth_ActiveDirectory
+AUTHENTICATION		AuthRequest				\MailClient\Auth\ExternalAuthentication\auth_basic
+AUTHENTICATION		AuthRequest				\MailClient\Auth\ExternalAuthentication\auth_LDAP
+AUTHENTICATION		AuthRequest				\MailClient\Auth\Multihost\multihost_auth_basic
+AUTHENTICATION		AuthRequest				\MailClient\Auth\SMTP\smtpRelayForwarding
+AUTHENTICATION		AuthRequest				\MailClient\Auth\VirtualHost\virtualhost_auth_basic
+AUTHENTICATION		AuthRequest				\MultiNode\MailClient\Auth\auth_refer
+AUTHENTICATION		AuthRequest				\MultiNode\MailClient\Auth\AuthBasicMultinode
+
+NOTES			NoteActionRequest			\MailClient\Notes\notes_basic
+NOTES			GetNoteRequest				\MailClient\Notes\notes_basic
+NOTES			CreateNoteRequest			\MailClient\Notes\notes_basic
+
+CALENDAR		GetApptSummariesRequest			\MailClient\Calender\calender_GetApptSummaries
+CALENDAR		GetFreeBusyRequest			\MailClient\Calender\calendar_getfreebusy
+CALENDAR		CreateAppointmentRequest		\MailClient\Calender\appointment_create
+CALENDAR		ModifyAppointmentRequest		\MailClient\Calender\appointment_modify
+CALENDAR		SendInviteReplyRequest			\MailClient\Calender\calendar_sendInviteReply
+CALENDAR		CancelAppointmentRequest		\MailClient\Calender\appointment_cancel
+CALENDAR		CreateAppointmentExceptionRequest	\MailClient\Calender\appointmentexception_crete
+CALENDAR		ModifyAppointmentExceptionRequest 	\MailClient\Calender\appointmentexception_modify
+CALENDAR		CancelAppointmentExceptionRequest	\MailClient\Calender\appointmentexception_cancel
+CALENDAR		ExpandRecurRequest 			\MailClient\Calender\ExpandRecur
+CALENDAR		GetFreeBusyRequest 			\MailClient\Calender\calendarTZ_getfreebusy
+CALENDAR		GetFreeBusyRequest 			\MailClient\Calender\calendar_getfreebusy4418
+CALENDAR		GetFreeBusyRequest 			\MailClient\Calender\calendar_getfreebusy01
+CALENDAR		GetFreeBusyRequest 			\MailClient\Calender\calendar_getfreebusy
+CALENDAR		SendInviteReplyRequest 			\MailClient\Calender\appointment_tz_sendReply
+CALENDAR		CreateAppointmentRequest 		\MailClient\Calender\appointment_timezone
+CALENDAR		GetAppointmentRequest 			\MailClient\Calender\appointment_get
+CALENDAR		SetAppointmentRequest 			\MailClient\Calender\appointment_set
+CALENDAR		CreateAppointmentRequest		\MailClient\Calender\appointment_recur_flow
+CALENDAR		CreateAppointmentRequest 		\MailClient\Calender\appointment_create02
+CALENDAR		GetFreeBusyRequest			\MultiNode\MailClient\Calendar\multinodecal_getfreebusy
+
+iCAL			CreateAppointmentRequest		\MailClient\iCal\ical_CreateAppointmentRequest
+iCAL			lmtpInjectRequest			\MailClient\iCal\ical_lmtpinject
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_100
+iCAL			GetICalRequest				\MailClient\iCal\RequestReply\accept_100
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_101
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_102
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_103
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_104
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_105
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_106
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_107
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_108
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_109
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_110
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_111
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_112
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_113
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_115
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_200
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_201
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_202
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_203
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_204
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_205
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_206
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_207
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\accept_500
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\decline_102
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\decline_107
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\decline_110
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\tentative_103
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\tentative_107
+iCAL			SendInviteReplyRequest			\MailClient\iCal\RequestReply\tentative_110
+iCAL			GetApptSummariesRequest			\MailClient\iCal\MS_Outlook_2003\outlook_ical_basic
+iCAL			GetApptSummariesRequest			\MailClient\iCal\MS_Outlook_2003\outlook_ical_recur
+iCAL			lmtpInjectRequest			\MailClient\iCal\MS_Outlook_2000\outlook_ical_raw
+iCAL			lmtpInjectRequest			\MailClient\iCal\Apple_iCal_1_0\apple_ical_raw
+
+ITEM			ItemActionRequest			\MailClient\Item\itemaction_conversation
+ITEM			ItemActionRequest			\MailClient\Item\itemaction_message
+ITEM			ItemActionRequest			\MailClient\Item\itemaction_folder
+ITEM			ItemActionRequest			\MailClient\Item\itemaction_contact
+ITEM			ItemActionRequest			\MailClient\Item\itemaction_tags
+
+ALARMS			CreateAlarmRequest	
+ALARMS			ModifyAlarmRequest	
+ALARMS			GetAlarmRequest	
+ALARMS			GetAlarmsRequest	
+
+SEARCH			SearchRequest				\MailClient\Search\search.date
+SEARCH			SearchRequest				\MailClient\Search\search.folders
+SEARCH			SearchRequest				\MailClient\Search\search.browseby
+SEARCH			SearchRequest				\MailClient\Search\search_attach
+SEARCH			SearchRequest				\MailClient\Search\search_flags
+SEARCH			SearchRequest				\MailClient\Search\search_domain
+SEARCH			SearchRequest				\MailClient\Search\search_basic
+SEARCH			SearchRequest				\MailClient\Search\search_mbx_user
+SEARCH			SearchRequest				\MailClient\Search\search_types
+SEARCH			SearchRequest				\MailClient\Search\searchGAL
+SEARCH			SearchRequest				\MailClient\Search\search_fetch.xml
+SEARCH			SearchRequest				\MailClient\Search\search_html.xml
+SEARCH			SearchRequest				\MailClient\Search\search_read.xml
+SEARCH			SearchRequest				\MailClient\Search\search_encoded
+SEARCH			SearchRequest				\MailClient\Search\AllItems\search_allitem
+SEARCH			SearchRequest				\MailClient\Search\Attach\search_specific 
+SEARCH			SearchRequest				\MailClient\Search\Attach\search_content
+SEARCH			SearchRequest				\MailClient\Search\Attach\search_uuencode
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_cc
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_combo_date
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_combo_domain
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_combo_folders
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_combo_size
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_combo_time
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_combo_tag
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_combo_status
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_content
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_from
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_subject
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_to
+SEARCH			SearchRequest				\MailClient\Search\Basic\search_bcc
+SEARCH			SearchRequest				\MailClient\Search\Calendar\search_content
+SEARCH			SearchRequest				\MailClient\Search\Calendar\invite_attach
+SEARCH			SearchRequest				\MailClient\Search\Contacts\search_contact_folder
+SEARCH			SearchRequest				\MailClient\Search\Contacts\search_contact_tag
+SEARCH			SearchRequest				\MailClient\Search\Contacts\search_contacts
+SEARCH			SearchRequest				\MailClient\Search\Date\search_after
+SEARCH			SearchRequest				\MailClient\Search\Date\search_before
+SEARCH			SearchRequest				\MailClient\Search\Date\search_date
+SEARCH			SearchRequest				\MailClient\Search\Date\search_date_combo
+SEARCH			SearchRequest				\MailClient\Search\Domain\search_domain
+SEARCH			SearchRequest				\MailClient\Search\Flag\search_combo_folder
+SEARCH			SearchRequest				\MailClient\Search\Flag\search_combo_time
+SEARCH			SearchRequest				\MailClient\Search\Flag\search_flag
+SEARCH			SearchRequest				\MailClient\Search\Folder\search_anywhere
+SEARCH			SearchRequest				\MailClient\Search\Folder\search_folder
+SEARCH			SearchRequest				\MailClient\Search\Object\search_object_phone
+SEARCH			SearchRequest				\MailClient\Search\Object\search_object_url
+SEARCH			SearchRequest				\MailClient\Search\Read\Search_read
+SEARCH			SearchRequest				\MailClient\Search\Reply_Forward\search_replied_forwarded
+SEARCH			SearchRequest				\MailClient\Search\size\search_size
+SEARCH			SearchRequest				\MailClient\Search\Tag\search_combo_basic
+SEARCH			SearchRequest				\MailClient\Search\Tag\search_combo_time
+SEARCH			SearchRequest				\MailClient\Search\Tag\search_tag
+SEARCH			SearchRequest				\MailClient\Search\Tag\search_hiddentags
+SEARCH			SearchRequest				\MailClient\Search\Time\search_time
+SEARCH			SearchRequest				\MailClient\Search\Tasks\search_tasks
+SEARCH			SearchDirectoryRequest			\MailClient\Search\SearchDirectoryRequest
+
+DELEGATION		FolderActionRequest			\MailClient\Delegation\calendars_delegated
+DELEGATION		FolderActionRequest			\MailClient\Delegation\folders_delegated_alias
+DELEGATION		FolderActionRequest			\MailClient\Delegation\folders_delegated_all
+DELEGATION		FolderActionRequest			\MailClient\Delegation\folders_delegated_cos
+DELEGATION		FolderActionRequest			\MailClient\Delegation\folders_delegated_dl
+DELEGATION		FolderActionRequest			\MailClient\Delegation\folders_delegated_domains
+DELEGATION		FolderActionRequest			\MailClient\Delegation\folders_delegated_user
+
+FILTERS			SaveRulesRequest			\MailClient\Filters\filters_basic
+FILTERS			GetRulesRequest				\MailClient\Filters\filters_basic
+FILTERS			SaveRulesRequest			\MailClient\Filters\filters_delete
+FILTERS			SaveRulesRequest			\MailClient\Filters\filters_spam
+FILTERS			SaveRulesRequest			\MailClient\Filters\Any-of\Subject\saverule_subject_is
+FILTERS			GetRulesRequest				\MailClient\Filters\Any-of\Subject\saverule_subject_is
+
+ITEMS			ItemActionRequest			\MailClient\Item\itemaction_contact
+ITEMS			ItemActionRequest			\MailClient\Item\itemaction_conversation
+ITEMS			ItemActionRequest			\MailClient\Item\itemaction_folder
+ITEMS			ItemActionRequest			\MailClient\Item\itemaction_message
+ITEMS			ItemActionRequest			\MailClient\Item\itemaction_tag
+
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\passwd_basic
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\aged_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\change_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\history_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\length_password
+PASSWORD		ChangePasswordRequest			\MailClient\Passwd\locked_password
+
+SKINS			GetAvailableSkinsRequest		\MailClient\Skins\availableskins_get
+
+SPAM			smtpInjectRequest			\MailClient\Spam\spamBasic
+SPAM			SearchRequest				\MailClient\Spam\spamBasic
+SPAM			MsgActionRequest			\MailClient\Spam\message_action_spam
+
+SYNC			SyncRequest				\MailClient\Sync\sync_request
+SYNC			SyncRequest				\MailClient\Sync\sync_appointment
+
+WIKI			SaveDocumentRequest			\MailClient\Wiki\SaveDocumentBasic
+WIKI			SaveWikiRequest				\MailClient\Wiki\SaveWikiBasic
+WIKI			GetWikiRequest				\MailClient\Wiki\GetWikiBasic
+WIKI			WikiActionRequest			\MailClient\Wiki\ActionWikiBasic
+WIKI			CreateFolderRequest			\MailClient\Wiki\WikiFolderRequest
+WIKI			ListWikiRequest
+WIKI			DiffWikiRequest 
+WIKI			InitNotebookRequest
+
+CONTEXT								\MailClient\Headers\Context\change
+CONTEXT								\MailClient\Headers\Context\nonotify
+CONTEXT								\MailClient\Headers\Context\nosession
+CONTEXT								\MailClient\Headers\Context\notify
+
+RestServlet		restServletRequest			\RestServlet\Auth\ba_BasicAuth\restAuthBasicAuth_basic
+RestServlet		restServletRequest			\RestServlet\Auth\co_Cookie\restAuthCookie_basic
+RestServlet		restServletRequest			\RestServlet\Auth\restAuth_combo
+RestServlet		restServletRequest			\RestServlet\Calendar\Post\basic
+RestServlet		restServletRequest			\RestServlet\Fmt\csv\contact_csv
+RestServlet		restServletRequest			\RestServlet\Fmt\html\part_viewAsHTML
+RestServlet		restServletRequest			\RestServlet\Fmt\JSON\contact_json
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\sync_basic
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Conv\sync_conv
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_attach
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_deleted
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_draft
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_flagged
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_forwarded
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_replied
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_sent
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Flags\flag_unread
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Modified\sync_modified
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Received\sync_received
+RestServlet		restServletRequest			\RestServlet\Fmt\Sync\Tags\sync_tag
+RestServlet		restServletRequest			\RestServlet\Fmt\vcf\contact_vcf
+RestServlet		restServletRequest			\RestServlet\Mail\rest_message
+RestServlet		lmtpInjectRequest			\RestServlet\Mail\rest_uuencode
+RestServlet		restServletRequest			\RestServlet\Mail\rest_blockedAttachments
+RestServlet		ModifyConfigRequest			\RestServlet\Mail\rest_blockedAttachments
+RestServlet		restServletRequest			\RestServlet\Mail\Post\basic
+RestServlet		restServletRequest			\RestServlet\Mail\Part\part_basic
+RestServlet		restServletRequest			\RestServlet\Query\query_message
+RestServlet		restServletRequest			\RestServlet\Sharing\permissions_GranteeType
+RestServlet		restServletRequest			\RestServlet\Sharing\permissions_guest
+RestServlet		restServletRequest			\RestServlet\Sync\sync_basic
+RestServlet		restServletRequest			\RestServlet\User\rest_user
+RestServlet		restServletRequest			\RestServlet\View\html\part_viewAsHTML
+
+UploadServlet		uploadServletRequest			\UploadServlet\Mail\us_message
+UploadServlet		uploadServletRequest			\UploadServlet\Mail\us_uploadServlet
+UploadServlet		uploadServletRequest			\UploadServlet\Mail\us_attachments
+
+LOOPS			CreateContactRequest			\Loops\Loop_MailClient\Contacts\contact_loop
+LOOPS			GetInfoRequest				\Loops\Loop_MailClient\Contacts\contact_loop
+LOOPS			ContactActionRequest			\Loops\Loop_MailClient\Contacts\contact_loop
+LOOPS			CreateFolderRequest			\Loops\Loop_MailClient\Folders\folder_loop
+LOOPS			GetFolderRequest			\Loops\Loop_MailClient\Folders\folder_loop
+LOOPS			CreateFolderRequest			\Loops\Loop_MailClient\Folders\folder_nested
+LOOPS			GetFolderRequest			\Loops\Loop_MailClient\Folders\folder_nested
+LOOPS			CreateSearchFolderRequest		\Loops\Loop_MailClient\Folders\searchfolder_loop
+LOOPS			GetSearchFolderRequest			\Loops\Loop_MailClient\Folders\searchfolder_loop
+LOOPS			SendMsgRequest				\Loops\Loop_MailClient\Mails\conversation_loop
+LOOPS			SendMsgRequest				\Loops\Loop_MailClient\Mails\conversation_loop2
+LOOPS			MsgActionRequest			\Loops\Loop_MailClient\Mails\message_delete
+LOOPS			SendMsgRequest				\Loops\Loop_MailClient\Mails\message_loop
+LOOPS			CreateTagRequest			\Loops\Loop_MailClient\Tags\tags_loop
+
+BACKUP								\MailClient\Filters\BackupRequest
+BACKUP								\MailClient\Calendar\BackupRequest
+BACKUP								\MailClient\Contacts\BackupRequest
+BACKUP								\MailClient\Conversation\BackupRequest
+BACKUP								\MailClient\Folders\BackupRequest
+BACKUP								\MailClient\Folders\Sharing\BackupRequest
+BACKUP								\MailClient\Folders\Mountpoints\BackupRequest
+BACKUP								\MailClient\Passwd\BackupRequest
+BACKUP								\MailClient\Prefs\BackupRequest
+BACKUP								\MailClient\Search\Attach\BackupRequest
+BACKUP								\MailClient\Search\Flag\BackupRequest
+BACKUP								\MailClient\Search\Read\BackupRequest
+BACKUP								\MailClient\Search\Reply_Forward\BackupRequest
+BACKUP								\MailClient\Search\Tag\BackupRequest
+BACKUP								\MailClient\Tags\BackupRequest
+BACKUP								\MailClient\Wiki\BackupRequest
+BACKUP								\MailClient\Tasks\BackupRequest
+
+TASKS			CreateTaskRequest			\MailClient\Tasks\create_tasks
+TASKS			ModifyTaskRequest			\MailClient\Tasks\modify_tasks
+TASKS			CancelTaskRequest			\MailClient\Tasks\cancel_tasks
+TASKS			GetTaskRequest			\MailClient\Tasks\get_tasks
+TASKS			CreateTaskRequest			\MailClient\Tasks\SendingTasks\SendTaskBasic
+
+DATASOURCE	CreateDataSourceRequest	\MailClient\DataSource\DataSource_create
+DATASOURCE	ModifyDataSourceRequest	\MailClient\DataSource\DataSource_modify
+DATASOURCE	DeleteDataSourceRequest	\MailClient\DataSource\DataSource_delete
+ 
+IDENTITIES		CreateIdentityRequest		\MailClient\DataSource\create_identity
+IDENTITIES		CreateIdentityRequest		\MailClient\DataSource\delete_identity
+IDENTITIES		CreateIdentityRequest		\MailClient\DataSource\get_identity
+IDENTITIES		CreateIdentityRequest		\MailClient\DataSource\modify_identity
+

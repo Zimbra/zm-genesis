@@ -1,0 +1,108 @@
+Steps to set up the perf staf service
+
+
+1. Get Testware
+   perfcore.tgz and perfdata.tgz(you can specify if the perfdata is already there, don't fetch that again). 
+
+2. Setup Performance Enviornment
+for each test machine, 
+a.run the buildperfenv.pl as root 
+buildperfenv.pl now takes two parameters i
+1) --zimbrahome(default /opt/zimbra if not specified)
+2) --perfdir(default /opt/zimbraperf if not specified)
+
+b.register the perf service into staf
+
+3.install build in server.
+  after installation, always reset the dataset info to none
+  staf server(mailserver node) VAR SET SYSTEM VAR DATASET=none
+4. Grant SSH between client&server.
+run as root
+perl grantssh4perf.pl 
+--server: mailserver hostname
+--client: Test client
+--ldap: LDAP hostname (default is <server>)
+--mta: MTA hostname (default is <server>)
+
+5. Kick off perf test
+Now kicking off perf test  starting from a staf call like this:
+staf client perf testsuite configxml smesuite.xml resultto /opt/qa/testlogs/platform/build/perf  server qa16.liquidsys.com ldap qa16.liquidsys.com mta qa16.liquidsys.com
+
+--configxml: the test suite configuration files include all the test cases we want to run. (you can put all test cases in one xml file or put them in different xml so user can choose
+                  from the UI to pick the test case they want to run. currently you can just use smesuite.xml (it's under PERDIR/CONF/)  to run all test cases, and traffic.xml to start the
+                  traffic, the tests included in the same test suits has to share the same dataset profile. 
+                  ie: all the test cases in test suite has to be all "sme" profile related test,or the "isp" related test. 
+                  other wise, start from step 3.
+--resultto: the value will have the form of /opt/qa/testlogs/....../perf  if this option specified, the test result will be copied to the destination
+               directory, I assume directory /opt/qa/testlogs/....../perf is created
+--server: the mailbox server
+--ldap: the ldap server  
+--mta: the mta server name
+--provisionload: the provisionload is based on the tmplate. an integer more than 100 indicate you want
+                 the load generated more than the tmplate. 
+6.when you want to set up traffic for server testing. 
+you want to know when the provision is done(all env preparation work is done)and real traffic is ongoing, 
+you can use 
+staf client perf dataset 
+if the dataset return is something other than NONE, the dataset is provisioned and you are able to run your test. 
+if the result return contains "runsoap", it means the the test client is sending traffic to the server already
+and you may start your server test with some server traffic on the backgroud. 
+
+7. Just do the provision for the server specified in the server parameter. 
+staf machine perf provision 
+     server qa24.liquidsys.com
+     dataset [sme|vd|traffic|isp|upgrade...that's what we have now]
+   
+                 
+
+
+
+#Exec Perf TESTSUITE
+#TESTSUITE service will allow you to specify the test cases flow and set the parameter  
+#for each test case in a xml file. 
+#The sample xml can be found under /zimbraqa/conf/perf/traffic.xml&smesuite.xml
+#always request the perf staf service from client machine.
+STAF MACHINE(client machine) PERF TESTSUITE 
+     CONFIGXML <configname> 
+               [The config file should be put under PERFDIR/conf/]
+     SERVER <servername> 
+     MTA <mtaname> 
+     LDAP <ldapname>  
+     PROVISIONLOAD <optional positive integer N> (it will provision based on the scale of N*tmplate/100(tmplate is 
+                   generated based on the test-mapping.xml and server name)
+     RESULTTO <the destination of the perf log should been copied to> 
+             [It's an optional param, format should be DestinationServer:/TESTLOG-ROOTDIR/PLATFORM/BUILD/PERFDIR]
+ 
+ Example:           
+ staf local perf testsuite
+ configxml traffic.xml 
+ resultto qa00.liquidsys.com:/opt/qa/testlogs/platform/build/perf  
+ server qa15.liquidsys.com 
+ ldap qa15.liquidsys.com 
+ mta qa15.liquidsys.com 
+ provisionload 60  
+ 
+#Exec Perf provision
+#CLONE will help to provision the accounts only
+STAF MACHINE PERF PROVISION
+     SERVER <mail server name>
+     DATASET <profile dataset> 
+             [find all the dataset name under /zimbraqa/conf/perf/test-mapping.xml message-pool-groups]
+Example:
+staf machine perf provision 
+     server qa15.liquidsys.com
+     dataset [sme|vd|traffic|isp...that's what we have now]  
+     
+     
+#Exec Perf HALT, will stp the current test case or stop all the test case in the queue. 
+STAF MACHINE(client) PERF HALT [ALL|CURRENT]
+Example: 
+staf local perf halt all
+
+
+
+ 
+
+
+
+

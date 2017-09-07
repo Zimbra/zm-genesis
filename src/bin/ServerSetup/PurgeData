@@ -1,0 +1,35 @@
+# Domains
+#
+DOMAIN	CREATE	domain1		testpurgeall.com
+
+# Accounts
+#
+ACCOUNT	CREATE	purge11		purgeAA test123 domain1
+ACCOUNT	CREATE	purge12		purgeAB test123 domain1
+ACCOUNT	CREATE	purge13		purgeAC test123 domain1
+ACCOUNT	CREATE	purge14		purgeAD test123 domain1
+ACCOUNT	CREATE	purge15		purgeAE test123 domain1
+ACCOUNT	CREATE	purge16		purgeAF test123 domain1
+
+# Emails
+#
+EMAIL	TIME_OFFSET purg02a data/TestMailRaw/purge/purge01A 86400	purge12
+EMAIL	TIME_OFFSET purg03a data/TestMailRaw/purge/purge01A 518400	purge13
+EMAIL	TIME_OFFSET purg03b data/TestMailRaw/purge/purge01C 518400	purge13
+EMAIL	TIME_OFFSET purg03c data/TestMailRaw/purge/purge01E 518400	purge13
+EMAIL	TIME_OFFSET purg04a data/TestMailRaw/purge/purge01A 2592000	purge14
+EMAIL	TIME_OFFSET purg04b data/TestMailRaw/purge/purge01B 2764800	purge14
+EMAIL	TIME_OFFSET purg04c data/TestMailRaw/purge/purge01C 518400	purge14
+EMAIL	TIME_OFFSET purg04d data/TestMailRaw/purge/purge01D 691200	purge14
+EMAIL	TIME_OFFSET purg04e data/TestMailRaw/purge/purge01E 518400	purge14
+EMAIL	TIME_OFFSET purg04f data/TestMailRaw/purge/purge01F 691200	purge14
+EMAIL	TIME_OFFSET purg05a data/TestMailRaw/purge/purge01A 2592000	purge15
+EMAIL	TIME_OFFSET purg05b data/TestMailRaw/purge/purge01B 2764800	purge15
+EMAIL	TIME_OFFSET purg05c data/TestMailRaw/purge/purge01C 518400	purge15
+EMAIL	TIME_OFFSET purg05d data/TestMailRaw/purge/purge01D 691200	purge15
+EMAIL	TIME_OFFSET purg05e data/TestMailRaw/purge/purge01E 518400	purge15
+EMAIL	TIME_OFFSET purg05f data/TestMailRaw/purge/purge01F 691200	purge15
+EMAIL	TIME_OFFSET purg06b data/TestMailRaw/purge/purge01B 2764800	purge16
+EMAIL	TIME_OFFSET purg06d data/TestMailRaw/purge/purge01D 691200	purge16
+EMAIL	TIME_OFFSET purg06f data/TestMailRaw/purge/purge01F 691200	purge16
+

@@ -1,0 +1,15 @@
+# Domains
+#
+DOMAIN	CREATE	domain01	testlimitman.com
+
+# Accounts
+#
+ACCOUNT	CREATE	man_limit01		man_limit01 test123 domain01
+
+# Emails
+#
+EMAIL	INJECT	emailLim01		data/TestMailRaw/limit01 man_limit01
+
+# Tags
+#
+

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <!--cluster name="qa-cluster"-->
+            <host name="localhost">
+                <!--zimbrahost name="localhost"/-->
+                <package name="zimbra-ldap">
+                    <option name="LDAPPASS">
+                        test123
+                    </option>
+                    <option name="LDAPADMINPASS">
+                        zimbra
+                    </option>
+                    <option name="LDAPPOSTPASS">
+                        test123
+                    </option>
+                    <option name="LDAPAMAVISPASS">
+                        test123
+                    </option>
+                    <option name="LDAPREPLPASS">
+                        test123
+                    </option>
+                </package>
+                <package name="zimbra-logger">
+                    <option name="enabled">
+                        Enabled
+                    </option>
+                </package>
+                <package name="zimbra-mta">
+                    <option name="blahmta">
+                        foomta
+                    </option>
+                </package>
+                <package name="zimbra-snmp">
+                    <option name="blahsnmp">
+                        foosnmp
+                    </option>
+                </package>
+                <package name="zimbra-store">
+                    <option name="ADMINPASS">
+                        test123
+                    </option>
+                    <option name="USEIMAPPROXY">
+                        no
+                    </option>
+                </package>
+                <package name="zimbra-spell">
+                    <option name="blahspell">
+                        foospell
+                    </option>
+                </package>
+                <package name="zimbra-apache">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <!--package name="zimbra-proxy">
+                    <option name="proxyoption">
+                        foo
+                    </option>
+    
+                </package-->
+                <package name="zimbra-archiving">
+                    <option name="RUNARCHIVING">
+                        yes
+                    </option>
+                </package>
+                <package name="zimbra-convertd">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <option name="ENABLEDEFAULTBACKUP">
+                    no
+                </option>
+                <!-- 12=CST, 5=PST -->
+                <!--option name="zimbraPrefTimeZoneId">
+                    12
+                </option-->
+                <option name="zimbraPrefTimeZoneName">
+                    America/Chicago
+                </option>
+            </host>
+        <!--/cluster-->
+    </config>
+    <preexecution>
+        <!--driver name="enableConvertd">
+            <option name="host">localhost</option>
+            <option name="version">v2</option>
+        </driver-->
+        <!--driver name="createYahooAccounts">
+            <option name="host">localhost</option>
+        </driver>
+        <driver name="archivingAndDiscovery">
+            <option name="host">localhost</option-->
+    </preexecution>
+</plan>

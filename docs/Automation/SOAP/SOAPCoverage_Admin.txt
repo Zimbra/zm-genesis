@@ -1,0 +1,194 @@
+Class			Request					Folder\File
+
+SERVERS			GetServerAggregateStatsRequest		\Admin\Server\serverAggregateStatsRequest_get (not found)
+SERVERS			CreateServerRequest			\Admin\Server\server_create
+SERVERS			GetServerRequest			\Admin\Server\server_get
+SERVERS			GetAllServersRequest			\Admin\Server\server_get
+SERVERS			DeleteServerRequest			\Admin\Server\server_delete
+SERVERS			ModifyServerRequest			\Admin\Server\server_modify
+		
+ACCOUNT			CreateAccountRequest			\Admin\Accounts\account_create
+ACCOUNT			ModifyAccountRequest			\Admin\Accounts\account_modify
+ACCOUNT			DeleteAccountRequest			\Admin\Accounts\account_delete
+ACCOUNT			GetAllAdminAccountsRequest		\Admin\Accounts\GetAllAdminAccountsRequest
+ACCOUNT			RenameAccountRequest			\Admin\Accounts\account_rename
+ACCOUNT			AddAccountAliasRequest			\Admin\Accounts\account_alias_add
+ACCOUNT			RemoveAccountAliasRequest		\Admin\Accounts\account_alias_remove
+ACCOUNT			GetAccountRequest			\Admin\Accounts\account_get
+ACCOUNT			GetAllAccountsRequest			\Admin\Account\GetAllAdminAccountsRequest
+ACCOUNT			SearchAccountsRequest			\Admin\AdminSearch\search_mbx_admin
+ACCOUNT			SearchAccountsRequest			\Admin\AdminSearch\account_search
+ACCOUNT			GetAccountInfoRequest			\Admin\Account\account_getinfo
+ACCOUNT			AddAccountAliasRequest			\Admin\Account\account_alias_add
+ACCOUNT			RemoveAccountAliasRequest		\Admin\Account\account_alias_remove
+ACCOUNT			CreateAccountRequest			\MultiNode\Admin\Accounts\CreateAccountMulitnode1
+ACCOUNT			CreateAccountRequest			\MultiNode\Admin\Accounts\CreateAccountMulitnode2
+ACCOUNT			CreateAccountRequest			\MultiNode\Admin\Accounts\CreateAccountMulitnode3
+
+MULTIHOST		CreateAccountRequest			\Admin\Accounts\Multihost\multihost_account_create
+MULTIHOST		AddAccountAliasRequest			\Admin\Accounts\account_alias_add
+MULTIHOST		RemoveAccountAliasRequest		\Admin\Accounts\account_alias_remove
+MULTIHOST		DeleteAccountRequest			\Admin\Accounts\account_delete
+MULTIHOST		GetAccountRequest			\Admin\Accounts\account_get
+MULTIHOST		GetAccountInfoRequest			\Admin\Accounts\account_getinfo
+MULTIHOST		GetAccountMembershipRequest		\Admin\Accounts\account_getmembership
+MULTIHOST		ModifyAccountRequest			\Admin\Accounts\account_modify
+MULTIHOST		RenameAccountRequest			\Admin\Accounts\account_rename
+MULTIHOST		GetAllAdminAccountsRequest		\Admin\Accounts\GetAllAdminAccountsRequest
+
+PASSWORD		SetPassword				\Admin\Passwords\password_set
+		
+ClassOfService		CreateCosRequest			\Admin\COS\cos_create
+ClassOfService		ModifyCosRequest 			\Admin\COS\cos_modify
+ClassOfService		DeleteCosRequest			\Admin\COS\cos_delete
+ClassOfService		GetAllCosRequest			\Admin\COS\cos_get
+ClassOfService		GetCosRequest				\Admin\COS\cos_get
+ClassOfService		RenameCosRequest			\Admin\COS\cos_rename
+		
+DOMAIN			CreateDomainRequest			\Admin\Domains\domains_create
+DOMAIN			DeleteDomainRequest			\Admin\Domains\domains_delete
+DOMAIN			GetDomainRequest			\Admin\Domains\domains_get
+DOMAIN			GetAllDomainsRequest			\Admin\Domains\domains_get
+DOMAIN			ModifyDomainRequest			\Admin\Domains\domains_modify
+DOMAIN			zimbraIsAdminAccount			\Admin\Domains\domainAdmin
+  
+MailBox			GetMailboxRequest			\Admin\Maibox\mailbox_get
+MailBox			DeleteMailboxRequest			\Admin\Maibox\mailbox_delete
+MailBox			ExportMailboxRequest	
+MailBox			PurgeMessagesRequest			\Admin\PurgeMessage\purge_messages
+MailBox			PurgeMessagesRequest			\Admin\PurgeMessages\purge_messages_mbox
+
+GlobalSettings		GetConfigRequest			\Admin\GlobalSettings\config_get
+GlobalSettings		GetAllConfigRequest			\Admin\GlobalSettings\config_get
+GlobalSettings		ModifyConfigRequest			\Admin\GlobalSettings\config_modify
+GlobalSettings		ModifyConfigRequest			\Admin\GlobalSettings\mtamessagesize_modify
+GlobalSettings		ModifyConfigRequest			\Admin\GlobalSettings\ConfigAntiVirus\config_antivirus
+GlobalSettings		ModifyConfigRequest			\Admin\GlobalSettings\ConfigAntiSpam\config_antispam
+GlobalSettings		ModifyConfigRequest			\Admin\GlobalSettings\Attachments\block_extension
+
+MISCELLANEOUS		GetServiceStatusRequest			\Admin\Miscellaneous\serviceStatusRequest_get
+MISCELLANEOUS		UnitTestRequest				\dev_sanity_check\UnitTestRequest
+MISCELLANEOUS		MaintainTablesRequest		
+MISCELLANEOUS		ReIndexRequest				\Admin\Miscellaneous\reindex_request
+MISCELLANEOUS		ReIndexRequest				\Admin\Miscellaneous\reindex2_request
+MISCELLANEOUS		GetVersionInfoRequest			\Admin\Miscellaneous\version_info
+MISCELLANEOUS		GetLicenseInfoRequest			\Admin\Miscellaneous\license_info
+MISCELLANEOUS		CheckHostnameResolveRequest		\Admin\Miscellaneous\CheckHostnameResolve
+MISCELLANEOUS		DumpSessionsRequest			\Admin\Miscellaneous\DumpSessionsRequest
+MISCELLANEOUS		GetQuotaUsageRequest			\Admin\Miscellaneous\GetQuotaUsage
+
+AdminSearch		SearchAccountsRequest			\Admin\AdminSearch\account_search
+AdminSearch		SearchMultiMailboxRequest		\Admin\AdminSearch\CrossMailboxSearch\SearchRequest
+			
+AuthToken		requestcontext				\Admin\Context\context
+AuthToken		DelegateAuthRequest			\Admin\Auth\auth_delegate
+AuthToken		AuthRequest				\Admin\Auth\admin_auth_negative
+AuthToken		AuthRequest				\Admin\Auth\auth_negative
+
+BACKUP			BackupRequest				\Admin\Backup\backup
+BACKUP			BackupQueryRequest			\Admin\Backup\backup_query
+BACKUP			BackupAccountQueryRequest		\Admin\Misc\backup_accountQuery
+BACKUP			RestoreRequest				\Admin\Backup\backup_restore
+BACKUP			RestoreRequest				\Admin\Backup\backup_restore02
+BACKUP			RestoreRequest				\Admin\Backup\BackupData\RestoreMessages
+BACKUP			RestoreRequest				\Admin\Backup\BackupData\RestorePassword.
+
+VOLUME			CreateVolumeRequest			\Admin\Volume\volume_create
+VOLUME			GetVolumeRequest			\Admin\Volume\volume_get
+VOLUME			GetAllVolumesRequest			\Admin\Volume\volume_get
+VOLUME			ModifyVolumeRequest			\Admin\Volume\volume_modify
+VOLUME			DeleteVolumeRequest			\Admin\Volume\volume_delete
+VOLUME			GetCurrentVolumesRequest		\Admin\Volume\volumes_getcurrent
+VOLUME			SetCurrentVolumeRequest			\Admin\Volume\volume_setcurrent
+		
+DISTRIBUTION		CreateDistributionListRequest		\Admin\DistributionList\distributionlist_create
+DISTRIBUTION		GetDistributionListRequest		\Admin\DistributionList\distributionlist_get
+DISTRIBUTION		GetAllDistributionListsRequest		\Admin\DistributionList\distributionlist_getall
+DISTRIBUTION		ModifyDistributionListRequest		\Admin\DistributionList\distributionlist_modify
+DISTRIBUTION		DeleteDistributionListRequest		\Admin\DistributionList\distributionlist_delete
+DISTRIBUTION		AddDistributionListMemberRequest	\Admin\DistributionList\distributionlist_addmember
+DISTRIBUTION		RemoveDistributionListMemberRequest	\Admin\DistributionList\distributionlist_removemember
+DISTRIBUTION		AddDistributionListAliasRequest		\Admin\DistributionList\distributionlist_addAlias
+DISTRIBUTION		RemoveDistributionListAliasRequest	\Admin\DistributionList\distributionlist_removeAlias
+DISTRIBUTION		GetDistributionListMembershipRequest	\Admin\DistributionList\distributionlist_getmembership
+
+ForeignPrincipal	CreateAccountRequest			\Admin\Accounts\ForeignPrincipal\account_create
+ForeignPrincipal	GetAccountRequest			\Admin\Accounts\ForeignPrincipal\account_get
+ForeignPrincipal	GetAccountMembershipRequest		\Admin\Accounts\ForeignPrincipal\account_getmembership
+ForeignPrincipal	ModifyAccountRequest			\Admin\Accounts\ForeignPrincipal\account_modify
+ForeignPrincipal	CreateCalendarResourceRequest		\Admin\Accounts\ForeignPrincipal\resource_create
+ForeignPrincipal	GetCalendarResourceRequest		\Admin\Accounts\ForeignPrincipal\resource_get
+ForeignPrincipal	ModifyCalendarResourceRequest		\Admin\Accounts\ForeignPrincipal\resource_modify
+ForeignPrincipal	SearchDirectoryRequest			\Admin\Accounts\ForeignPrincipal\SearchDirectoryRequest
+ForeignPrincipal	BackupRequest				\Admin\Accounts\ForeignPrincipal\BackupRequest
+
+AddressBookSizeLimit						\Admin\Accounts\AddressBookSizeLimit\addressbook_size_limit
+
+CLUSTER			GetClusterStatusRequest
+CLUSTER			FailoverClusterServiceRequest
+
+Index			ReIndexRequest				\Admin\Miscellaneous\reindex_request
+
+ACL			FolderActionRequest			\Admin\ACL\acl_basic
+ACL			AddDistributionListMemberRequest	\Admin\ACL\acl_modify
+ACL			AddDistributionListMemberRequest	\Admin\ACL\acl_recursive
+ACL			RemoveDistributionListMemberRequest	\Admin\ACL\acl_remove
+
+CONTEXT								\Admin\Context\context
+
+ExternalAuthentication	CheckAuthConfigRequest			\Admin\ExternalAuthentication\CheckAuthConfigAD	
+ExternalAuthentication	CheckAuthConfigRequest			\Admin\ExternalAuthentication\CheckAuthConfigLDAP
+ExternalAuthentication	CheckGalConfigRequest			\Admin\ExternalAuthentication\CheckGalConfigAD
+ExternalAuthentication	CheckGalConfigRequest			\Admin\ExternalAuthentication\CheckGalConfigLDAP
+ExternalAuthentication	CreateDomainRequest			\Admin\ExternalAuthentication\domains_create
+
+GAL			AutoCompleteGalRequest			\Admin\GAL\autocomplate_gal
+GAL			SearchGalRequest			\Admin\GAL\hideaccounts_gal
+
+MAILQUEQE		GetMailQueueRequest			\Admin\MailQueue\mailqueue_get
+MAILQUEQE		GetMailQueueInfoRequest			\Admin\MailQueue\mailqueue_getinfo
+
+PASSWORD		ChangePasswordRequest			\Admin\Passwords\NormalUser_aged_password
+PASSWORD		ChangePasswordRequest			\Admin\Passwords\NormalUser_history_password
+PASSWORD		SetPasswordRequest			\Admin\Passwords\password_set
+
+RESOURCE		CreateCalendarResourceRequest		\Admin\Resource\resource_create
+RESOURCE		DeleteCalendarResourceRequest		\Admin\Resource\resource_delete
+RESOURCE		GetCalendarResourceRequest		\Admin\Resource\resource_get
+RESOURCE		GetAllCalendarResourcesRequest		\Admin\Resource\resource_getall
+RESOURCE		GetFreeBusyRequest			\Admin\Resource\resource_getfreebusy
+RESOURCE		ModifyCalendarResourceRequest		\Admin\Resource\resource_modify
+RESOURCE		RenameCalendarResourceRequest		\Admin\Resource\resource_rename
+RESOURCE		SearchCalendarResourcesRequest		\Admin\Resource\resource_search
+
+ZIMLETS			ModifyZimletRequest			\Admin\Zimlets\aclZimlets
+ZIMLETS			GetZimletStatusRequest			\Admin\Zimlets\aclZimlets
+ZIMLETS			DeployZimletRequest			\Admin\Zimlets\deployZimlets
+ZIMLETS								\Admin\Zimlets\newCosZimlets
+ZIMLETS			GetZimletStatusRequest			\Admin\Zimlets\ootbZimlets
+ZIMLETS			CreateZimletRequest
+ZIMLETS			DeleteZimletRequest
+ZIMLETS			GetZimletRequest
+ZIMLETS			UndeployZimletRequest
+ZIMLETS			ListZimletsRequest
+ZIMLETS			ConfigureZimletRequest
+
+LOOPS			CreateAccountRequest			\Loops\Loop_Admin\Account\accounts_loop
+LOOPS			CreateCosRequest			\Loops\Loop_Admin\Cos\cos_loop
+LOOPS			AddDistributionListMemberRequest	\Loops\Loop_Admin\DistributionList\distributionlist_addmember_loop
+LOOPS			SendMsgRequest				\Loops\Loop_Admin\DistributionList\distributionlist_sendmail
+LOOPS			CreateDistributionListRequest		\Loops\Loop_Admin\DistributionList\distributionlist_loop
+LOOPS			GetDistributionListRequest		\Loops\Loop_Admin\DistributionList\distributionlist_loop
+LOOPS			DeleteDistributionListRequest		\Loops\Loop_Admin\DistributionList\distributionlist_loop
+LOOPS			GetAllDistributionListsReques		\Loops\Loop_Admin\DistributionList\distributionlist_loop
+LOOPS			AddDistributionListMemberRequest	\Loops\Loop_Admin\DistributionList\distributionlist_loop
+LOOPS			RemoveDistributionListMemberRequest	\Loops\Loop_Admin\DistributionList\distributionlist_loop
+LOOPS			CreateDomainRequest			\Loops\Loop_Admin\Domains\domain_loop
+LOOPS			GetAllDomainsRequest			\Loops\Loop_Admin\Domains\domain_loop
+LOOPS			DeleteDomainRequest			\Loops\Loop_Admin\Domains\domain_loop
+LOOPS			GetDomainRequest			\Loops\Loop_Admin\Domains\domain_loop
+LOOPS			ModifyDomainRequest			\Loops\Loop_Admin\Domains\domain_loop
+
+HSM				AbortHsmRequest			\Admin\HSM\AbortHsm.xml
+HSM				GetHsmStatusRequest			\Admin\HSM\GetHsmStatus.xml
+HSM				HsmRequest				\Admin\HSM\Hsm.xml

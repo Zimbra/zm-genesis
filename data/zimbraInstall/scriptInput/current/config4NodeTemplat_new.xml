@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan> 
+    <config>
+        <host name="zqa-054.eng.vmware.com">
+            <package name="zimbra-snmp">
+            </package>
+            <package name="zimbra-store">
+                <option name="SMTPHOST">zqa-056.eng.vmware.com</option>
+                <option name="ADMINPASS">test123</option>
+                <option name="zimbraMailProxy">TRUE</option>
+          `     <option name="zimbraWebProxy">TRUE</option>
+                <option name="MODE">https</option>
+                <!--option name="HTTPPORT">8080</option>
+                <option name="HTTPSPORT">8443</option-->
+            </package>
+            <package name="zimbra-proxy">
+                <option name="HTTPPROXY">TRUE</option>
+                <option name="PROXYMODE">https</option>
+                <option name="HTTPPROXYPORT">80</option>
+                <option name="HTTPSPROXYPORT">443</option>
+	        </package>
+            <package name="zimbra-memcached">
+            </package>
+            <package name="zimbra-spell">
+            </package>
+            <package name="zimbra-apache">
+                <option name="blah">foo</option>
+            </package>
+            <package name="zimbra-convertd">
+                <option name="blah">foo</option>
+            </package>
+            <option name="zimbraPrefTimeZoneName">America/Chicago</option>
+            <option name="beta-support">yes</option>
+        </host>
+        <host name="zqa-055.eng.vmware.com">
+            <package name="zimbra-logger">
+                <option name="enabled">Enabled</option>
+            </package>
+            <package name="zimbra-snmp">
+            </package>
+            <package name="zimbra-store">
+                <option name="SMTPHOST">zqa-056.eng.vmware.com</option>
+                <option name="ADMINPASS">test123</option>
+                <option name="zimbraMailProxy">TRUE</option>
+                <option name="zimbraWebProxy">TRUE</option>
+                <option name="MODE">https</option>
+                <option name="HTTPPORT">8080</option>
+                <option name="HTTPSPORT">8443</option>
+            </package>
+            <!--package name="zimbra-memcached">
+            </package-->
+            <package name="zimbra-spell">
+            </package>
+            <package name="zimbra-apache">
+                <option name="blah">foo</option>
+            </package>
+            <package name="zimbra-convertd">
+                <option name="blah">foo</option>
+            </package>
+            <option name="zimbraPrefTimeZoneName">America/Chicago</option>
+            <option name="beta-support">yes</option>
+        </host>
+        <host name="zqa-056.eng.vmware.com">
+            <package name="zimbra-ldap">
+                <option name="replica">
+                    yes
+                </option>
+            </package>
+            <package name="zimbra-snmp">
+            </package>
+            <package name="zimbra-mta">
+                <option name="RUNDKIM">no</option>
+            </package>
+            <option name="zimbraPrefTimeZoneName">America/Chicago</option>
+            <option name="beta-support">yes</option>
+        </host>
+        <host name="zqa-057.eng.vmware.com">
+            <package name="zimbra-ldap">
+                <option name="LDAPPORT">636</option>
+                <option name="LDAPPASS">zimbra</option>
+                <option name="LDAPADMINPASS">test123</option>
+                <option name="LDAPPOSTPASS">test123</option>
+                <option name="LDAPAMAVISPASS">test123</option>
+                <option name="LDAPREPLPASS">test123</option>
+                <option name="ldap_nginx_password">test123</option>
+            </package>
+            <option name="zimbraPrefTimeZoneName">America/Chicago</option>
+            <option name="beta-support">yes</option>
+        </host>
+    </config>
+    <plugins>
+         <plugin name="runGenesisTests">
+            <option name="plugs">preUpgrade</option>
+            <option name="host">zqa-054.eng.vmware.com</option>
+            <option name="test">plugins/preUpgrade804.rb</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-056.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraMtaRelayHost zqa-smtp.eng.vmware.com; /opt/zimbra/bin/zmmtactl restart</option>
+        </plugin>
+        <!--plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin-->
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-054.eng.vmware.com</option>
+            <option name="cmd">if [ -f /opt/zimbra/bin/zmlicense ]; then /opt/zimbra/bin/zmlicense</option>
+            <option name="parms">-a; fi</option>
+        </plugin>
+        <plugin name="certInstall">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-054.eng.vmware.com</option>
+        </plugin>
+        <plugin name="certInstall">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-055.eng.vmware.com</option>
+        </plugin>
+        <plugin name="certInstall">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-056.eng.vmware.com</option>
+        </plugin>
+        <plugin name="certInstall">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-057.eng.vmware.com</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ca globaladmin@zqa-055.eng.vmware.com test123 zimbraAdminConsoleUIComponents cartBlancheUI description \"Global QA Admin Account\" zimbraIsAdminAccount TRUE</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-054.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraInvalidLoginFilterMaxFailedLogin 0</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-054.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">flushCache config</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-055.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">flushCache config</option>
+        </plugin>
+    </plugins>
+</plan>

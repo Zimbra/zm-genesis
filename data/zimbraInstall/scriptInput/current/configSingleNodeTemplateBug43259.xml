@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <!--cluster name="qa-cluster"-->
+            <host name="localhost">
+                <!--zimbrahost name="localhost"/-->
+                <package name="zimbra-ldap">
+                    <option name="LDAPPASS">
+                        test123
+                    </option>
+                    <option name="LDAPADMINPASS">
+                        zimbra
+                    </option>
+                    <option name="LDAPPOSTPASS">
+                        test123
+                    </option>
+                    <option name="LDAPAMAVISPASS">
+                        test123
+                    </option>
+                    <option name="LDAPREPLPASS">
+                        test123
+                    </option>
+                </package>
+                <package name="zimbra-logger">
+                    <option name="enabled">
+                        Enabled
+                    </option>
+                </package>
+                <package name="zimbra-mta">
+                    <option name="blahmta">
+                        foomta
+                    </option>
+                </package>
+                <package name="zimbra-snmp">
+                    <option name="blahsnmp">
+                        foosnmp
+                    </option>
+                </package>
+                <package name="zimbra-store">
+                    <option name="ADMINPASS">
+                        test123
+                    </option>
+                    <option name="USEIMAPPROXY">
+                        no
+                    </option>
+                </package>
+                <package name="zimbra-spell">
+                    <option name="blahspell">
+                        foospell
+                    </option>
+                </package>
+                <package name="zimbra-apache">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <!--package name="zimbra-proxy">
+                    <option name="proxyoption">
+                        foo
+                    </option>
+    
+                </package-->
+                <package name="zimbra-archiving">
+                    <option name="RUNARCHIVING">
+                        yes
+                    </option>
+                </package>
+                <package name="zimbra-convertd">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-memcached">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <option name="ENABLEDEFAULTBACKUP">
+                    yes
+                </option>
+                <option name="zimbraPrefTimeZoneName">
+                     America/Chicago
+                </option>
+                <option name="beta-support">
+                    <!-- missing/yes/no (yes=continue, no=stop) -->
+                    yes
+                </option>
+            </host>
+        <!--/cluster-->
+    </config>
+    <plugins>
+        <plugin name="download">
+            <option name="plugs">postInstall,preUpgrade</option>
+            <option name="host">localhost</option>
+            <option name="uri">http://tms.lab.zimbra.com/files/bug43259.jar</option>
+            <option name="dest">/opt/zimbra/lib/jars</option>
+            <option name="options">--quiet --no-check-certificate</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,preUpgrade</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmlocalconfig</option>
+            <option name="parms">-e zimbra_zmjava_options=\"-Xmx256m -Xbootclasspath/p:/opt/zimbra/lib/jars/bug43259.jar\"</option>
+        </plugin>
+        <!--plugin name="runZmCommand">
+            <option name="plugs">postInstall,preUpgrade</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmlocalconfig</option>
+            <option name="parms">-e mailboxd_java_options=\"-server -Djava.awt.headless=true -XX:+UseConcMarkSweepGC -XX:NewRatio=2 -XX:PermSize=128m -XX:MaxPermSize=128m -XX:SoftRefLRUPolicyMSPerMB=1 -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintGCApplicationStoppedTime -Xbootclasspath/p:/opt/zimbra/lib/jars/bug43259.jar\"</option>
+        </plugin-->
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmcontrol</option>
+            <option name="parms">stop</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmcontrol</option>
+            <option name="parms">start</option>
+        </plugin>
+    </plugins>
+</plan>

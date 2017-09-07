@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <host name="zqa-121.eng.vmware.com">
+            <!--package name="zimbra-mta">
+            </package-->
+            <package name="zimbra-logger">
+                <option name="enabled">
+                    Enabled
+                </option>
+            </package>
+            <package name="zimbra-snmp">
+            </package>
+            <package name="zimbra-store">
+                <option name="SMTPHOST">
+                    zqa-124.eng.vmware.com
+                </option>
+                <option name="ADMINPASS">
+                    test123
+                </option>
+                <option name="zimbraMailProxy">
+                    TRUE
+                </option>
+                <option name="zimbraWebProxy">
+                    TRUE
+                </option>
+                <!--option name="MODE">
+                    http
+                </option>
+                <option name="HTTPPORT">
+                    8080
+                </option>
+                <option name="HTTPSPORT">
+                    8443
+                </option-->
+            </package>
+            <package name="zimbra-memcached">
+            </package>
+            <package name="zimbra-spell">
+            </package>
+            <package name="zimbra-apache">
+                <option name="blah">
+                    foo
+                </option>
+            </package>
+            <package name="zimbra-convertd">
+                <option name="blah">
+                    foo
+                </option>
+            </package>
+            <option name="zimbraPrefTimeZoneName">
+                America/Chicago
+            </option>
+            <option name="beta-support">
+                yes
+            </option>
+        </host>
+    </config>
+    <plugins>
+         <!--plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-120.eng.vmware.com</option>
+            <option name="cmd">zmproxyctl</option>
+            <option name="parms">restart</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraMtaRelayHost zqa-smtp.eng.vmware.com</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms zqa-121.eng.vmware.com zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms zqa-122.eng.vmware.com zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms zqa-122.eng.vmware.com zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">if [ -f /opt/zimbra/bin/zmlicense ]; then /opt/zimbra/bin/zmlicense</option>
+            <option name="parms">-a; fi</option>
+        </plugin-->
+        <!--############################################
+            # run zmprov fc config on all other stores #
+            # after activating the license             #
+            ############################################-->
+        <!--plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">if [ -f /opt/zimbra/bin/zmlicense ]; then /opt/zimbra/bin/zmlicense</option>
+            <option name="parms">-a; fi</option>
+        </plugin-->
+        <!--plugin name="scheduleBackup">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-120.eng.vmware.com</option>
+            <option name="backup">delete</option>
+        </plugin-->
+    </plugins>
+</plan>

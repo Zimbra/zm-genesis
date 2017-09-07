@@ -1,0 +1,36 @@
+to set up the inject service: 
+1. copy ZimbraQA/src/bin/runemail to the server where you try to install the inject service under /opt/qa/tools/
+2. build zimbraemail.jar.
+3. using this jar file to deploy service like this: 
+staf $SERVER service ADD SERVICE inject LIBRARY JSTAF EXECUTE $DIR/zimbraemail.jar
+4. Usage of the service: 
+
+STAF SERVER.NAME INJECT 
+           SMTP 
+		   TO <recipient, "," separate if multiple recipient this test1@xx.com,test2@xx.com > 
+		   FROM <sender user@company.com>
+		   SUBJECT <email Subject>
+		   MESSAGE <Mime Message File this option exclusive with FILE|TEXTATTACHMENT|TEXTATTACHMENT > 
+		   FILE <File file as msg body> 
+		   TEXTATTACHMENT <file as attachmenet>
+		   BINARYATTACHMENT <file as attachment>
+		   FSERVER <Machine where the msg/file is stored if not local file to inject as msg> 
+		   AUTH  < optional, do smtp auth >
+		   USER  < required only if auth is set >
+		   PASSWD < required only if auth is set >
+		   PORT <optinal smtp port defaul 25 for non-ssl and 465 for ssl>
+		   HOST <smtp host>
+		   SSL  <optional ssl if set exclusive with STARTLS>
+		   STARTLS < optional startls if set 
+		   
+		   
+example 
+  staf local inject smtp  
+  to test@mbs.lab.zimbra.com 
+  from admin@mbs.lab.zimbra.com 
+  subject remotetest 
+  host mbs.lab.zimbra.com 
+  file /opt/zimbraperf/bin/runsoap.pl 
+  textattachment /opt/zimbraperf/bin/test  
+  fserver qa24.liquidsys.com 
+  ssl

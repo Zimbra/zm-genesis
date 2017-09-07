@@ -1,0 +1,48 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+
+
+<t:property name="user.name" value="CHANGE_ME_USER_NAME"/>
+<t:property name="user.password" value="CHANGE_ME_USER_PASSWORD"/>
+
+<t:property name="tag.name" value="CHANGE_ME_TAG_NAME"/>
+<t:property name="tag.color" value="CHANGE_ME_TAG_COLOR"/>
+
+
+
+<t:property name="uri" value="${mailclient.uri}"/>
+
+
+<t:test>
+	<t:request>
+		<AuthRequest xmlns="urn:zimbraAccount">
+			<account by="name">${user.name}</account>
+			<password>${user.password}</password>
+		</AuthRequest>
+	</t:request>
+
+	<t:response>
+		<t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+		<t:select path="//acct:AuthResponse/acct:sessionId" set="sessionId"/>
+	</t:response>
+
+</t:test>
+
+
+
+
+<t:test >
+	<t:request>
+		<CreateTagRequest xmlns="urn:zimbraMail">
+			<tag name="${tag.name}" color="${tag.color}"/>
+		</CreateTagRequest>
+	</t:request>
+	<t:response>
+		<t:select path="//mail:CreateTagResponse/mail:tag"/>
+	</t:response>
+</t:test>
+
+
+
+</t:tests>
+

@@ -1,0 +1,38 @@
+#!/usr/bin/expect -d
+#
+# $File$
+# $DateTime$
+# $Revision$
+# $Author$
+#
+# Expect file to hookup rpath system to qa00
+# 2007 Zimbra
+# bootstrap code for rpath
+# argument #1 ip address for the rpath
+# argument #2 initial root password for the rpath
+# arugment #3 hostname rpath system to be set to
+set ip [lindex $argv 0]
+set password [lindex $argv 1]
+set mhostname [lindex $argv 2]
+spawn ssh "root@$ip"
+expect "sure"
+send "yes\n"
+expect "password"
+send "$password\n"
+expect "root"
+send "/bin/mv /etc/localtime /etc/localtime-old\n"
+expect "root"
+send "/bin/ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime\n"
+expect "root"
+send "/usr/bin/perl -pi.bak -e 's/Eastern/Pacific/' /etc/sysconfig/clock\n"
+expect "root"
+send "/bin/rm /etc/sysconfig/clock.bak\n"
+expect "root"
+send "wget http://tms.liquidsys.com/files/setupreplayer.sh\n"
+expect "root"
+send "bash ./setupreplayer.sh $mhostname\n"
+expect "root"
+sleep 20
+send "reboot\n"
+sleep 20
+exit

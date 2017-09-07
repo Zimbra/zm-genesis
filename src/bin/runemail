@@ -1,0 +1,18 @@
+#!/usr/bin/perl -w
+# 
+# ***** BEGIN LICENSE BLOCK *****
+# 
+# Zimbra Collaboration Suite, Network Edition.
+# Copyright (C) 2006, 2007 Zimbra, Inc.  All Rights Reserved.
+# 
+# ***** END LICENSE BLOCK *****
+# 
+#use lib "/opt/zimbraperf/bin";
+#use perfutil;
+#my $perfdir = getPerfdir();
+#build the class path;
+my $CLASSPATH = join(":", glob("/usr/local/staf/data/STAF/lang/java/service/email/jars/*.jar"));
+
+my $cmd = "java  -Xmx1600m -cp $CLASSPATH com.zimbra.perf.email.EmailImpl ".join(" ", @ARGV);
+print $cmd."\n";
+system($cmd);

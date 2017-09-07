@@ -1,0 +1,45 @@
+#
+# Genesis test setup
+#
+data/testsetup
+#
+# Test plan for smoke test zimbra-nginx
+#
+#data/proxyimap/setproxy
+data/nioimap/nioon
+data/imap
+data/proxyimap/userlimiton
+data/imap/bug/nginxdoublelogin
+data/imap/bug/54039_extrauntagged
+data/imap/login
+data/imap/extension/authenticateplain
+data/imap/extension/gssapi/basic
+data/proxyimap/userlimitoff
+data/nioimap/niooff
+data/imap
+data/nioimap/nioon
+data/pop
+data/cronjob
+data/mimefilter
+data/sharemessage/basic.rb
+data/sharemessage/distributionlist
+data/spam
+data/virus
+data/server
+#
+
+# SMTP test
+data/smtp
+
+# Nginx tests
+data/proxyimap/auth
+data/proxyimap/bug
+data/proxyimap/mailthrottle
+data/proxyimap/webproxy
+
+#
+# Test control scripts
+#
+data/zmproxyctl
+data/zmproxyconfgen
+

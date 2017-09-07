@@ -1,0 +1,208 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<t:property name="account1.name" value="upgrade${TIME}.${COUNTER}@${defaultdomain.name}"/>
+<t:property name="account1.password" value="${defaultpassword.value}"/>
+<t:property name="account2.name" value="upgrade${TIME}.${COUNTER}@${defaultdomain.name}"/>
+<t:property name="account2.password" value="${defaultpassword.value}"/>
+
+<t:property name="account1.server" value="NOT_DEFINED"/>
+<t:property name="account2.server" value="NOT_DEFINED"/>
+
+<t:property name="compose.subject" value="Subject of the message is testing"/>
+<t:property name="compose.content" value="Content in the message is contents..."/>
+
+
+
+
+
+
+
+
+
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+<t:test_case testcaseid="postUpgradeMailrouting_accountSetup" type="always" >
+    <t:objective>Create the upgrade test accounts</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+	<t:test id="create_test_account1" required="true" depends="admin_login">
+		<t:request>
+			<CreateAccountRequest xmlns="urn:zimbraAdmin">
+				<name>${account1.name}</name>
+				<password>${account1.password}</password>
+			</CreateAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:CreateAccountResponse/admin:account" attr="id" set="account1.id"/>
+			<t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>
+		</t:response>
+	</t:test>
+
+	<t:test id="create_test_account2" required="true" depends="admin_login">
+		<t:request>
+			<CreateAccountRequest xmlns="urn:zimbraAdmin">
+				<name>${account2.name}</name>
+				<password>${account2.password}</password>
+			</CreateAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:CreateAccountResponse/admin:account" attr="id" set="account2.id"/>
+			<t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account2.server"/>
+		</t:response>
+	</t:test>
+
+
+
+</t:test_case>
+
+
+<t:test_case testcaseid="postUpgradeMailRouting01" type="smoke" areas="upgrade">
+    <t:objective>After an upgrade, send a new mail from one zimbra account to another</t:objective>
+
+	<!--t:property name="uri" value="https://${account1.server}:${soapservice.port}/${soapservice.path}"/-->
+        <t:property name="server.zimbraAccount" value="${account1.server}"/>
+
+	<t:test required="true">
+	 <t:request>
+	  <AuthRequest xmlns="urn:zimbraAccount">
+	    <account by="name">${account1.name}</account>
+	    <password>${account1.password}</password>
+	  </AuthRequest>
+	 </t:request>
+	 <t:response>
+		<t:select path="//acct:AuthResponse/acct:lifetime"  match="^\d+$"/>
+		<t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+	 </t:response>
+	</t:test>
+
+	<t:test id="postUpgradeMailRouting_01a">
+	  <t:request>
+	    <SendMsgRequest xmlns="urn:zimbraMail">
+	      <m>
+			<e t="t" a='${account2.name}'/>
+			<su>${compose.subject}</su>
+			<mp ct="text/plain">
+			    <content>${compose.content}</content>
+			</mp>
+	     </m>
+	    </SendMsgRequest>
+	  </t:request>
+	  <t:response>
+	         <t:select path="//mail:SendMsgResponse"/>
+	   </t:response>
+	</t:test>
+  
+    <t:test >
+        <t:request>
+            <SearchRequest xmlns="urn:zimbraMail" types="message">
+                <query> subject:(${compose.subject}) </query>
+            </SearchRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:SearchResponse/mail:m">
+	            <t:select attr="su" match="^${compose.subject}$"/>
+	            <t:select attr="id" set="message1.id"/>
+            </t:select>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <GetMsgRequest xmlns="urn:zimbraMail">
+                <m id="${message1.id}"/>
+            </GetMsgRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetMsgResponse/mail:m" attr="id" match="${message1.id}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:mid" set="message.mid"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:e[@t='f']" attr="a" match="${account1.name}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:e[@t='t']" attr="a" match="${account2.name}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:su" match="${compose.subject}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:mp[@ct='text/plain']/mail:content" match="${compose.content}"/>
+        </t:response>
+    </t:test>
+
+	<!--t:property name="uri" value="https://${account2.server}:${soapservice.port}/${soapservice.path}"/-->
+        <t:property name="server.zimbraAccount" value="${account2.server}"/>
+	<t:test >
+	 <t:request>
+	  <AuthRequest xmlns="urn:zimbraAccount">
+	    <account by="name">${account2.name}</account>
+	    <password>${account2.password}</password>
+	  </AuthRequest>
+	 </t:request>
+	 <t:response>
+		<t:select path="//acct:AuthResponse/acct:lifetime"  match="^\d+$"/>
+		<t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+	 </t:response>
+	</t:test>
+  
+    <t:test required="true">
+        <t:request>
+            <SearchRequest xmlns="urn:zimbraMail" types="message">
+                <query> subject:(${compose.subject}) </query>
+            </SearchRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:SearchResponse/mail:m">
+	            <t:select attr="su" match="^${compose.subject}$"/>
+	            <t:select attr="id" set="message2.id"/>
+            </t:select>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <GetMsgRequest xmlns="urn:zimbraMail">
+                <m id="${message2.id}"/>
+            </GetMsgRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetMsgResponse/mail:m" attr="id" match="${message2.id}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:mid" match="${message.mid}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:e[@t='f']" attr="a" match="${account1.name}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:e[@t='t']" attr="a" match="${account2.name}"/>
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:su" match="${compose.subject}"/>
+<!--
+4/21/06: Matt - For some reason, the content has a EOL character and won't match.
+            <t:select path="//mail:GetMsgResponse/mail:m/mail:mp[@ct='text/plain']/mail:content" match="${compose.content}"/>
+-->
+        </t:response>
+    </t:test>
+
+
+
+</t:test_case>
+
+  
+
+</t:tests>
+

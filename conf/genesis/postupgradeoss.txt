@@ -1,0 +1,36 @@
+#
+# Test plan for post upgrade test on oss bits
+#
+
+data/upgrade/post/completioncheck.rb
+data/upgrade/post/tomcat2jettyconversioncheck.rb
+data/upgrade/post/folderwithtrailingcheck.rb
+data/upgrade/post/coscheck.rb
+data/upgrade/post/cosfeaturescheck.rb
+data/upgrade/post/accountprefscheck.rb
+data/upgrade/post/packagewarningscheck.rb
+data/upgrade/post/fossovernetcheck.rb
+data/upgrade/post/accountidcheck.rb
+data/upgrade/post/domainwikiaccounttemplatecheck.rb
+data/upgrade/post/identitycheck.rb
+#data/upgrade/post/savedtemplatescheck.rb
+data/upgrade/post/htmltagscheck.rb
+data/upgrade/post/ldapindexcheck.rb
+data/upgrade/post/publicdomaincheck.rb
+data/upgrade/post/preservecheck.rb
+data/upgrade/post/backupcheck.rb
+data/upgrade/post/resourcecheck.rb
+data/upgrade/post/stepscheck.rb
+data/upgrade/post/customizationscheck.rb
+data/upgrade/post/galcheck.rb
+data/upgrade/post/keystorecheck.rb
+data/upgrade/post/versioncheckcheck.rb
+data/upgrade/post/zimletscheck.rb
+data/upgrade/post/replicationcheck.rb
+data/upgrade/post/savedsearch.rb
+#data/sharemessage/distributionlist/dynamic50.rb
+data/upgrade/post/ldapdiffscheck.rb
+data/upgrade/post/contactgroup.rb
+
+# Redolog check
+data/verification/redolog.rb

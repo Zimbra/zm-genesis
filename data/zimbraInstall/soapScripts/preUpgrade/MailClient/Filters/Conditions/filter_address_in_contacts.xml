@@ -1,0 +1,167 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+
+<t:property name="account1.name" value="testuser_bug_42874_test@${defaultdomain.name}"/>
+<t:property name="from.address" value="bug42874@zimbra.com"/>
+<t:property name="folder.pname" value="1" /> 
+<!--  Folder's parent ID --> 
+<t:property name="folder.name" value="bug_42874" /> 
+<t:property name="filter1.name" value="filter1.${TIME}.${COUNTER}"/>
+<t:property name="root"				value="${soapxml.root}/MailClient/Mail/lmtp/MimeBasic/"/>
+<t:property name="msg01.file"		value="${root}/lmtp_basic01.txt"/>
+<t:property name="firstName" value="Bug"/>
+<t:property name="lastName" value="42874"/>
+<t:property name="subject" value="Pre Upgrade"/>
+
+<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+         <t:response>
+             <t:select path="//admin:PingResponse"/>
+         </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+<t:test_case testcaseid="Filter_Address_In_Contact_AccountSetup" type="always" >
+    <t:objective>create test account</t:objective>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+	    <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${account1.name}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+	    <t:response>
+                <t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="account1.id"/>
+                <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>
+	    </t:response>
+    </t:test>
+
+<t:property name="server.zimbraAccount" value="${account1.server}"/>
+</t:test_case>
+
+<t:test_case testcaseid="Filter_Address_In_Contact" type="always" >
+    <t:objective> Verify filter works if from field of the mail matches the contacts saved </t:objective>
+	    <t:steps> 
+			  1. Login to test account 1
+			  2. Create a contact
+			  3. Save a Rule as Addressbook -> FROM -> :in -> contacts
+			  4. Inject a Mail with From field is one of the contact that is being saved.
+			  5. Search mail get filtered.
+        </t:steps>
+        
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+
+        </t:response>
+    </t:test>
+	 
+	<t:test >
+        <t:request>
+            <CreateContactRequest xmlns="urn:zimbraMail">
+                <cn>
+                    <a n="firstName">${firstName}</a>
+                    <a n="lastName">${lastName}</a>
+                    <a n="email">${from.address}</a>
+                </cn>     
+            </CreateContactRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateContactResponse/mail:cn"/>
+        </t:response>
+    </t:test>
+
+	<t:test>
+		<t:request>
+			<CreateFolderRequest xmlns="urn:zimbraMail">
+  				<folder name="${folder.name}" l="${folder.pname}" /> 
+  			</CreateFolderRequest>
+  		</t:request>
+  		<t:response>
+  			<t:select path="//mail:CreateFolderResponse/mail:folder" attr="id" set="folder.id" /> 
+  		</t:response>
+  	</t:test>
+    <t:test>
+        <t:request>
+            <ModifyFilterRulesRequest xmlns="urn:zimbraMail">
+                <filterRules>
+                    <filterRule name="${filter1.name}" active="true">
+                        <filterTests condition="anyof">
+                            	<addressBookTest header="from" type="contacts"/>
+                        </filterTests>
+			            <filterActions>
+							<actionFileInto folderPath="${folder.name}"/>
+						  	<actionStop/> 
+						</filterActions>                        
+                    </filterRule>
+                </filterRules>
+            </ModifyFilterRulesRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:ModifyFilterRulesResponse"/>
+        </t:response>
+    </t:test>
+
+
+	<t:test>
+        <t:request>
+            <GetFilterRulesRequest xmlns="urn:zimbraMail"/>
+		</t:request>
+		<t:response>
+            <t:select path="//mail:GetFilterRulesResponse"/>
+        </t:response>
+	</t:test>
+
+    <t:mailinjecttest >
+        <t:lmtpInjectRequest>
+            <filename>${msg01.file}</filename>
+			<to>${account1.name}</to>
+			<from>${from.address}</from>
+			<server>${account1.server}</server>
+            <modify>
+                <header a="X-Spam-Score">0</header>
+                <header a="From">${from.address}</header>
+                <header a="Subject">${subject}</header>
+            </modify>
+        </t:lmtpInjectRequest>
+    </t:mailinjecttest>
+
+    <t:test id="searchRequest1">
+        <t:request>
+            <SearchRequest xmlns="urn:zimbraMail" types="message">
+ 				 <query>in:${folder.name}</query>
+            </SearchRequest>
+        </t:request>
+        <t:response>
+   		<t:select path="//mail:SearchResponse/mail:m/mail:e[@t='f']" attr="a" match="${from.address}" />        </t:response>
+    </t:test>
+</t:test_case>
+</t:tests>
+

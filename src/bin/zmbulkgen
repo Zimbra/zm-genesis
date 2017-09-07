@@ -1,0 +1,16 @@
+#!/bin/sh
+
+ZM_EMAIL_PREFIX=account
+ZM_EMAIL_SUFFIX=`date +"%s"`
+ZM_EMAIL_PASSWD=test123
+
+ZM_MAIL_HOST=demo5.zimbra.com
+
+count=0
+while (( count < $1 ))
+do
+
+  echo ca ${ZM_EMAIL_PREFIX}${count}.${ZM_EMAIL_SUFFIX}@${ZM_MAIL_HOST} ${ZM_EMAIL_PASSWD} >> $2
+  (( count = count + 1))
+  
+done

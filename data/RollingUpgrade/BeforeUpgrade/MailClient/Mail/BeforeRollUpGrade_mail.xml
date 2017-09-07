@@ -1,0 +1,154 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<!-- Shared variables between Pre and Post upgrade scripts -->
+
+<t:property name="account1.name" value="rollingupgrade01@${defaultdomain.name}"/>
+<t:property name="account2.name" value="rollingupgrade02@${defaultdomain.name}"/>
+<t:property name="account3.name" value="rollingupgrade03@${defaultdomain.name}"/>
+
+
+<t:property name="compose.subject" value="Subject of the message is testing"/>
+<t:property name="compose.content" value="Content in the message is contents..."/>
+
+<!-- End shared variables -->
+
+
+<t:test_case testcaseid="Briefcase_Folder_Setup" type="always" >
+    <t:objective>basic system check</t:objective>
+
+	<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>	
+    <t:test id="ping" required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+	
+	<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+	
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+    
+    <t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${account1.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account1.id"/>
+			<t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>
+		</t:response>
+	</t:test>
+ 
+    <t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${account2.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account2.id"/>
+			<t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account2.server"/>
+		</t:response>
+	</t:test>
+
+ </t:test_case>  
+ 
+<t:test_case testcaseid="SendMessageRequest1" type="smoke" >
+ <t:objective>Make a coversation between account1 and account2 </t:objective>
+ 
+ <t:property name="server.zimbraAccount" value="${account1.server}"/>
+
+    <t:test>
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+	<t:test >
+		<t:request>
+		   <SendMsgRequest xmlns="urn:zimbraMail">
+		     <m>
+		       <e t="t" a='${account1.name}'/>
+		       <e t="c" a='${account2.name}'/>
+		       <su>${compose.subject}</su>
+		       <mp ct="text/plain">
+			    <content> ${compose.content} </content>
+		       </mp>
+		    </m>
+		  </SendMsgRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//mail:SendMsgResponse"/>
+		</t:response>
+	</t:test>
+	
+	<t:property name="server.zimbraAccount" value="${account2.server}"/>
+
+    <t:test>
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account2.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+	
+	
+	 <t:test required="true">
+        <t:request>
+			<SearchRequest xmlns="urn:zimbraMail" types="message">
+				<query>subject:(${compose.subject})</query>
+			</SearchRequest>
+        </t:request>
+        <t:response>      
+            <t:select path="//mail:SearchResponse">
+            	<t:select path="//mail:m" attr="id" set="message1.id"/>
+            </t:select>
+        </t:response>
+    </t:test>
+    
+    <t:test  >
+	  <t:request>
+	    <SendMsgRequest xmlns="urn:zimbraMail">
+	      <m origid="${message1.id}" rt="r">
+			<e t="t" a='${account1.name}'/>			
+			<su>RE ${compose.subject} </su>
+			<mp ct="text/plain">
+		    	<content>Reply to ${compose.content}</content>
+			</mp>
+	     </m>
+	    </SendMsgRequest>
+	  </t:request>
+	  <t:response>
+		 <t:select path="//mail:SendMsgResponse/mail:m"/>
+	   </t:response>
+	</t:test>
+	
+
+</t:test_case>
+
+
+    
+</t:tests>

@@ -1,0 +1,159 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<t:property name="folder1.name" value="Briefcase.${TIME}.${COUNTER}"/>
+
+<!-- Shared variables between Pre and Post upgrade scripts -->
+
+<t:property name="account1.name" value="rollingupgrade01@${defaultdomain.name}"/>
+<t:property name="account2.name" value="rollingupgrade02@${defaultdomain.name}"/>
+<t:property name="account3.name" value="rollingupgrade03@${defaultdomain.name}"/>
+<t:property name="shared.folder1.name" value="Briefcase_RollingUpgrade_Shared"/>
+<t:property name="SharedFolder1.name" value="Briefcase.RollingUpgrade.Shared1"/>
+<!-- End shared variables -->
+
+
+<t:test_case testcaseid="Briefcase_Folder_Setup" type="always" >
+    <t:objective>basic system check</t:objective>
+
+	<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>	
+    <t:test id="ping" required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+	
+	<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+	
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+    
+    <t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${account1.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account1.id"/>
+			<t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>
+		</t:response>
+	</t:test>    
+	
+    <t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${account2.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account2.id"/>
+			<t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account2.server"/>
+		</t:response>
+	</t:test>
+	
+ </t:test_case>  
+ 
+
+  
+ <t:test_case testcaseid="Briefcase_ShareFolder_01" type="smoke"  >
+    <t:objective>Share briefcase folder</t:objective>
+    
+   <t:steps>	   
+	    1. Login to account2 
+	    2. Mount the shared folder and verify the documents inside of the folders.	    
+    </t:steps>
+
+	<t:property name="server.zimbraAccount" value="${account1.server}"/>
+
+  
+
+    <t:test >
+        <t:request >
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test> 
+    
+    <t:test required="true">
+        <t:request>
+            <GetFolderRequest xmlns="urn:zimbraMail"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:folder[@name='${SharedFolder1.name}']" attr="id" set="account1.briefcase.folder.id"/>           
+        </t:response>
+    </t:test>
+   
+   
+   <t:property name="server.zimbraAccount" value="${account2.server}"/>
+   
+    <t:test >
+        <t:request >
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account2.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test> 
+
+    <t:test required="true">
+        <t:request>
+            <GetFolderRequest xmlns="urn:zimbraMail"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:folder[@name='${globals.root}']" attr="id" set="account2.folder.root"/>           
+        </t:response>
+    </t:test>
+
+   <t:property name="shared.folder.name" value="BriefcaseSharedIn RollingUpgrade"/>
+    <t:test required="true">
+        <t:request>
+            <CreateMountpointRequest xmlns="urn:zimbraMail">
+                <link l="${account2.folder.root}" rid="${account1.briefcase.folder.id}" name="${shared.folder.name}" zid="${account1.id}"/>
+            </CreateMountpointRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateMountpointResponse/mail:link" attr="id" set="account2.briefcase.delegated.id"/>
+            <t:select path="//mail:CreateMountpointResponse/mail:link" attr="owner" match="${account1.name}"/>
+            <t:select path="//mail:CreateMountpointResponse/mail:link" attr="id" set="account2.shared.folder.id"/>
+        </t:response>
+    </t:test>    
+    
+     <!-- Do GetShareInfoRequest -->    
+    <t:test>
+        <t:request>
+            <GetShareInfoRequest xmlns="urn:zimbraAccount">
+            		<grantee type="usr" />            		                   
+                    <owner by="name">${account1.name}</owner>
+            </GetShareInfoRequest>            
+        </t:request>
+        <t:response>
+              <t:select path="//acct:GetShareInfoResponse">              		
+					<t:select path="acct:share" attr="mid" match="${account2.shared.folder.id}" />										
+              </t:select>          	
+        </t:response>
+    </t:test>
+    
+   </t:test_case>   
+
+    
+</t:tests>

@@ -1,0 +1,5 @@
+data/testsetup/
+#data/proxyimap/setproxy
+data/appliance
+data/server/zimbraurlscheck.rb
+

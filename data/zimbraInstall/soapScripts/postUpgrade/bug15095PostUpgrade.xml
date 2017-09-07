@@ -1,0 +1,213 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<t:property name="scriptId" value="bug15095"/>
+<t:property name="account1.name" value="test.${scriptId}.1@${defaultdomain.name}"/>
+<t:property name="account2.name" value="test.${scriptId}.2@${defaultdomain.name}"/>
+<t:property name="appointment.location" value="Location of meeting ${scriptId}.3"/>
+<t:property name="appointment.location.mod1" value="${appointment.location} 1st modification"/>
+<t:property name="appointment.location.mod2" value="${appointment.location} 2nd modification"/>
+<t:property name="appointment.content" value="Content of the message ${scriptId}.4"/>
+
+
+<t:property name="op.grant"			value="grant"/>
+<t:property name="op.read"			value="read"/>
+<t:property name="op.unread"		value="!read"/>
+<t:property name="op.flag"			value="flag"/>
+<t:property name="op.unflag"		value="!flag"/>
+<t:property name="op.tag"			value="tag"/>
+<t:property name="op.untag"			value="!tag"/>
+<t:property name="op.move"			value="move"/>
+<t:property name="op.delete"		value="delete"/>
+
+<t:property name="grant.usr"			value="usr"/>
+<t:property name="grant.grp"			value="grp"/>
+<t:property name="grant.dom"			value="dom"/>
+<t:property name="grant.cos"			value="cos"/>
+<t:property name="grant.all"			value="all"/>
+<t:property name="grant.pub"			value="pub"/>
+<t:property name="grant.guest"			value="guest"/>
+
+<t:property name="rights.none"			value=""/>
+<t:property name="rights.read"			value="r"/>
+<t:property name="rights.write"			value="w"/>
+<t:property name="rights.insert"		value="i"/>
+<t:property name="rights.delete"		value="d"/>
+<t:property name="rights.administer"	value="a"/>
+<t:property name="rights.workflow"		value="x"/>
+<t:property name="rights.manager"		value="${rights.read}${rights.write}${rights.insert}${rights.delete}${rights.workflow}"/>
+<t:property name="view.conversation"	value="conversation"/>
+<t:property name="view.message"			value="message"/>
+<t:property name="view.contact"			value="contact"/>
+<t:property name="view.appointment"		value="appointment"/>
+<t:property name="view.note"			value="note"/>
+
+
+
+<t:property name="acct1.server" value="${zimbraServer.name}"/>
+<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>    
+
+<t:test_case testcaseid="Ping" type="always">
+    <t:objective>Basic system check</t:objective>
+
+    <t:test id="ping" required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+    
+<t:test_case testcaseid="CalendarSharing_CalendarsDelegated_Modify" type="smoke" bugids="33693">
+    <t:objective>Verify GetApointmentRequest against an appointment in a shared calendar</t:objective>
+    <t:steps>
+        1. Login as account2.
+        2. Get the appointment in account1's calendar
+        3. Modify appointment
+    </t:steps>
+
+	<t:property name="appt.subject"		value="subject.${scriptId}.5"/>
+	<t:property name="appt.timezone"	value="America/New_York"/>
+	<t:property name="appt.start.gmt"	value="1263902400000"/> <!-- 01/19/2010 12:00:00 UTC time -->
+	<t:property name="appt.start.tz"	value="${TIME(-5h)[${appt.start.gmt}]}"/>
+
+    <t:test  id="admin_login" required="true" depends="ping">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test id="getAccountRequest1">
+        <t:request>
+            <GetAccountRequest xmlns="urn:zimbraAdmin">
+                <account by="name">${account1.name}</account>
+            </GetAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account1.id"/>
+            <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>	 
+        </t:response>
+    </t:test>
+    
+    <t:test id="getAccountRequest2">
+        <t:request>
+            <GetAccountRequest xmlns="urn:zimbraAdmin">
+                <account by="name">${account2.name}</account>
+            </GetAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account2.id"/>
+            <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account2.server"/>	 
+        </t:response>
+    </t:test>
+    
+	<t:property name="server.zimbraAccount" value="${account2.server}"/>
+
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account2.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <GetFolderRequest xmlns="urn:zimbraMail">
+            </GetFolderRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetFolderResponse/mail:folder[@name='${globals.root}']/mail:link" attr="owner" match="(?)${account1.name}"/>
+            <t:select path="//mail:GetFolderResponse/mail:folder[@name='${globals.root}']/mail:link" attr="id" set="account2.delegated.id"/>
+        </t:response>
+    </t:test>
+
+    <!--t:test required="true">
+        <t:request>
+            <CreateMountpointRequest xmlns="urn:zimbraMail">
+                <link l="${account2.folder.root}" name="Calendar.${TIME}.6" view="appointment" rid="${account1.folder.calendar}" zid="${account1.id}"/>
+            </CreateMountpointRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateMountpointResponse/mail:link" attr="id" set="account2.delegated.id"/>
+        </t:response>
+    </t:test-->
+
+            <!--t:request>
+            <GetApptSummariesRequest xmlns="urn:zimbraMail" 
+            	l="${account2.delegated.id}"
+            	s="${TIME(-1d)[${appt.start.gmt}]}" 
+            	e="${TIME(+1d)(+1h)[${appt.start.gmt}]}"/>
+        </t:request-->
+    <t:test >
+
+        <t:request>
+            <GetApptSummariesRequest xmlns="urn:zimbraMail"
+                l="${account2.delegated.id}"
+            	s="${TIME(-1d)[${appt.start.gmt}]}" 
+            	e="${TIME(+1d)(+1h)[${appt.start.gmt}]}"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetApptSummariesResponse/mail:appt[@name='${appt.subject}']" attr="invId" set="appt.id"/>
+            
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request> 
+            <GetAppointmentRequest  xmlns="urn:zimbraMail" id="${appt.id}"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetAppointmentResponse/mail:appt/mail:inv/mail:tz" attr="id" match="\Q${appt.timezone}\E"/>
+            <t:select path="//mail:GetAppointmentResponse/mail:appt/mail:inv/mail:comp" attr="loc" match="(?i)${appointment.location.mod1}"/>
+            <t:select path="//mail:GetAppointmentResponse/mail:appt/mail:inv/mail:comp" attr="apptId" set="appointment.id"/>
+        </t:response>
+    </t:test>
+    
+    <t:test>
+        <t:request>
+            <ModifyAppointmentRequest xmlns="urn:zimbraMail" id="${appt.id}" comp="0">
+                <m>
+                    <inv>
+                        <comp method="REQUEST" type="event" fb="B" transp="O" status="CONF" allDay="0" name="${appt.subject}" loc="${appointment.location.mod2}">
+							<s d="${ICALTIME[${appt.start.tz}]}" tz="${appt.timezone}"/>
+							<e d="${ICALTIME(+1h)[${appt.start.tz}]}" tz="${appt.timezone}"/>
+							<or a="${account1.name}"/>
+						</comp>
+                    </inv>
+                </m>
+            </ModifyAppointmentRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:ModifyAppointmentResponse" attr="apptId" match="${appointment.id}"/>
+        </t:response>
+    </t:test>
+    
+    <t:test >
+        <t:request> 
+            <GetAppointmentRequest  xmlns="urn:zimbraMail" id="${appt.id}"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetAppointmentResponse/mail:appt/mail:inv/mail:tz" attr="id" match="\Q${appt.timezone}\E"/>
+            <t:select path="//mail:GetAppointmentResponse/mail:appt/mail:inv/mail:comp" attr="loc" match="(?i)${appointment.location.mod2}"/>
+            <t:select path="//mail:GetAppointmentResponse/mail:appt/mail:inv/mail:comp" attr="apptId" set="appointment.id"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+    
+
+</t:tests>

@@ -1,0 +1,568 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<!-- Define acct_upgrade1.name and acct_upgrade2.name in global.properties -->
+    
+<t:property name="COS.name" value="upgradecosa"/>
+<t:property name="DL.name" value="upgradedla@${defaultdomain.name}"/>
+<t:property name="alias.name" value="upgradealiasa@${defaultdomain.name}"/>
+<t:property name="domainA.name" value="upgradedomaina.com"/>
+<t:property name="server.name" value="upgrade.testserver.com"/>
+<t:property name="server.notes" value="test of adding Server via SOAP"/>
+<t:property name="server.desc" value="test server description"/>
+<t:property name="volume.name" value="upgradeVolume"/>
+
+<t:property name="tempdir" value="/tmp/volumes"/>
+<t:property name="basedir" value="${tempdir}/volumeRoot${COUNTER}${TIME}"/>
+
+<t:property name="folder.name" value="upgradeFolderA"/>
+<t:property name="folder2.name" value="upgradeFolderB"/>
+<t:property name="contact.mailid" value="email@domain.com"/>
+<t:property name="tag.name" value="upgradeTagA" />
+
+<t:property name="mail1.subject" value="subject1" />
+<t:property name="mail1.content" value="mail1 simple content in a message" />
+<t:property name="mail2.subject" value="subject2" />
+<t:property name="mail2.content" value="mail2 simple content in a message" />
+
+<t:property name="appt1.subject" value="appt1 subject" />
+<t:property name="appt1.location" value="appt1 location" />
+<t:property name="appt1.content" value="appt1 content" />
+
+<t:property name="dlMember.name" value="upgradedlmember@${defaultdomain.name}"/>
+
+<t:property name="test_acct1.server" value="NOT_DEFINED"/>
+<t:property name="test_acct2.server" value="NOT_DEFINED"/>
+
+
+
+<t:property name="acct_upgrade1.id" value=""/>
+<t:property name="acct_upgrade2.id" value=""/>
+<t:property name="inboxFolder.id" value=""/>
+<t:property name="folder1.id" value=""/>
+<t:property name="folder2.id" value=""/>
+<t:property name="distributionList.id" value=""/>
+<t:property name="dlMember.id" value=""/>
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+<t:property name="trial_end_date" value="NONE"/>
+
+<t:test_case testcaseid="backupTrialExpirationGetLicense" >
+    <t:objective>Get trial expiration date</t:objective>
+
+    <t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <GetLicenseInfoRequest xmlns="urn:zimbraAdmin">
+            </GetLicenseInfoRequest>
+        </t:request>
+        <t:response>
+            <t:select path='//admin:GetLicenseInfoResponse/admin:expiration' attr="date" set="trial_end_date"/>
+	</t:response>
+    </t:test>
+</t:test_case>
+
+<t:test_case testcaseid="upgrade_create_account_01" type="always" >
+    <t:objective>Create the upgrade test accounts</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${acct_upgrade1.name}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+    </t:test>  
+
+	<t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${acct_upgrade1.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="acct_upgrade1.id"/>
+                        <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct1.server"/>
+		</t:response>
+	</t:test>
+
+    <t:test >
+        <t:request>
+            <DeleteAccountRequest xmlns="urn:zimbraAdmin">
+                <id>${acct_upgrade1.id}</id>
+            </DeleteAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:DeleteAccountResponse"/>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${acct_upgrade1.name}</name>
+                <password>${defaultpassword.value}</password>
+                <!--a n="ou">${trial_end_date}</a-->
+                <a n="zimbraNotes">${trial_end_date}</a>
+            </CreateAccountRequest>
+        </t:request>
+		<t:response>
+			<t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="acct_upgrade1.id"/>
+                        <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct1.server"/>
+		</t:response>
+    </t:test>  
+
+    <t:test >
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${acct_upgrade2.name}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+    </t:test>  
+
+	<t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${acct_upgrade2.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="acct_upgrade2.id"/>
+                        <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct2.server"/>
+		</t:response>
+	</t:test>
+
+    <t:test >
+        <t:request>
+            <DeleteAccountRequest xmlns="urn:zimbraAdmin">
+                <id>${acct_upgrade2.id}</id>
+            </DeleteAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:DeleteAccountResponse"/>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${acct_upgrade2.name}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+		<t:response>
+			<t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="acct_upgrade2.id"/>
+		</t:response>
+    </t:test>  
+
+
+</t:test_case>
+
+
+<t:test_case testcaseid="upgrade_modify_account_01" type="smoke" >
+    <t:objective>Modify account 1 with different settings</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+	<t:test >
+		<t:request>
+			<ModifyAccountRequest xmlns="urn:zimbraAdmin">
+				  <id>${acct_upgrade2.id}</id>
+				    <a n="zimbraFeatureCalendarEnabled">TRUE</a>
+				    <a n="zimbraPasswordModifiedTime">20050529053842Z</a>
+				    <a n="zimbraPrefMailInitialSearch">in:inbox</a>
+				    <a n="zimbraPop3Enabled">TRUE</a>
+				    <a n="zimbraImapEnabled">TRUE</a>
+				    <a n="zimbraContactMaxNumEntries">0</a>
+				    <a n="zimbraNewMailNotificationBody">New message received</a>
+				    <a n="zimbraFeatureGalEnabled">TRUE</a>
+				    <a n="zimbraPrefSentMailFolder">sent</a>
+				    <a n="zimbraPasswordMaxAge">0</a>
+				    <a n="zimbraNewMailNotificationSubject">New message received</a>
+				    <a n="zimbraPasswordEnforceHistory">0</a>
+				    <a n="zimbraMailStatus">enabled</a>
+				    <a n="zimbraPasswordMinLength">6</a>
+				    <a n="zimbraMailTrashLifetime">7d</a>
+				    <a n="zimbraMailIdleSessionTimeout">0</a>
+				    <a n="zimbraFeatureTaggingEnabled">TRUE</a>
+				    <a n="zimbraMailQuota">0</a>
+				    <a n="givenName">yttyy</a>
+				    <a n="zimbraMailMessageLifetime">0</a>
+				    <a n="zimbraFeatureChangePasswordEnabled">TRUE</a>
+				    <a n="zimbraMailMinPollingInterval">2m</a>
+				    <a n="zimbraPrefReplyIncludeOriginalText">includeBody</a>
+				    <a n="zimbraPrefForwardIncludeOriginalText">includeBody</a>
+				    <a n="zimbraFeatureFiltersEnabled">TRUE</a>
+				    <a n="zimbraPrefSaveToSent">TRUE</a>
+				    <a n="zimbraAdminAuthTokenLifetime">12h</a>
+				    <a n="zimbraAttachmentsViewInHtmlOnly">FALSE</a>
+				    <a n="zimbraAttachmentsBlocked">FALSE</a>
+				    <a n="zimbraPrefMessageViewHtmlPreferred">TRUE</a>
+				    <a n="zimbraFeatureSavedSearchesEnabled">TRUE</a>
+				    <a n="displayName">yttyy admin</a>
+				    <a n="zimbraFeatureContactsEnabled">TRUE</a>
+				    <a n="zimbraPrefIncludeSpamInSearch">FALSE</a>
+				    <a n="zimbraPrefMailItemsPerPage">25</a>
+				    <a n="zimbraPasswordMinAge">0</a>
+				    <a n="zimbraPrefContactsPerPage">25</a>
+				    <a n="zimbraAccountStatus">active</a>
+				    <a n="zimbraMailSpamLifetime">7d</a>
+				    <a n="zimbraPrefAutoAddAddressEnabled">FALSE</a>
+				    <a n="zimbraPrefMailSignatureStyle">internet</a>
+				    <a n="zimbraFeatureConversationsEnabled">TRUE</a>
+				    <a n="zimbraFeatureAdvancedSearchEnabled">TRUE</a>
+				    <a n="zimbraPasswordLocked">FALSE</a>
+				    <a n="zimbraPrefGroupMailBy">conversation</a>
+				    <a n="zimbraPrefIncludeTrashInSearch">FALSE</a>
+				    <a n="zimbraFeatureInitialSearchPreferenceEnabled">TRUE</a>
+				    <a n="zimbraAuthTokenLifetime">12h</a>
+				    <a n="zimbraAttachmentsIndexingEnabled">TRUE</a>
+				    <a n="zimbraPasswordMaxLength">64</a>
+				    <a n="zimbraPrefDedupeMessagesSentToSelf">dedupeNone</a>
+				    <a n="zimbraPrefForwardReplyPrefixChar">&gt;</a>
+				    <a n="zimbraPrefMailPollingInterval">5m</a>
+				    <a n="sn">test.1117345120686.1</a>
+				    <a n="zimbraPrefContactsInitialView">cards</a>
+				    <a n="cn">test.1117345120686.1</a>
+				    <a n="zimbraPrefUseKeyboardShortcuts">FALSE</a>
+				    <a n="zimbraNewMailNotificationFrom">Notification &lt;notify@RECIPIENT_DOMAINgt;</a>
+		    </ModifyAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:ModifyAccountResponse/admin:account"/>
+        </t:response>
+    </t:test>
+  
+</t:test_case>
+
+  
+<t:test_case testcaseid="upgrade_modify_account_02" type="smoke" >
+    <t:objective>Modify account 1 with different data</t:objective>
+
+    <t:property name="server.zimbraAccount" value="${test_acct1.server}"/>
+
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${acct_upgrade1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+            </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:lifetime"  match="^\d+$"/>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <!-- find out which folder ID is the inbox -->
+    <t:test id="getFolderRequest">
+        <t:request>
+               <GetFolderRequest xmlns = "urn:zimbraMail"/>
+        </t:request>
+        <t:response>              
+            <t:select path="//mail:folder[@name='${globals.inbox}']" attr="id" set="inboxFolder.id"/>
+            <t:select path="//mail:folder[@name='${globals.trash}']" attr="id" set="trashFolder.id"/>
+            <t:select path="//mail:folder[@name='${globals.sent}']" attr="id" set="sentFolder.id"/>
+            <t:select path="//mail:folder[@name='${globals.spam}']" attr="id" set="spamFolder.id"/> 
+            <t:select path="//mail:folder[@name='${globals.drafts}']" attr="id" set="draftsFolder.id"/>
+        </t:response>
+    </t:test>
+
+    <t:test id="CreateFolderRequest1a" >
+        <t:request>
+            <CreateFolderRequest xmlns="urn:zimbraMail">
+                <folder name="${folder.name}" l="${inboxFolder.id}"/>
+            </CreateFolderRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateFolderResponse/mail:folder" attr="id" set="folder.id"/>
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <CreateContactRequest xmlns="urn:zimbraMail">
+                <cn>
+                    <a n="email">${contact.mailid}</a>
+                </cn>     
+            </CreateContactRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateContactResponse/mail:cn"/>
+        </t:response>
+    </t:test>
+    
+    <t:test>
+        <t:request>
+            <CreateTagRequest xmlns="urn:zimbraMail">
+                <tag name="${tag.name}" color="4" />
+            </CreateTagRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateTagResponse/mail:tag"/>
+        </t:response>
+    </t:test>
+
+	<t:test >
+	  <t:request>
+	    <SendMsgRequest xmlns="urn:zimbraMail">
+	      <m>
+			<e t="t" a='${acct_upgrade2.name}'/>
+			<su>${mail1.subject}</su>
+			<mp ct="text/plain">
+			    <content>${mail1.content}</content>
+			</mp>
+	     </m>
+	    </SendMsgRequest>
+	  </t:request>
+	  <t:response>
+	         <t:select path="//mail:SendMsgResponse"/>
+	   </t:response>
+	</t:test>
+
+    
+    <!-- Add a mail to the inbox-->
+<!--
+    <t:test>
+        <t:request>
+            <AddMsgRequest xmlns="urn:zimbraMail">
+                <m l="${inboxFolder.id}">
+                    <content>"${mail2.content}"</content>
+                </m>
+            </AddMsgRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:AddMsgResponse/mail:m"/>
+        </t:response>
+    </t:test>
+    -->
+
+    <t:test>
+        <t:request>
+            <CreateAppointmentRequest xmlns="urn:zimbraMail">
+                <m>
+                    <inv method="REQUEST" type="event" fb="B" transp="O" allDay="0" name="${appt1.subject}" loc="${appt1.location}">
+                        <at role="OPT" ptst="NE" rsvp="1" a="${acct_upgrade2.name}"/>
+                        <s d="${ICALTIME(+10h)}"/>  
+                        <e d="${ICALTIME(+11h)}"/>  
+                        <or a="${acct_upgrade1.name}"/>
+                    </inv>
+                    <e a="${acct_upgrade2.name}" t="t"/>
+                    <mp content-type="text/plain">
+                        <content>${appt1.content}</content>
+                    </mp>
+                    <su>${appt1.subject}</su>
+                </m>
+            </CreateAppointmentRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateAppointmentResponse"/>
+        </t:response>
+    </t:test>
+
+    <t:test id="folders_delegated1a">
+        <t:request>
+            <CreateFolderRequest xmlns="urn:zimbraMail">
+                <folder l="${inboxFolder.id}" name="${folder2.name}"/>
+            </CreateFolderRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateFolderResponse/mail:folder" attr="id" set="folder2.id"/>
+        </t:response>
+    </t:test>
+
+    <t:test id="folders_delegated1b" depends="folders_delegated1a">
+        <t:request>
+            <FolderActionRequest xmlns="urn:zimbraMail">
+                <action id="${folder2.id}" op="grant">
+                    <grant d="${acct_upgrade2.name}" gt="usr" perm="r" inh="1"/>
+                </action>
+            </FolderActionRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:FolderActionResponse/mail:action"/>
+        </t:response>
+    </t:test>
+    
+</t:test_case>
+
+<t:test_case testcaseid="upgrade_modify_server_01" type="smoke" >
+    <t:objective>Modify server settings</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test id = "CreateCosRequest1a">
+        <t:request>
+            <CreateCosRequest xmlns="urn:zimbraAdmin">
+                <name xmlns="">${COS.name}</name>        
+            </CreateCosRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:CreateCosResponse/admin:cos" attr="id" set="cos.id"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <CreateDistributionListRequest xmlns="urn:zimbraAdmin">
+                <name>${DL.name}</name>
+                <a n="description">A test distribution list</a>
+            </CreateDistributionListRequest>
+        </t:request>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <GetDistributionListRequest xmlns="urn:zimbraAdmin">
+                <dl by="name">${DL.name}</dl>
+            </GetDistributionListRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetDistributionListResponse/admin:dl" attr="id" set="distributionList.id"/>
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${dlMember.name}</name>
+                <password>${defaultpassword.value}</password>
+                <a n="zimbraCOSId">${cos.id}</a>
+            </CreateAccountRequest>
+        </t:request>
+    </t:test>  
+           
+    <t:test >
+        <t:request>
+            <AddDistributionListMemberRequest xmlns="urn:zimbraAdmin">
+                <id>${distributionList.id}</id>
+                <dlm>${dlMember.name}</dlm>
+            </AddDistributionListMemberRequest>
+        </t:request>
+    </t:test>
+ 
+	<t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${dlMember.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id" set="dlMember.id"/>
+		</t:response>
+	</t:test>
+
+   <t:test>
+        <t:request>
+            <AddAccountAliasRequest xmlns="urn:zimbraAdmin">
+                <id>${dlMember.id}</id>
+                <alias>${alias.name}</alias>
+            </AddAccountAliasRequest>
+        </t:request>
+    </t:test>  
+
+    <t:test id="CreateDomainRequest0a">
+        <t:request>
+            <CreateDomainRequest xmlns="urn:zimbraAdmin">
+                <name>${domainA.name}</name>
+            </CreateDomainRequest>
+        </t:request>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <ModifyConfigRequest  xmlns="urn:zimbraAdmin">
+                <!-- should add all config settings here -->
+                <a n="zimbraGalMaxResults">100</a>
+            </ModifyConfigRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:ModifyConfigResponse"/>
+        </t:response>
+    </t:test> 
+
+    <t:test required="true">
+        <t:request>
+            <CreateServerRequest xmlns="urn:zimbraAdmin">
+                <name>${server.name}</name>
+                <a n="zimbraNotes">${server.notes}</a>
+                <a n="description">${server.desc}</a>
+            </CreateServerRequest>
+        </t:request>
+    </t:test>
+
+    <t:system command="mkdir" parms="${tempdir}"/>
+    <t:system command="chmod" parms="777 ${tempdir}"/>
+    <t:system command="mkdir" parms="${basedir}"/>
+    <t:system command="chmod" parms="777 ${basedir}"/>
+    <t:property name="rootpath" value="${basedir}/rootpath${COUNTER}${TIME}"/>
+    <t:system command="mkdir" parms="${rootpath}"/>
+    <t:system command="chmod" parms="777 ${rootpath}"/>
+
+    <t:test>
+        <t:request>
+            <CreateVolumeRequest xmlns="urn:zimbraAdmin">
+                <volume type= "1" name= "${volume.name}" rootpath= "${rootpath}" mgbits= "8" mbits= "12" fgbits= "8" fbits="12" compressBlobs="0" compressionThreshold="4096"/>
+            </CreateVolumeRequest>
+        </t:request>
+    </t:test>
+
+</t:test_case>
+
+
+</t:tests>
+

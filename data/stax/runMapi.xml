@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>
+    
+    <defaultcall function="runMapi"/>
+    
+    <function name="mapiTest" scope="local"> <!-- Execute some test-->
+        <function-map-args>
+            
+            <function-required-arg name="sut">
+            </function-required-arg>
+            
+            <function-required-arg name="areas">
+            </function-required-arg>
+            
+            <function-required-arg name="bits">
+            </function-required-arg>
+            
+            <function-required-arg name="machine">
+            </function-required-arg>
+            
+            <function-required-arg name="logDir">
+            </function-required-arg>
+            
+            <function-optional-arg name="mapiMsi" default="'NONE'"> msi to be used by run mapi test </function-optional-arg>
+            
+        </function-map-args>
+        
+        <sequence>
+            <script> rName = "MAPI EXECUTE %s"%areas</script>
+            <script> rDirectory = 'C:\opt\qa\mapivalidator\data\mapivalidator\outlookClient'</script>
+            <log>'Run MAPI with sut %s machine %s bits %s rDirectory %s logDir %s' %(sut, machine, bits, rDirectory, logDir)</log>
+             <script>logDirEscape = logDir.replace("\\", "\\\\")</script>
+             <process name="'Maniuplate property file'">
+                        <location>machine</location>
+                        <command mode="'shell'">'echo'</command>
+                        <workdir>'C:\opt\qa'</workdir>
+                        <parms>'log4j.appender.logfile.File=%sstaf.txt'%logDirEscape</parms>
+                        <stdout mode="'append'">'C:\opt\qa\mapivalidator\conf\log4jMAPI.properties'</stdout>
+             </process>
+        
+                <if expr="mapiMsi=='NONE'">
+                    <sequence>
+                        <log>'No msi'</log>
+                        <stafcmd name="rName">
+                            <location>machine</location>
+                            <service>'Mapi'</service>
+                            <request>'EXECUTE %s DIRECTORY %s ZIMBRAQAROOT C:\opt\qa\mapivalidator BITS %s MSI LOG %s LOG4j C:\opt\qa\mapivalidator\conf\log4jMAPI.properties' % (sut, rDirectory, bits, logDir)</request>
+                        </stafcmd>
+                    </sequence>
+                    <else>
+                        <sequence>
+                            <log>'msi is %s' % mapiMsi</log>
+                            <stafcmd name="rName">
+                                <location>machine</location>
+                                <service>'Mapi'</service>
+                                <request>'EXECUTE %s MSI %s DIRECTORY %s ZIMBRAQAROOT C:\opt\qa\mapivalidator BITS %s LOG %s LOG4j C:\opt\qa\mapivalidator\conf\log4jMAPI.properties' % (sut, mapiMsi, rDirectory, bits, logDir)</request>
+                            </stafcmd>
+                        </sequence>
+                    </else>
+                </if>
+         
+            <script>soapResult = STAFResult</script>
+            <return>STAFResult</return>
+        </sequence>
+        
+    </function>
+    
+    <function name="runMapi" scope="local">
+        
+        <function-prolog> Main entry point to set up global variables </function-prolog>
+        
+        <function-map-args>
+            
+            <function-optional-arg name="sut" default="'qa04'"> Name of the System Under Test (localhost) </function-optional-arg>
+            
+            <function-optional-arg name="areas" default="'NONE'"> Name of the test areas to execute, ie. calendar, mail, etc. (None) </function-optional-arg>
+            
+            <function-optional-arg name="logareas" default="'INSTALL'"> path name for areas for logging purpose </function-optional-arg>
+            
+            <function-optional-arg name="bits" default="'network'"> Name of the Zimbra bits that are running on the SUT (network) </function-optional-arg>
+            
+            <function-optional-arg name="machine" default="'qa04'"> Name of the target machine </function-optional-arg>
+            
+            <function-optional-arg name="OS" default="'RHEL4'"> Name of the operation system </function-optional-arg>
+            
+            <function-optional-arg name="build" default="'foo'"> Name of the build </function-optional-arg>
+            
+            <function-optional-arg name="branch" default="'mebranch'"> Name of the branch </function-optional-arg>
+            
+            <function-optional-arg name="timestamp" default="'whenever'"> Time Stamp </function-optional-arg>
+            
+            <function-optional-arg name="needNotify" default="'1'"> Is notification required? 1= yes others = no </function-optional-arg>
+            
+            <function-optional-arg name="notificationAlias" default="'qa-automation@zimbra.com'"> This is email notification alias </function-optional-arg>
+            
+            <function-optional-arg name="smokeOrFull" default="'1'"> Run Smoke or Full test, 1 == smoke 0 == full </function-optional-arg>
+            
+            <function-optional-arg name="needSetUp" default="'1'"> Need setting up test ware </function-optional-arg>
+            
+            <function-optional-arg name="mapiMsi" default="'NONE'"> msi to be used by run mapi test </function-optional-arg>
+			
+			<function-optional-arg name="tms" default="'tms.lab.zimbra.com'">Location of TMS server </function-optional-arg>
+            <function-optional-arg name="tmsStax" default="'tms-stax.lab.zimbra.com'">Location of STAX server </function-optional-arg>
+            
+        </function-map-args>
+        
+        <sequence>
+            <log>'NT machine reboot regardless'</log>
+            <import machine="tmsStax" file="'/opt/qa/%s/staf/rebootNT.xml'%(branch)"/>
+            <script> machine = 'qapc03mapi-frank' </script>
+            <call function="'rebootNT'"> {'nmachine' : 'qapc03mapi-frank' } </call>
+                  
+            <stafcmd name="'Remove MAPI Service'">
+                <location>machine</location>
+                <service>'service'</service>
+                <request>'REMOVE SERVICE MAPI'</request>
+            </stafcmd>
+            
+            <if expr="needSetUp=='1'">
+                <sequence>
+                    <log>'Set up MAPI testware'</log>
+                    <process name="'Remove Current Testware'">
+                        <location>machine</location>
+                        <command mode="'shell'">'rmdir'</command>
+                        <workdir>'C:\opt\qa'</workdir>
+                        <parms>'C:\opt\qa\mapivalidator /S /Q'</parms>
+                    </process>
+                    
+                    <script>origDir = "/qa/%s/mapivalidator/" % branch</script>
+                    <script>cutDir = "2"</script>
+                    <stafcmd>
+                        <location>tms</location>
+                        <service>'fs'</service>
+                        <request>'query entry /opt%s'%origDir</request>
+                    </stafcmd>
+                    <if expr="RC != 0">
+                        <sequence>    
+                            <script>origDir = "/qa/mapivalidator/"</script>
+                            <script>cutDir ="1"</script>
+                        </sequence>
+                    </if>
+                    <process name="'Copy Testware'">
+                        <location>machine</location>
+                        <command>'wget'</command>
+                        <workdir>'C:\opt\qa'</workdir>
+                        <parms>'--no-proxy -r http://%s%s  --level=0 - --waitretry=1 --tries=0 -q -nH -np -P C:\opt\qa --cut-dir=%s -p' % (tms, origDir, cutDir)</parms>
+                    </process>                    
+                    <process name="'Make tmp'">
+                        <location>machine</location>
+                        <command mode="'shell'">'mkdir'</command>
+                        <workdir>'/opt/qa/mapivalidator'</workdir>
+                        <parms>'mkdir /opt/qa/mapivalidator/tmp'</parms>
+                    </process>
+                </sequence>
+            </if>
+          
+            <stafcmd name="'Sleep 10 seconds'">
+                <location>"tms"</location>
+                <service>'DELAY'</service>
+                <request>'DELAY 10000'</request>
+            </stafcmd>
+            
+            <stafcmd name="'Add MAPI Service'">
+                <location>machine</location>
+                <service>'service'</service>
+                <request>'ADD SERVICE MAPI LIBRARY JSTAF EXECUTE /opt/qa/mapivalidator/bin/zimbrastaf.jar OPTION JVMName=MapiJVM OPTION J2=-Xmx512m'</request>
+            </stafcmd>
+            
+            <stafcmd name="'Sleep 10 seconds'">
+                <location>tmsStax</location>
+                <service>'DELAY'</service>
+                <request>'DELAY 10000'</request>
+            </stafcmd>
+            
+            <if expr="areas=='NONE'">
+                <sequence>
+                    <if expr="smokeOrFull == '1'">
+                        <sequence>
+                            <script>areas="SMOKE"</script>
+                        </sequence>
+                        <else>
+                            <sequence>
+                                <script>areas="FULL"</script>
+                            </sequence>
+                        </else>
+                    </if>
+                    <script>logareas = areas.lower()</script>
+                    <script>areas = "SUITE %s" % (areas)</script>
+                </sequence>
+            </if>
+            
+            <script>logDir = "/opt/qa/testlogs/%s/%s/%s/mapi/%s/%s/%s/" % (OS, branch, build, logareas, timestamp, sut)</script>
+            <script>NTlogDir = 'T:\\%s\\%s\\%s\\mapi\\%s\\%s\\%s\\' % (OS, branch, build, logareas, timestamp, sut)</script>
+            <script>meURL = "http://%s/testlogs/%s/%s/%s/mapi/%s/%s/%s/ " % (tms, OS, branch, build, logareas, timestamp, sut)</script>
+            <process name="'Create Log Directory'">
+                <location>tms</location>
+                <command>'/bin/mkdir'</command>
+                <workdir>'/opt/qa'</workdir>
+                <parms>'-p %s'% (logDir)</parms>
+            </process>
+            <script>mapiResult='timeOut'</script>
+            <timer duration="'100m'">
+                <sequence>
+                    <call function="'mapiTest'"> {'mapiMsi': mapiMsi, 'sut' : sut, 'machine' : machine, 'areas' : areas, 'bits' : bits, 'logDir' : NTlogDir} </call>
+                    <script>mapiResult= STAXResult.replace("\\", "\\\\")</script>
+                </sequence>
+            </timer>
+            <script>topdir='mapivalidator'</script>
+            <if expr="logareas == 'upgrade'">
+                <script>topdir = 'zimbraInstall'</script>
+            </if>
+
+            <log>'Run mapi report'</log>
+            <script>reportcmd = "/opt/qa/%s/soapvalidator/bin/runreports.sh" % branch</script>
+            <stafcmd>
+                <location>'tms'</location>
+                <service>'fs'</service>
+                <request>'query entry %s'%reportcmd</request>
+            </stafcmd>
+            <if expr="RC != 0">
+                <script>reportcmd = "/opt/qa/soapvalidator/bin/runreports.sh"</script>
+            </if>
+            
+            <process name="'Run Generation Logic'">
+                <location>'tms'</location>
+                <command>'/bin/env'</command>
+                <parms>'perl %s %s%s' % (reportcmd, logDir, topdir)</parms>
+                <workdir>'%s' % logDir</workdir>
+                <stdout>'%sreportlog.txt' % logDir</stdout>
+            </process>
+            
+            <stafcmd name="'Remove MAPI Service'">
+                <location>machine</location>
+                <service>'service'</service>
+                <request>'REMOVE SERVICE MAPI'</request>
+            </stafcmd>
+            
+            <script>omessage = 'Build %s tested on machine %s. Log file is at %s\n%s' % (build, machine, meURL, mapiResult)</script>
+            
+            <if expr="needNotify == '1'">
+                <sequence>
+                    <log message="1">'Publish Result'</log>      
+                    <script>mlogareas = logareas.upper()</script>               
+                    <process name="'Test Summary'">
+                        <location>tms</location>
+                        <command>'/bin/env'</command>
+                        <workdir>logDir</workdir>
+                        <parms>'ruby /opt/qa/%s/genesis/reportResult.rb testsummary.txt MAPI %s %s %s %s %s'% (branch, OS, build, branch, mlogareas, meURL)</parms>
+                    </process>    
+                    <log>'Get report File'</log>
+                    <stafcmd>
+                        <location>machine</location>
+                        <service>'fs'</service>
+                        <request>'GET FILE %sBugReports\\BugReport.txt'% (NTlogDir)</request>
+                    </stafcmd>
+                    <script>mapires=STAFResult</script>
+                    <script>omessage="%s\n%s"%(omessage, mapires)</script>
+                    <log>'Send out notificaiton'</log>
+                    <timer duration="'5m'">
+                        <stafcmd name="'Send Completion Email'">
+                            <location>tmsStax</location>
+                            <service>'EMAIL'</service>
+                            <request>r'SEND TO %s FROM qa-tms@zimbra.com message "%s" SUBJECT "%s %s Mapi %s completed"'% (notificationAlias, omessage, OS, branch, logareas)</request>
+                        </stafcmd>
+                    </timer>
+                </sequence>
+            </if>
+            
+            <return>omessage</return>
+        </sequence>
+        
+    </function>
+    
+</stax>

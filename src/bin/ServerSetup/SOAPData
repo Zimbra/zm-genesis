@@ -1,0 +1,62 @@
+# Domains
+#
+# Create a domain called testsearch.com
+DOMAIN	CREATE	domain00	testsearch.com
+DOMAIN	CREATE	domain03	blockextension.com
+
+# Accounts
+#
+# Create an account with name=soap01@testsearch.com, passwd=test123
+#ACCOUNT	CREATE	account20	soap20 test123 domain00
+#ACCOUNT	CREATE	account21	soap21 test123 domain00
+
+
+
+
+
+#ACCOUNT	CREATE	blockextension01		blockextension01 test123 domain03
+
+
+
+# Emails
+#
+# Add all messages in data/TestMailRaw/email01 to soap01@testsearch.com
+#EMAIL	INJECT	email20		data/TestMailRaw/email20 account20
+#EMAIL	INJECT	email21		data/TestMailRaw/email21 account21
+
+
+	# TIME_OFFSET: Modify the X-Zimbra-Received to (now)-X seconds for all emails
+	# 86400 = 1 day
+	# 518400 = 6 days
+	# 691200 = 8 days
+	# 2592000 = 30 days
+	# 2764800 = 32 days
+
+# 2400 = 1 hour - 40 mins
+# 12000 = 4 hr - 40 mins
+# 84000 = 1 day - 40 mins
+# 170400 = 2 day - 40 mins
+# 602400 = 7 day - 40 mins
+# 1207200 = 14 day - 40 mins
+# 2416800 = 28 day - 40 mins
+# 4836000 = 56 days - 40 mins
+# 31533600 = 365 day - 40 min
+# 63069600 = 730 day - 40 mins
+#EMAIL	TIME_OFFSET soap09 data/TestMailRaw/email09/email09A 2400  	account09
+
+
+# Add all messages in data/TestMailRaw/blockextension to blockextension01@blockextension.com
+#EMAIL	INJECT	email01		data/TestMailRaw/blockextension blockextension01
+
+
+# Tags
+#
+# Create a tag with name=tagtext01, color=orange in soap01@testsearch.com
+#TAG	CREATE	tag01		tagtext01 0 account01
+
+#Folders
+# Create a folder with name=foldertext01, Parent=USER_ROOT in soap01@testsearch.com
+#FOLDER	CREATE	folder01	foldertext01 1 account01
+
+
+

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <!--cluster name="qa-cluster"-->
+            <host name="localhost">
+                <!--zimbrahost name="localhost"/-->
+                <package name="zimbra-ldap">
+                    <option name="LDAPPASS">
+                        test123
+                    </option>
+                    <option name="LDAPADMINPASS">
+                        zimbra
+                    </option>
+                    <option name="LDAPPOSTPASS">
+                        test123
+                    </option>
+                    <option name="LDAPAMAVISPASS">
+                        test123
+                    </option>
+                    <option name="LDAPREPLPASS">
+                        test123
+                    </option>
+                </package>
+                <package name="zimbra-logger">
+                    <option name="enabled">
+                        Enabled
+                    </option>
+                </package>
+                <package name="zimbra-mta">
+                    <option name="blahmta">
+                        foomta
+                    </option>
+                </package>
+                <package name="zimbra-snmp">
+                    <option name="blahsnmp">
+                        foosnmp
+                    </option>
+                </package>
+                <package name="zimbra-store">
+                    <option name="ADMINPASS">
+                        test123
+                    </option>
+                    <option name="USEIMAPPROXY">
+                        no
+                    </option>
+                </package>
+                <package name="zimbra-spell">
+                    <option name="blahspell">
+                        foospell
+                    </option>
+                </package>
+                <package name="zimbra-apache">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <!--package name="zimbra-proxy">
+                    <option name="proxyoption">
+                        foo
+                    </option>
+    
+                </package-->
+                <package name="zimbra-archiving">
+                    <option name="RUNARCHIVING">
+                        yes
+                    </option>
+                </package>
+                <package name="zimbra-convertd">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-memcached">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <option name="ENABLEDEFAULTBACKUP">
+                    no
+                </option>
+                <!-- 12=CST, 5=PST -->
+                <!--option name="zimbraPrefTimeZoneId">
+                    12
+                </option-->
+                <option name="zimbraPrefTimeZoneName">
+                    America/Chicago
+                </option>
+                <!-- missing/yes/no (yes=continue, no=stop) -->
+                <option name="beta-support">
+                    yes
+                </option>
+            </host>
+        <!--/cluster-->
+    </config>
+    <plugins>
+        <plugin name="certInstall">
+            <option name="plugs">postInstall,preUpgrade</option>
+            <option name="host">localhost</option>
+        </plugin>
+        <!--plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms localhost zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin-->
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">if [ -f /opt/zimbra/bin/zmlicense ]; then /opt/zimbra/bin/zmlicense</option>
+            <option name="parms">-a; fi</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">wget --no-proxy --no-check-certificate</option>
+            <option name="parms">-O conf/krb5.keytab http://zqa-tms.eng.vmware.com/setup/krb/localhost.krb5.keytab</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraMtaRelayHost zqa-smtp.eng.vmware.com; /opt/zimbra/bin/zmmtactl restart</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ca globaladmin@localhost test123 zimbraAdminConsoleUIComponents cartBlancheUI description \"Global QA Admin Account\" zimbraIsAdminAccount TRUE</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraHttpDosFilterMaxRequestsPerSec 200; /opt/zimbra/bin/zmmailboxdctl restart</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraInvalidLoginFilterMaxFailedLogin 0</option>
+        </plugin>
+        <plugin name="runGenesisTests">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">localhost</option>
+            <option name="test">install/modeset.rb</option>
+        </plugin>
+    </plugins>
+</plan>

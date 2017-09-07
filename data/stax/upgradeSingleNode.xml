@@ -1,0 +1,1706 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>  
+   
+    <!-- voodoo magic don't touch this if you dont know what you doing -->
+    <script>installTemplate = "\"\nY\nY\nY\nY\nY\nY\nY\nNo\n\n6\n4\ntest123\nr\na\nYes\nconfigBackup\nYes\nNo\n\""</script>
+    <!--script>installQa14 = "\"\nN\nN\nY\nY\nN\nN\nY\n2\nqa11.liquidsys.com\n4\nzimbra\n5\n2\nqa12.liquidsys.com\nr\na\nYes\nconfigBackup\nYes\n\n\""</script-->
+    <!--script>upgradeTemplate = "\"\nY\nY\nN\nY\na\nYes\nconfigBackup\nYes\nNo\n\""</script-->
+    <!--script>upgradeTemplate = "\"\nY\nY\nY\na\nYes\nconfigBackup\nYes\nNo\n\""</script-->
+    <script>upgradeTemplate = "\"\nY\nY\nNo\nNo\n\""</script>
+    <script>upgradeTemplateNet = "\"Y\n\nY\nY\nNo\nNo\n\""</script>
+    <script>confirm = "Y\n"</script>
+    <script>failed = "FAILED"</script>
+    <script>passed = "PASSED"</script>
+    <script>stopTimeout = "3m"</script>
+    <script>machineList=['qa11']</script>
+    <script>configBase=[installTemplate]</script>
+    <script>configUpgrade=[upgradeTemplate]</script>
+    <script>configList=STAXGlobal(configBase)</script>
+    <script>configFile="/tmp/config.txt"</script>
+    <script>outputFile=STAXGlobal(['/tmp/install.out'])</script>
+    <script>res=STAXGlobal([passed])</script>
+    <!--script>bURL = "http://build.liquidsys.com:8000/links/RHEL4/CRAY2/20060124111816_NETWORK/ZimbraBuild/i386/"</script-->
+    <!-- GA build -->
+    <!--script>bURL = "http://build.liquidsys.com:8000/links/RHEL4/CRAY/20060209093602_NETWORK/ZimbraBuild/i386/"</script-->
+    <script>bURL = "http://build.liquidsys.com:8000/links/RHEL4/CRAY/20060206091212_NETWORK/ZimbraBuild/i386/"</script>
+    <!-- 3.0.1 build -->
+    <!--script>tURL = "http://build.liquidsys.com:8000/links/RHEL4/CRAY/20060216140016_NETWORK/ZimbraBuild/i386/"</script-->
+    <script>tURL = "http://build.liquidsys.com:8000/links/RHEL4/main/20060227121054_NETWORK/ZimbraBuild/i386/"</script>
+    <script>maxSize=STAXGlobal([100000])</script>
+    <script>
+        releaseID=STAXGlobal({'32Beta':    '20060628104608',
+                              '4.0.0_RC1': '20060814122217',
+                              '4.0.1_GA' : '20060906182033',
+                              '4.0.2_GA' : '20060922120101',
+                              '4.0.3_GA' : '20061016133001',
+                              '4.0.4_GA' : '20061115171001',
+                              '4.0.5_GA' : '20061218020101',
+                              '4.5.0_RC1': '20061220100001',
+                              '4.5.0_RC2': '20070104193501',
+                              '4.5.0_GA' : '20070115190001'})
+    </script>
+    <script>
+        gMachines=STAXGlobal({'qa00':   'qa00.liquidsys.com',
+                              'build' : 'build.liquidsys.com'})
+    </script>
+
+    <script>
+       from java.net import InetAddress
+       from java.net import UnknownHostException
+
+       for h in ['qa00', 'build']:
+          try:
+             inetAddress = InetAddress.getByName(h).getCanonicalHostName()
+             gMachines[h] = inetAddress
+          except UnknownHostException, uhe:
+             pass
+    </script>    
+
+    <script>dbg=STAXGlobal(['off'])</script>
+
+    <defaultcall function="runUpgrade"/>
+
+    <script>notificationAlias="vstamatoiu@zimbra.com"</script>
+    <!--defaultcall function="install"/-->
+    <script>STAFServicesDir='{STAF/Config/STAFRoot}/services/lib/'</script>
+
+
+    <function name="runUpgrade" scope="local">
+        <function-prolog>
+            Main entry point to set up global variables
+        </function-prolog>
+        
+        <function-map-args>
+                
+            <function-optional-arg name="sut" default="'localhost'">
+                Name of the System Under Test (localhost)
+            </function-optional-arg>  
+
+            <function-optional-arg name="bits" default="'network'">
+                Name of the Zimbra bits that are running on the SUT (network)
+            </function-optional-arg>  
+
+            <function-optional-arg name="machine" default="'qa03'">
+                Name of the target machine
+            </function-optional-arg>
+
+            <function-optional-arg name="needReboot" default="'1'">
+                Is rebooting of the machine required? 1= yes others = no
+            </function-optional-arg>       
+
+            <function-optional-arg name="OS" default="'RHEL4'">
+                Name of the operation system
+            </function-optional-arg>        
+
+            <function-optional-arg name="build" default="'foo'">
+                Name of the build
+            </function-optional-arg>        
+
+            <function-optional-arg name="branch" default="'mebranch'">
+                Name of the branch
+            </function-optional-arg>
+
+            <function-optional-arg name="timestamp" default="'whenever'">
+                Time Stamp
+            </function-optional-arg>
+
+            <function-optional-arg name="needNotify" default="'1'">
+                Is notification required? 1= yes others = no
+            </function-optional-arg>  
+
+            <function-optional-arg name="notificationAlias" default="'qa-automation@zimbra.com'">
+                This is email notification alias
+            </function-optional-arg>  
+
+            <function-optional-arg name="smokeOrFull" default="'1'">
+                Run Smoke or Full test, 1 == smoke 0 == full 
+            </function-optional-arg>  
+
+            <function-optional-arg name="needSetUp" default="'1'">
+               Need setting up test ware
+            </function-optional-arg>
+
+            <function-optional-arg name="baseBuild" default="'bURL'">
+               Initial build
+            </function-optional-arg>
+
+            <function-optional-arg name="targetBuild" default="'tURL'">
+               Build to upgrade to
+            </function-optional-arg>
+
+            <function-optional-arg name="configuration" default="'/opt/qa/zimbraInstall/data/zimbraInstall/scriptInput/current/configSingleNodeTemplate.xml'">
+               Install configuration
+            </function-optional-arg>
+
+            <function-optional-arg name="zmsetupConfiguration" default="'zmsetupConfig.txt'">
+               Install configuration
+            </function-optional-arg>
+
+            <function-optional-arg name="pjobID" default="'-1'">
+                JobID to signal job termination
+            </function-optional-arg>
+
+        </function-map-args>
+
+        <sequence>
+            <script>STAXMessageLog=1</script>
+            <if expr="dbg[0] != 'on'">
+                <sequence>
+                    <script>
+                        branch = targetBuild.split('_')[-3]
+                        staxDir = '/opt/qa/' + branch + '/staf/'
+                    </script>
+	            <stafcmd>
+	                <location>gMachines['qa00']</location>
+	                <service>'fs'</service>
+	                <request>'query entry /opt%s'%staxDir</request>
+	            </stafcmd>
+	            <if expr="RC != STAFRC.Ok">
+	            	<script>
+                            srcDir = "/opt/qa/staf/"
+                        </script>
+	            </if>
+                    <import machine="gMachines['qa00']" file="srcDir + 'installUtils.xml'"/>
+                    <import machine="gMachines['qa00']" file="srcDir + 'configUtils.xml'"/>
+                </sequence>
+                <else>
+                    <sequence>
+                        <import machine="'qa11.liquidsys.com'" file="'/VS/zimbra/main/ZimbraQA/data/stax/installUtils.xml'"/>
+                        <import machine="'qa11.liquidsys.com'" file="'/VS/zimbra/main/ZimbraQA/data/stax/configUtils.xml'"/>
+                    </sequence>
+                </else>
+            </if>
+            <call function="'buildID'">{'uri':baseBuild}</call>
+            <script>s=STAXResult</script>
+            <call function="'buildID'">{'uri':targetBuild}</call>
+            <script>e=STAXResult</script>
+            <script>outputFile[0]="/tmp/install.out." + s</script>
+            <script>bURL=baseBuild</script>
+            <script>tURL=targetBuild</script>
+            <call function="'buildID'">{'uri':bURL}</call>
+            <script>s=STAXResult</script>
+            <call function="'buildID'">{'uri':tURL}</call>
+            <script>e=STAXResult</script>
+            <script>passfail=passed</script>
+            <script>
+                if baseBuild.lower().find('network') == -1:
+                    bits='open'
+                else:
+                    bits='network'
+                branch = baseBuild.split('_')[-3]
+            </script>
+            <!--iterate var="machine" in="machines">
+                <process name="'Generate install only template - ' + machine">
+                    <location>'qa11'</location>
+                    <command>'./genInstallTemplates.pl'</command>
+                    <workdir>'/VS/zimbra/main/ZimbraQA/data/zimbraInstall/shellScripts/utils'</workdir>
+                    <parms>' -file %s -host %s'% (configuration, machine)</parms>
+                    <stdout>'/tmp/install.out'</stdout>
+                    <stderr mode="'stdout'"/>
+                     
+                </process>
+                <log>'installTempl=%s'%STAXResult[0][0]</log>
+            </iterate-->
+            <!--#################
+                 create new config from configuration by replacing localhost with fqdn
+                #################-->
+            <script>machines=[machine]</script>
+            <!--call function="'getFqdnHostname'">machines[0]</call-->
+            <call function="'getDnsHostname'">machines[0]</call>
+            <script>fqdn = STAXResult</script>
+            <script>
+                import re
+                import os
+                f = open(configuration)
+                lines = f.readlines()
+                f.close()
+                needNewConfig = 0
+                for i in range(len(lines)):
+                   if lines[i].find('localhost') != -1:
+                      needNewConfig = 1
+                      lines[i] = lines[i].replace('localhost', fqdn)
+                if needNewConfig:
+                   toks = configuration.split(os.sep)
+                   configuration = '/tmp/' + toks[len(toks) - 1] + '.' + fqdn
+                   f = open(configuration, 'w')
+                   f.writelines(lines)
+                   f.close()
+            </script>
+            <call function="'getMachines'">{'file':configuration}</call>
+            <script>machines = STAXResult</script>
+            <script>installSwOnlyRes = passed</script>
+            <paralleliterate var="machine" in="machines">
+                <sequence>
+                    <process name="'Get base build'">
+                        <location>machine</location>
+                        <command>'cp'</command>
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'%s zcsfrom.tgz'%baseBuild</parms>
+                        <stdout>outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                         
+                    </process>
+                    <process name="'Get target build'">
+                        <location>machine</location>
+                        <command>'cp'</command>
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'%s zcsto.tgz'%targetBuild</parms>
+                        <stdout>'/tmp/install.out.%s'%e</stdout>
+                        <stderr mode="'stdout'"/>
+                         
+                    </process>
+                    <process name ="'Remove Configurations'">
+                        <location>machine</location>
+                        <command>'/bin/rm'</command>
+                        <workdir>'/tmp'</workdir>
+                        <parms>'-r -f /tmp/config.%s /tmp/config.%s"' % (s,e)</parms>
+                    </process>
+                    <call function="'genInstallTemplates'">
+                        {'file' : configuration,
+                         'machine' : machine
+                        }
+                    </call>
+                    <log>'machine %s config %s'%(machine, STAXResult)</log>
+                    <script>template=STAXResult</script>
+                    <if expr="template.startswith('error')">
+                        <return>template</return>
+                    </if>
+                    <call function="'uninstallSoftware'">
+                        {'machine'   : machine,
+                         'buildUri'  : baseBuild,
+                         'branch'    : branch,
+                         'timestamp' : timestamp,
+                         'needReboot': needReboot
+                        }
+                    </call>
+                    <call function="'installSoftware'">
+                        {'machine'  : machine,
+                         'installTemplate' : template,
+                         'branch' : branch,
+                         'timestamp' : timestamp,
+                         'buildUri' : baseBuild
+                        }
+                    </call>
+                    <if expr="(baseBuild.lower().find('cray') == -1) and (baseBuild.lower().find('network') != -1)">
+                        <call function="'getLicense'">
+                             {'machine': machine,
+                             'outputFile': '/tmp/install.out.' + s}
+                        </call>
+                    </if>
+                    <script>
+                        if STAXResult == failed:
+                           installSwOnlyRes = STAXResult
+                    </script>
+                    <log>'Install RC=%s, result=%s' % ( RC, installSwOnlyRes)</log>
+                </sequence>
+
+            </paralleliterate>
+             <!-- stop and report if error -->
+            <script>configFromRes = passed</script>
+            <script>res[0] = "\nInstall"</script>
+            <script>fromServStatRes = "\n"</script>
+            <script>statExitCode = 0</script>
+            <iterate var="machine" in="machines">
+                <sequence>
+                    <call function="'masqueradeURL'">
+                        {'machine' : machine,
+                         'URL' : 'www.zimbra.com'
+                        }
+                    </call>
+                    <if expr="STAXResult[0] != 0">
+                        <sequence>
+                            <script>msg = STAXResult[1]</script>
+                            <process name="'Log message - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/echo'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>msg</parms>
+                                <stdout mode="'append'">outputFile[0]</stdout>  
+                            </process>
+                        </sequence>
+                    </if>
+                    <call function="'genZmsetupTemplate'">
+                        {'file' : configuration,
+                         'machine' : machine,
+                         'template' : zmsetupConfiguration
+                        }
+                    </call>
+                    <script>template = STAXResult</script>
+                    <call function="'runZmsetup'">
+                        {'machine'  : machine,
+                         'timeout' : '30m',
+                         'config' : template
+                        }
+                    </call>
+                    <script>
+                        res[0] += "\n" + machine + " - zmsetup: "
+                        if STAXResult == failed:
+                            configFromRes = failed
+                            res[0] += failed
+                        else:
+                            res[0] += passed
+                    </script>
+                    <call function="'unmasqueradeURL'">
+                        {'machine' : machine,
+                         'URL' : 'www.zimbra.com'
+                        }
+                    </call>
+                    <if expr="STAXResult[0] != 0">
+                        <sequence>
+                            <script>msg = STAXResult[1]</script>
+                            <process name="'Log message - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/echo'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>msg</parms>
+                                <stdout mode="'append'">outputFile[0]</stdout>  
+                            </process>
+                        </sequence>
+                    </if>
+                    <process name="'save config - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/opt/zimbra'</workdir>
+                        <parms>'-l -c "cp `ls -t config.* | head -1` /tmp/config.%s"' % s</parms> 
+                        <stdout mode="'append'">'/tmp/install.out.%s'%s</stdout>
+                        <stderr mode="'stdout'"/>
+                         
+		    </process>
+                    <!-- bug 9616 -->
+                    <call function="'fixRedolog'">
+                        {'machine': machine,
+                         'outputFile': '/tmp/install.out.' + s}
+                    </call>
+                    <!-- #####################################################
+                         # don't check status on replica host, it fails for ldap only
+                         #####################################################-->
+                    <call function="'getLdapReplica'">configuration</call>
+                    <if expr="STAXResult != machine">
+                        <sequence>
+                            <call function="'zimbraStatus'">
+                                {'machine' : machine,
+                                'file'    : outputFile[0]}
+                            </call>
+                           <script>
+                               res[0] += "\n" + machine + " - server status: "
+                               if STAXResult[0] == 0:
+                                  res[0] += passed
+                               else:
+                                  res[0] += failed
+                                  statExitCode = STAXResult[0]
+                           </script>
+                        </sequence>
+                    </if>
+                </sequence>
+            </iterate>
+            <if expr="(configFromRes == passed) and (statExitCode == 0)">
+                <sequence>
+                    <!-- in multinode: enable remote syslogging, run zmsyslogsetup & zmupdateauthkeys -->
+                    <if expr="len(machines) > 1">
+                        <sequence>
+                            <call function="'getLoggerHost'">configuration</call>
+                            <script>
+                                loggerHost = STAXResult
+                            </script>
+                            <call function="'enableRemoteLogging'">
+                                {'machine': loggerHost,
+                                 'OS'     : OS}
+                            </call>
+                            <paralleliterate var="machine" in="machines">
+                                <sequence>
+                                    <process name="'zmupdateauthkeys - ' + machine">
+                                        <location>machine</location>
+                                        <command mode="'shell'">'su - zimbra -c "zmupdateauthkeys"'</command>
+                                        <workdir>'/opt/zimbra/bin'</workdir>
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                         
+                                    </process>
+                                    <process name="'zmsyslogsetup - ' + machine">
+                                        <location>machine</location>
+                                        <command mode="'shell'">'/opt/zimbra/bin/zmsyslogsetup'</command>
+                                        <workdir>'/opt/zimbra/bin'</workdir>
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                         
+                                    </process>
+                                </sequence>
+                            </paralleliterate>
+                        </sequence>
+                    </if>
+                    <!-- finish setup: ldap replication,...-->
+                    <call function="'getLdapReplica'">configuration</call>
+                    <if expr="STAXResult is not None">
+                        <sequence>
+                            <call function="'getLdapMaster'">configuration</call>
+                            <script>ldapMaster=STAXResult</script>
+                            <call function="'getFqdnHostname'">ldapMaster</call>
+                            <script>ldapMaster = STAXResult</script>
+                            <call function="'getLdapReplica'">configuration</call>
+                            <call function="'getFqdnHostname'">STAXResult</call>
+                            <script>ldapReplica = STAXResult</script>
+                            <!-- zmcreatecert-->
+                            <process name="'zmcreatecert - ' + ldapReplica">
+                                <location>ldapReplica</location>
+                                <command mode="'shell'">'su - zimbra -c "zmcreatecert"'</command>
+                                <workdir>'/opt/zimbra/bin'</workdir>
+                                <stdout mode="'append'">outputFile[0]</stdout>
+                                <stderr mode="'stdout'"/>
+                                 
+                            </process>
+                            <script>ldapMachines = [ldapMaster, ldapReplica]</script>
+                            <iterate var="machine" in="ldapMachines">
+                                <sequence>
+                                    <!-- stop services -->
+                                    <process name="'stop zimbra - ' + machine">
+                                        <location>machine</location>
+                                        <command mode="'shell'">'su - zimbra -c "zmcontrol stop"'</command>
+                                        <workdir>'/opt/zimbra/bin'</workdir>
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                         
+                                    </process>
+                                    <!-- zmldapenablereplica -->
+                                    <process name="'enable replica - ' + machine">
+                                        <location>machine</location>
+                                        <command mode="'shell'">'su - zimbra -c "libexec/zmldapenablereplica"'</command>
+                                        <workdir>'/opt/zimbra/bin'</workdir>
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                         
+                                    </process>
+                                </sequence>
+                            </iterate>
+                            <!-- start zimbra on master-->
+                            <process name="'start zimbra - ' + ldapMaster">
+                                <location>ldapMaster</location>
+                                <command mode="'shell'">'su - zimbra -c "zmcontrol start"'</command>
+                                <workdir>'/opt/zimbra/bin'</workdir>
+                                <stdout mode="'append'">outputFile[0]</stdout>
+                                <stderr mode="'stdout'"/>
+                                 
+                            </process>
+                            <if expr="baseBuild.split('_')[-2] &lt; releaseID['4.5.0_RC1']">
+                                <sequence>
+                                    <!-- on replica: stop zimbra, update ldap_url, start zimbra -->
+                                    <process name="'stop zimbra - ' + ldapReplica">
+                                        <location>ldapReplica</location>
+                                        <command mode="'shell'">'su - zimbra -c "zmcontrol stop"'</command>
+                                        <workdir>'/opt/zimbra/bin'</workdir>
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                         
+                                    </process>
+                                    <process name="'get ldap_url - ' + ldapMaster">
+                                        <location>ldapMaster</location>
+                                        <command mode="'shell'">'su - zimbra -c "zmlocalconfig ldap_url"'</command>
+                                        <workdir>'/opt/zimbra/bin'</workdir>
+                                        <stdout>'/tmp/ldapurl.txt'</stdout>
+                                        <stderr mode="'stdout'"/>
+                                        <returnstdout/>
+                                    </process>
+                                    <script>
+                                        import re
+                                        ldapUrl = STAXResult[0][1].split('=')
+                                        masterUrl = ldapUrl[1].strip().replace('\n','')
+                                        replicaUrl = masterUrl.replace(ldapMaster, ldapReplica)
+                                    </script>
+                                    <!-- ######################################
+                                         # set_ldap_url should be done by zmldapenablereplica
+                                         # CURRENTLY open bug 11118 -->
+                                    <process name="'set ldap_url - ' + ldapReplica">
+                                        <location>ldapReplica</location>
+                                        <command mode="'shell'">'su - zimbra -c "zmlocalconfig -e ldap_url=\\\"%s %s\\\""'%(replicaUrl, masterUrl)</command>
+                                        <workdir>'/opt/zimbra/bin'</workdir>
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                         
+                                    </process>
+                                </sequence>
+                            </if>
+                            <process name="'start zimbra - ' + ldapReplica">
+                                <location>ldapReplica</location>
+                                <command mode="'shell'">'su - zimbra -c "zmcontrol start"'</command>
+                                <workdir>'/opt/zimbra/bin'</workdir>
+                                <stdout mode="'append'">outputFile[0]</stdout>
+                                <stderr mode="'stdout'"/>
+                                 
+                            </process>
+                            <!--script>configFromRes = passed</script-->
+                            <script>res[0] += "\nAfter ldap replica:\n"</script>
+                            <script>statExitCode = 0</script>
+                            <iterate var="machine" in="machines">
+                                <sequence>
+                                    <call function="'zimbraStatus'">
+                                        {'machine' : machine,
+                                         'file'    : outputFile[0]}
+                                    </call>
+                                    <script>
+                                        res[0] += "\n" + machine + " - server status: "
+                                        if STAXResult[0] == 0:
+                                           res[0] += passed
+                                        else:
+                                           res[0] += failed
+                                           statExitCode = STAXResult[0]
+                                    </script>
+                                </sequence>
+                            </iterate>
+                        </sequence>
+                    </if>
+                </sequence>
+            </if>
+            <script>
+                if s == e:
+                   subj = "Installation of " + s
+                else:
+                   subj = "Upgrade " + s + "->" + e
+            </script>
+            <script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/%s/logs'%(OS, targetBuild.split('_')[-3], build, timestamp, sut.split('.')[0])</script>
+            <script>zimbraLogDir = 'http://%s/testlogs/%s/%s/%s/upgrade/%s/%s/logs'%(gMachines['qa00'], OS, targetBuild.split('_')[-3], build, timestamp, sut.split('.')[0])</script>
+            <paralleliterate var="machine" in="machines">
+                <sequence>
+                    <!--script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/%s/logs/'%(OS, branch, build, timestamp, machine)</script-->
+                    <process name ="'Create Install Log Directory'">
+                        <location>gMachines['qa00']</location> 
+                        <command>'/bin/mkdir'</command>
+                        <workdir>'/opt/qa'</workdir>
+                        <parms>'-p %s'%logDir</parms> 
+                    </process>
+                    <!--script>logList = ['/var/log/zimbra.log', '/opt/zimbra/log/zimbra.log', '/tmp/install.out.' + s]</script-->
+                    <call function="'getLogs'">{'buildName': baseBuild, 'machine': machine}</call>
+                    <script>logList = STAXResult</script>
+                    <iterate var="file" in="logList">
+                        <sequence>
+                            <process name="'Copy Install Logs'">
+                                <location>machine</location>
+                                <command>'/bin/cp'</command>
+                                <workdir>'/tmp'</workdir>
+                                <!--parms>'%s %s/%s.install.%s'% (file, logDir, machine, os.path.basename(file))</parms-->
+                                <parms>'%s %s/%s.install%s'% (file, logDir, machine, ".".join(file.split(os.sep)))</parms>
+                            </process>
+                            <process name="'Chmod'">
+                                <location>machine</location>
+                                <command>'/bin/env'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>'chmod -r o+r %s'%logDir</parms>
+                                <!--parms>'chmod -r o+r /opt/qa/testlogs/%s/%s/%s/install/%s/%s/one'% (OS, branch, build, timestamp, machine)</parms-->
+                            </process>
+                        </sequence> 
+                    </iterate> 
+                </sequence>
+            </paralleliterate>
+            <if expr="configFromRes == failed or statExitCode != 0 or s == e">
+                <sequence>
+                    <script>
+                        overall = passed
+                        if configFromRes == failed or statExitCode != 0:
+                           overall = failed
+                    </script>
+                    <call function="'endOfJob'">
+                        {'jobId':pjobID,
+                         'outputFile':outputFile[0]}
+                    </call>
+                    <!-- script>attachments="TEXTATTACHMENT /tmp/install.out." + s + " NOHEADER ATTACHMENTMACHINE %s"%machine</script-->
+                    <!--script>attachments="TEXTATTACHMENT /var/log/zimbra.log TEXTATTACHMENT /opt/zimbra/log/zimbra.log TEXTATTACHMENT /tmp/install.out.%s NOHEADER ATTACHMENTMACHINE %s" % (s, machine)</script-->
+                    <if expr="needNotify == '1'">
+                        <sequence>
+                            <stafcmd name="'Get logs list'">
+                                <location>gMachines['qa00']</location>
+                                <service>'FS'</service>
+                                <request>'list directory %s type f' % logDir</request>
+                            </stafcmd>
+                            <script>
+                                list=STAFResult
+                                attachments = ''
+                                for file in list:
+                                    attachments += 'BINARYATTACHMENT ' + logDir +os.sep + file + ' '
+                                attachments += 'NOHEADER ATTACHMENTMACHINE ' + gMachines['qa00']
+                            </script>
+                            <if expr="dbg[0] != 'on'">
+                                <script>attachments = ""</script>
+                            </if>
+<log>'email=SEND TO %s FROM qa-tms@zimbra.com %s message "Install build on %s: %s%s\nInstallation log files located at %s" SUBJECT "%s %s %s Completed"' % (notificationAlias, attachments, machines, overall, res[0], zimbraLogDir, OS, targetBuild.split('_')[-3], subj)</log>
+                            <timer duration="'20m'">
+                                <stafcmd name="'Send Completion Email'">
+                                    <location>gMachines['qa00']</location>
+                                    <service>'EMAIL'</service>
+                                    <request>'SEND TO %s FROM qa-tms@zimbra.com %s message "Install build on %s: %s%s\nInstallation log files located at %s" \
+                                              SUBJECT "%s %s %s Completed"' % (notificationAlias, attachments, machines, overall, res[0], zimbraLogDir, OS, targetBuild.split('_')[-3], subj)</request>
+                                </stafcmd>
+                            </timer> 
+                            <log>'sentres=%s'%STAXResult</log>
+                        </sequence>
+                    </if>   
+                    <return>passfail</return>
+                </sequence>
+            </if>
+
+            <script>
+                machine = sut
+            </script>
+            <if expr="needSetUp=='1'">
+                <sequence>     
+                    <log>'Set up zimbraInstall SOAP testware on %s'%machine</log>  
+                    <process name ="'Remove Current Testware - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/rm'</command>
+                        <workdir>'/opt/qa'</workdir>
+                        <parms>'-r -f zimbraInstall'</parms>
+                    </process>     
+                    <script>
+                        import re
+                        tokens = baseBuild.split('_')
+                        srcDir = '/qa/'
+                        if len(tokens) > 2:
+                           branch = tokens[-3]
+                           srcDir += branch + '/'
+                        srcDir += 'zimbraInstall/'
+                        cutDir = "2"
+                    </script>
+	            <stafcmd>
+	                <location>gMachines['qa00']</location>
+	                <service>'fs'</service>
+	                <request>'query entry /opt%s'%srcDir</request>
+	            </stafcmd>
+	            <if expr="RC != STAFRC.Ok">
+	            	<script>
+                            srcDir = "/qa/zimbraInstall/"
+                            cutDir = "1"
+                        </script>
+	            </if>
+                    <!--stafcmd name="'Copy zimbraInstall Testware'">
+                        <location>gMachines['qa00']</location>
+                        <service>'fs'</service>
+                        <request>'COPY DIRECTORY %s TODIRECTORY /opt/qa/zimbraInstall TOMACHINE %s RECURSE' % (srcDir, machine)</request>
+                    </stafcmd-->
+                    <process name="'Copy Testware'">
+                        <location>machine</location>
+                        <command>'wget'</command>
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'--no-proxy -r http://%s%s/  --level=0 - --waitretry=1 --tries=0 -q -nH -np -P /opt/qa  -R index.html --cut-dir=%s' % (gMachines['qa00'], srcDir, cutDir)</parms>
+                    </process>   
+                </sequence>
+            </if>
+
+            <!-- *************************
+                 * run pre upgrade tests *
+                 ************************* -->
+            <script>pars=['--bits', bits, '--machine', machine, '--OS', OS, '--build', build, '--branch', branch,\
+                          '--baseBuild', baseBuild, '--targetBuild', targetBuild]</script>
+            <call function="'runShellScripts'">
+                {'machine':machine,
+                 'directory':'/opt/qa/zimbraInstall/data/zimbraInstall/shellScripts/preUpgrade',
+                 'parameters':pars,
+                 'log':outputFile[0],
+                 'ignoreError':'1'}
+            </call>
+            <script>preShellScriptsRes=STAXResult</script>
+            <log>'runShellScripts result %s'%STAXResult</log>
+            <!-- TODO: ADD INFO FROM ALL MACHINES -->
+            <!--if expr="s == e or preShellScriptsRes == failed">
+                <sequence>
+                    <call function="'endOfJob'">
+                        {'jobId':pjobID,
+                         'outputFile':outputFile[0]}
+                    </call>
+                    <script>attachments="TEXTATTACHMENT " + outputFile[0] + " NOHEADER ATTACHMENTMACHINE %s"%machine</script>
+                    <log>'msg=SEND TO %s FROM qa-tms@zimbra.com %s message "cfg+Pre-upgrade: %s %s" \
+                                  SUBJECT "%s %s Upgrade %s->%s Completed"' % (notificationAlias, attachments, configFromRes, preShellScriptsRes, OS, branch, s, e)</log>
+                    <if expr="needNotify == '1'">
+                        <sequence>
+                            <if expr="dbg[0] != 'on'">
+                                <script>attachments = ""</script>
+                            </if>
+                            <timer duration="'20m'">
+                                <stafcmd name="'Send Completion Email'">
+                                    <location>gMachines['qa00']</location>
+                                    <service>'EMAIL'</service>
+                                    <request>'SEND TO %s FROM qa-tms@zimbra.com %s message "Install base build: %s\n%sPre-upgrade shell scrips: %s" \
+                                              SUBJECT "%s %s Upgrade %s->%s Completed"' % (notificationAlias, attachments, configFromRes, fromServStatRes, preShellScriptsRes, OS, branch, s, e)</request>
+                                </stafcmd>
+                            </timer> 
+                            <log>'sentres=%s'%STAXResult</log>
+                        </sequence>
+                    </if>   
+                    <return>preShellScriptsRes</return>
+                </sequence>
+            </if-->
+            <!--process name="'stop zimbra'">
+                <location>machine</location>
+                <command mode="'shell'">'su - zimbra -c "zmcontrol stop"'</command>
+                <workdir>'/opt/zimbra/bin'</workdir>
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>
+                 
+            </process>
+            <process name="'start zimbra'">
+                <location>machine</location>
+                <command mode="'shell'">'su - zimbra -c "zmcontrol start"'</command>
+                <workdir>'/opt/zimbra/bin'</workdir>
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>
+                 
+            </process-->
+            <script>STAFServicesDir='{STAF/Config/STAFRoot}/services/lib/'</script>
+            <stafcmd>
+                <location>gMachines['qa00']</location>
+                <service>'var'</service>
+                <request>'resolve string %s' % STAFServicesDir</request>
+            </stafcmd>
+            <if expr="RC == 0">
+                <sequence>
+                    <script>STAFServicesDir = STAFResult</script>
+                </sequence>
+                <else>
+                    <sequence>
+                        <log>
+                            'Error resolving STAFServicesDir: RC=%s, STAFResult=%s, \
+                             STAFServicesDir=%s' % (RC, STAFResult, STAFServicesDir)
+                        </log>
+                        <log>'Terminating job'</log>
+                        <terminate block="'main'"/>
+                    </sequence>
+                </else>
+            </if>
+            <script>
+                import re
+                platform = None
+                m = re.match('.*zcs_([^_]+)_.*', targetBuild)
+                if m is not None:
+                   platform = m.group(1).upper()
+                if platform.startswith('MACOSX'):
+                   soapxml = STAFServicesDir + 'runSoapOSX.xml'
+                else:
+                   soapxml = STAFServicesDir + 'runSoap.xml'
+            </script>
+            <if expr="platform is None">
+                <sequence>
+                   <log>'no install, platf=%s'%STAXResult</log>
+                   <return>None</return>
+                </sequence>
+            </if>
+            <!--script>soapxml='%s%s'%(STAFServicesDir,"runSoap.xml")</script-->
+            <import machine="gMachines['qa00']" file="soapxml"/>
+            <call function="'buildID'">{'uri':bURL}</call>
+            <script>s=STAXResult</script>
+            <call function="'buildID'">{'uri':tURL}</call>
+            <script>e=STAXResult</script>
+            <script>
+                if baseBuild.lower().find('network') == -1:
+                   bits='open'
+                else:
+                   bits='network'
+            </script>
+            <script>m = machine.split('.')</script>
+            <call function="'runSoap'">
+                {'sut'               : 'localhost',
+                 'areas'             : 'DIRECTORY /opt/qa/zimbraInstall/data/zimbraInstall/soapScripts/preUpgrade',
+                 'bits'              : bits,
+                 'machine'           : m[0],
+                 'OS'                : OS,
+                 'build'             : build,
+                 'logareas'          : 'upgrade',
+                 'branch'            : branch,
+                 'timestamp'         : timestamp,
+                 'needNotify'        : '0',
+                 'notificationAlias' : notificationAlias,
+                 'needSetUp'         : needSetUp }
+            </call>
+            <log>'soapTests RC=%s, res=%s' % (RC, STAXResult)</log>
+            <script>
+                import re
+                match=re.search(".*(Fail|Script Errors):([^0]).*", STAXResult)
+                result = 0
+                preSoapRes = passed
+                if match != None:
+                   result = match.group(2)
+                   preSoapRes = failed
+            </script>
+            <script>soapres=STAXResult</script>
+            <log>'found %s, sres=%s' % (result, soapres)</log>
+            <!--stafcmd>
+                <location>machine</location>
+                <service>'fs'</service>
+                <request>'GET FILE /tmp/soapdata.txt'</request>
+            </stafcmd>
+            <log>'get results RC=%s res=%s'%(RC,STAFResult)</log>
+            <script>soapres=STAFResult</script-->
+            <process name="'Append soap results'">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s'%soapres</parms>
+                <stdout mode="'append'">outputFile[0]</stdout>  
+            </process>
+            <script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/%s/logs'%(OS, targetBuild.split('_')[-3], build, timestamp, sut.split('.')[0])</script>
+            <!--script>logList = ['/var/log/zimbra.log', '/opt/zimbra/log/zimbra.log', '/tmp/install.out.' + s]</script-->
+            <call function="'getLogs'">{'buildName': baseBuild, 'machine': machine}</call>
+            <script>logList = STAXResult</script>
+            <paralleliterate var="machine" in="machines">
+                <sequence>
+                    <iterate var="file" in="logList">
+                        <sequence>
+                            <process name="'Copy Install Logs'">
+                                <location>machine</location>
+                                <command>'/bin/cp'</command>
+                                <workdir>'/tmp'</workdir>
+                                <!--parms>'%s %s/%s.install.%s'% (file, logDir, machine, os.path.basename(file))</parms-->
+                                <parms>'%s %s/%s.install%s'% (file, logDir, machine, ".".join(file.split(os.sep)))</parms>
+                            </process>
+                            <process name="'Chmod'">
+                                <location>machine</location>
+                                <command>'/bin/env'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>'chmod -r o+r %s'%logDir</parms>
+                                <!--parms>'chmod -r o+r /opt/qa/testlogs/%s/%s/%s/install/%s/%s/one'% (OS, branch, build, timestamp, machine)</parms-->
+                            </process>
+                        </sequence> 
+                    </iterate> 
+                </sequence>
+            </paralleliterate>
+            <script>outputFile[0]="/tmp/install.out." + e</script>
+            <script>installToRes = passed</script>
+            <script>toServStatRes = "\n"</script>
+            <script>
+                 if targetBuild.lower().find('network') == -1:
+                    bits='open'
+                 else:
+                    bits='network'
+                 branch = targetBuild.split('_')[-3]
+            </script>
+            <script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/%s/logs'%(OS, branch, build, timestamp, sut.split('.')[0])</script>
+            <script>res[0] += "\nUpgrade"</script>
+            <iterate var="machine" in="machines">
+                <sequence>
+                    <!--call function="'genUpgradeTemplate'">
+                        {'machine':machine,
+                         'bits':bits,
+                         'fromConfig':configuration,
+                         'toConfig':'/VS/zimbra/main/ZimbraQA/data/zimbraInstall/scriptInput/current/configSingleNodeqa03To.xml'
+                        }
+                    </call-->
+                    <call function="'genUpgradeTemplate'">
+                        {'machine':machine,
+                         'bits':bits,
+                         'fromConfig':configuration,
+                         'toConfig':configuration
+                        }
+                    </call>
+                    <log>'utempl=%s'%STAXResult</log>
+                    <script>template=STAXResult</script>
+                    <if expr="template.startswith('error')">
+                        <return>template</return>
+                    </if>
+
+                    <process name="'Log Message - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/echo'</command>
+                        <workdir>'/tmp'</workdir>
+                        <parms>'Upgrade from Build %s to Build: %s'%(baseBuild, targetBuild)</parms>
+                        <stdout mode="'append'">outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+
+                    <!--#######################################################
+                        # for NET->FOSS upgrades prepend a Y for the Waarning #
+                        #######################################################-->
+                    <script>
+                       if (baseBuild.lower().find('network') != -1) and (targetBuild.lower().find('foss') != -1):
+                          template = "Y\\\\n" + template
+                    </script>
+
+                    <!--call function="'installSoftware'">
+                         {'machine'  : machine,
+                          'installTemplate' : template,
+                          'branch' : branch,
+                          'timestamp' : timestamp,
+                          'buildUri' : targetBuild,
+                          'softwareOnly':''
+                         }
+                    </call-->
+                    <!--############### need to do it only once -->
+                    <if expr="bits == 'network'">
+                        <call function="'getLicense'">
+                            {'machine': machine,
+                             'outputFile': '/tmp/install.out.' + e}
+                        </call>
+                    </if>
+                    <call function="'installSoftware'">
+                         {'machine'  : machine,
+                          'installTemplate' : template,
+                          'branch' : branch,
+                          'timestamp' : timestamp,
+                          'buildUri' : targetBuild
+                         }
+                    </call>
+                    <!-- ############################
+                         # workaround for bug 10261 #
+                         ############################-->
+                    <if expr="not platform.startswith('MACOSX')">
+                        <sequence>
+                            <process name="'Restore config - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/bash'</command> 
+                                <workdir>'/opt/zimbra/uninstall'</workdir>
+                                <parms>' -l -c ". ./util/utilfunc.sh;. ./util/globals.sh; setDefaultsFromExistingConfig; restoreExistingConfig"'</parms> 
+                                <stdout mode="'append'">outputFile[0]</stdout>  
+                                <stderr mode="'stdout'"/>
+                                 
+                            </process>
+                        </sequence>
+                    </if>
+                    <call function="'masqueradeURL'">
+                        {'machine' : machine,
+                         'URL' : 'www.zimbra.com'
+                        }
+                    </call>
+                    <if expr="STAXResult[0] != 0">
+                        <sequence>
+                            <script>msg = STAXResult[1]</script>
+                            <process name="'Log message - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/echo'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>msg</parms>
+                                <stdout mode="'append'">outputFile[0]</stdout>  
+                            </process>
+                        </sequence>
+                    </if>
+                    <call function="'runZmsetup'">
+                        {'machine' : machine,
+                         'timeout' : '30m',
+                         'config'  : '6\n17\nr\na\nNo\nNo\n'
+                        }
+                    </call>
+                    <!--call function="'runZmsetup'">
+                        {'machine'  : machine,
+                         'config' : 'No\nNo\n'
+                        }
+                    </call-->
+                    <script>
+                        res[0] += "\n" + machine + " - zmsetup: "
+                        if STAXResult == failed:
+                            installToRes = failed
+                            res[0] += failed
+                        else:
+                            res[0] += passed
+                    </script>
+                    <process name="'save config - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/opt/zimbra'</workdir>
+                        <parms>'-l -c "cp `ls -t config.* | head -1` /tmp/config.%s"' % e</parms> 
+                        <stdout mode="'append'">'/tmp/install.out.%s'%e</stdout>
+                        <stderr mode="'stdout'"/>
+                         
+		    </process>
+                    <call function="'unmasqueradeURL'">
+                        {'machine' : machine,
+                         'URL' : 'www.zimbra.com'
+                        }
+                    </call>
+                    <if expr="STAXResult[0] != 0">
+                        <sequence>
+                            <script>msg = STAXResult[1]</script>
+                            <process name="'Log message - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/echo'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>msg</parms>
+                                <stdout mode="'append'">outputFile[0]</stdout>  
+                            </process>
+                        </sequence>
+                    </if>
+                    <call function="'fixRedolog'">
+                        {'machine': machine,
+                         'outputFile': outputFile[0]}
+                    </call>
+                    <call function="'zimbraStatus'">
+                        {'machine' : machine,
+                         'file'    : outputFile[0]}
+                    </call>
+                    <script>
+                        res[0] += "\n" + machine + " - server status: "
+                        if STAXResult[0] == 0:
+                           res[0] += passed
+                        else:
+                           res[0] += failed
+                        #res[0] += "\n"
+                    </script>
+                </sequence>
+            </iterate>
+
+            <script>machine = sut</script>
+            <!--script>res[0]=toServStatRes</script-->
+            <if expr="installToRes == passed">
+                <sequence>
+                    <if expr="needSetUp=='1'">
+                        <sequence>     
+                            <log>'Set up zimbraInstall SOAP testware on %s'%machine</log>  
+                            <process name ="'Remove Current Testware - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/rm'</command>
+                                <workdir>'/opt/qa'</workdir>
+                                <parms>'-r -f zimbraInstall'</parms>
+                            </process>     
+                            <script>
+                                import re
+                                tokens = targetBuild.split('_')
+                                srcDir = '/qa/'
+                                if len(tokens) > 2:
+                                   branch = tokens[-3]
+                                   srcDir += branch + '/'
+                                srcDir += 'zimbraInstall/'
+                                cutDir = "2"
+                            </script>
+	                    <stafcmd>
+	                        <location>gMachines['qa00']</location>
+	                        <service>'fs'</service>
+	                        <request>'query entry /opt%s'%srcDir</request>
+	                    </stafcmd>
+	                    <if expr="RC != STAFRC.Ok">
+	                    	<script>
+                                    srcDir = "/qa/zimbraInstall"
+                                    cutDir = "1"
+                                </script>
+	                    </if>
+                            <!--stafcmd name="'Copy zimbraInstall Testware'">
+                                <location>gMachines['qa00']</location>
+                                <service>'fs'</service>
+                                <request>'COPY DIRECTORY %s TODIRECTORY /opt/qa/zimbraInstall TOMACHINE %s RECURSE' % (srcDir, machine)</request>
+                            </stafcmd-->
+                            <process name="'Copy Testware'">
+                                <location>machine</location>
+                                <command>'wget'</command>
+                                <workdir>'/var/tmp'</workdir>
+                                <parms>'-r http://%s%s/  --level=0 - --waitretry=1 --tries=0 -q -nH -np -P /opt/qa  -R index.html --cut-dir=%s' % (gMachines['qa00'], srcDir, cutDir)</parms>
+                            </process>   
+
+                        </sequence>
+                    </if>
+
+                    <!-- *************************
+                         * run post upgrade tests *
+                         ************************* -->
+                    <script>pars=['--bits', bits, '--machine', machine, '--OS', OS, '--build', build, '--branch', branch,\
+                                  '--baseBuild', baseBuild, '--targetBuild', targetBuild]</script>
+
+                    <script>logDir = "/opt/qa/testlogs/%s/%s/%s/soap/%s/%s/%s/" % (OS, branch, build, 'upgrade', timestamp, sut.split('.')[0])</script>
+                    <!--process name ="'Create Log Directory'">
+                        <location>gMachines['qa00']</location> 
+                        <command>'/bin/mkdir'</command>
+                        <workdir>'/opt/qa'</workdir>
+                        <parms>'-p %s'% (logDir)</parms>
+                    </process-->
+                    <stafcmd>
+                        <location>gMachines['qa00']</location>
+                        <service>'fs'</service>
+                        <request>'create directory %s fullpath' % dir</request>
+                    </stafcmd>
+                    <if expr="RC != STAFRC.Ok">
+                        <log level="'error'">'create log dir RC=%s, res=%s, dir=%s'% (RC, STAFResult, dir)</log>
+                    </if>
+                    <call function="'runShellScripts'">
+                        {'machine':machine,
+                         'directory':'/opt/qa/zimbraInstall/data/zimbraInstall/shellScripts/postUpgrade',
+                         'parameters':pars,
+                         'log':outputFile[0],
+                         'ignoreError':'1'}
+                    </call>
+                    <log>'runShellScripts result %s'%STAXResult</log>
+                    <script>
+                        from java.lang import System
+                        from java.util import TimeZone,Date
+                        from java.text import SimpleDateFormat
+                        id=STAXResult
+                        now = Date(System.currentTimeMillis())
+                        fmt = SimpleDateFormat()
+            	        fmt.setTimeZone(TimeZone.getDefault())
+                        fmt.applyPattern('EEE MMM dd HH:mm:ss z yyyy')
+                        f = open(logDir + 'testsummary_shell_scripts.txt', 'w')
+                        f.write('#%s\n' % fmt.format(now))
+                        f.write('Failed=%s\n' % id[1])
+                        f.write('Passed=%s\n' % id[2])
+                        f.close()
+                        if id[1] != 0:
+                          passfail = failed
+                    </script>
+                    <call function="'runSoap'">
+                        {'sut'               : 'localhost',
+                         'areas'             : 'DIRECTORY /opt/qa/zimbraInstall/data/zimbraInstall/soapScripts/postUpgrade',
+                         'bits'              : bits,
+                         'machine'           : m[0],
+                         'OS'                : OS,
+                         'build'             : build,
+                         'logareas'          : 'upgrade',
+                         'branch'            : branch,
+                         'timestamp'         : timestamp,
+                         'needNotify'        : '0',
+                         'notificationAlias' : notificationAlias,
+                         'needSetUp'         : needSetUp }
+                    </call>
+                    <log>'someTest RC=%s, res=%s' % (RC, STAXResult)</log>
+                    <!--script>
+                        import re
+                        match=re.search(".*(Fail|Script Errors):([^0]).*", STAXResult)
+                        result = 0
+                        passfail=passed
+                        if match != None:
+                           result = match.group(2)
+                           passfail=failed
+                    </script>
+                    <script>soapres=STAXResult</script>
+                    <log>'found %s, sres=%s' % (result, soapres)</log>
+                    <process name="'Append soap results'">
+                        <location>machine</location>
+                        <command>'/bin/echo'</command>
+                        <workdir>'/tmp'</workdir>
+                        <parms>'%s'%soapres</parms>
+                        <stdout mode="'append'">outputFile[0]</stdout>  
+                    </process-->
+
+                    <!--script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/%s/to'%(OS, branch, build, timestamp, machine)</script>
+                    <process name ="'Create Install Log Directory'">
+                        <location>gMachines['qa00']</location> 
+                        <command>'/bin/mkdir'</command>
+                        <workdir>'/opt/qa'</workdir>
+                        <parms>'-p %s'%logDir</parms> 
+                    </process>
+
+                    <script>logList = ['/opt/zimbra/log/zimbra.log', '/tmp/install.out.' + e]</script>
+                    <loop var="funcIndex" from="0" to="1">
+                        <sequence>
+                            <process name="'Copy Install Logs'">
+                                <location>machine</location>
+                                <command>'/bin/cp'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>'%s %s'% (logList[funcIndex], logDir)</parms>
+                            </process>
+                            <process name="'Chmod'">
+                                <location>machine</location>
+                                <command>'/bin/env'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>'chmod -r o+r %s'%logDir</parms>
+                            </process>
+                        </sequence> 
+                    </loop--> 
+
+                    <script>
+                        import re
+                        report = "/opt/qa/testlogs/" + OS + "/" + branch + "/" + build + "/soap/upgrade/" + timestamp + "/" + sut.split('.')[0] + "/BugReports/BugReport.txt"
+                        logUrl = "http://" + gMachines['qa00'] + "/testlogs/" + OS + "/" + branch + "/" + build + "/soap/upgrade/" + timestamp + "/" + sut.split('.')[0] + "/"
+                        failres = ''
+                        try:
+                           f = open(report)
+                           lines = f.readlines()
+                           f.close()
+                           for line in lines:
+                              if line.find('NEW ') != -1:
+                                 passfail = failed
+                                 failres = failres + line
+                                 #break
+                           soapres = "".join(lines)
+                        except IOError, e:
+                           soapres = e
+                    </script>
+                    <call function="'getFqdnHostname'">sut</call>
+                    <script>res[0] = res[0] + "\n" + STAXResult + ' - test scripts: ' + passfail + '\n' + failres + 'Soap log files located at ' + logUrl + '\n'</script>
+                    <process name="'Append soap results'">
+                        <location>machine</location>
+                        <command>'/bin/echo'</command>
+                        <workdir>'/tmp'</workdir>
+                        <parms>'%s'%soapres</parms>
+                        <stdout mode="'append'">outputFile[0]</stdout>  
+                    </process>
+                </sequence>
+            </if>
+
+            <log>'Completed upgrade %s->%s, res0=%s' % (s, e, res[0])</log>
+            <script>attachments=""</script>
+            <script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/%s/logs'%(OS, targetBuild.split('_')[-3], build, timestamp, sut.split('.')[0])</script>
+            <script>zimbraLogDir = 'http://%s/testlogs/%s/%s/%s/upgrade/%s/%s/logs'%(gMachines['qa00'], OS, targetBuild.split('_')[-3], build, timestamp, sut.split('.')[0])</script>
+            <script>res[0] += '\nUpgrade log files located at ' + zimbraLogDir + "\n"</script>
+            <!--script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/logs'%(OS, branch, build, timestamp)</script-->
+            <iterate var="machine" in="machines">
+                <sequence>
+                    <!--script>logList = ['/var/log/zimbra.log', '/opt/zimbra/log/zimbra.log', '/tmp/install.out.' + e]</script-->
+                    <call function="'getLogs'">{'buildName': targetBuild, 'machine': machine}</call>
+                    <script>logList = STAXResult</script>
+                    <iterate var="file" in="logList">
+                        <sequence>
+                            <process name="'Copy Install Logs'">
+                                <location>machine</location>
+                                <command>'/bin/cp'</command>
+                                <workdir>'/tmp'</workdir>
+                                <!--parms>'%s %s/%s.upgrade.%s'% (file, logDir, machine, os.path.basename(file))</parms-->
+                                <parms>'%s %s/%s.upgrade%s'% (file, logDir, machine, ".".join(file.split(os.sep)))</parms>
+                            </process>
+                            <process name="'Chmod'">
+                                <location>machine</location>
+                                <command>'/bin/env'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>'chmod -r o+r %s'%logDir</parms>
+                            </process>
+                        </sequence> 
+                    </iterate> 
+                    <process name="'Compare configurations'">
+                        <location>machine</location>
+                        <command>'diff'</command>
+                        <workdir>'/opt/zimbra'</workdir>
+                        <parms>' /tmp/config.%s /tmp/config.%s"' % (s,e)</parms>
+                        <stdout>'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                         
+                    </process>    
+                    <script>outputFile[0]="/tmp/install.out"</script>
+                    <script>res[0]=res[0] + "\n" + machine + " config." + s + " and config." + e + " differences:\n" + STAXResult[0][1] + "\n"</script>
+                    <script>res[0]=res[0].replace("\"", "\\\"")</script>				
+                    <stafcmd>
+                        <location>machine</location>
+                        <service>'FS'</service>
+                        <request>'query entry %s.%s' % (outputFile[0], e)</request>
+                    </stafcmd>
+                    <if expr="RC == 0">
+                        <sequence>
+                            <script>rex="^error\\\|failed [^t][^e][^s][^t] [^c][^a][^s][^e][^s]\\\|^Exception in thread\\\|syntax error: "</script>
+                            <process name="'Scan for errors'">
+                                <location>machine</location>
+                                <command>'grep'</command>
+                                <workdir>'/var/tmp'</workdir>
+                                <parms>' -i "%s" %s.%s' % (rex, outputFile[0], e)</parms>
+                                <stdout>'/tmp/install.out'</stdout>
+                                <stderr mode="'stdout'"/>
+                                <returnstdout/>
+                            </process>   
+                            <if expr="STAXResult[0][1] != ''">
+                                <sequence>
+                                    <script>
+                                       res[0]=res[0] + "ERRORS detected in /tmp/install.out." + e + ":\n" + STAXResult[0][1] + "\n\n"
+                                       res[0]=res[0].replace("\"", "\\\"")
+                                       passfail=failed
+                                    </script>
+                                </sequence>
+                            </if>
+                            <script>rex="^real[[:space:]][[:digit:]]"</script>
+                            <process name="'Scan for run time - ' + machine">
+                                <location>machine</location>
+                                <command>'grep'</command>
+                                <workdir>'/var/tmp'</workdir>
+                                <parms>' -i "%s" /tmp/install.out.%s' % (rex,e)</parms>
+                                <stdout>'/tmp/install.out'</stdout>
+                                <stderr mode="'stdout'"/>
+                                <returnstdout/>
+                            </process>   
+                            <if expr="STAXResult[0][1] != ''">
+                                <sequence>
+                                    <script>
+                                       import re
+                                       hours = []
+                                       mins = []
+                                       secs = []
+                                       lines = STAXResult[0][1].splitlines()
+                                       for line in lines:
+                                          duration = line.split('\t')[1]
+                                          if duration.find('h') != -1:
+                                             toks = duration.split('h')
+                                             hours.append(toks[0])
+                                             duration = toks[1]
+                                          toks = duration.split('m')
+                                          mins.append(toks[0])
+                                          secs.append(toks[1].split('s')[0])
+                                       sTotal = 0
+                                       for sec in secs:
+                                          sTotal += float(sec)
+                                       sTotal = int(sTotal)
+                                       mTotal = sTotal/60
+                                       sTotal = sTotal%60
+                                       for min in mins:
+                                          mTotal += int(min)
+                                       hTotal = mTotal/60
+                                       mTotal = mTotal%60
+                                       for hour in hours:
+                                          hTotal += int(hour)
+                                       #res[0] += "Total upgrade running time - " + machine + ":    " + str(hTotal) + " Hour(s)   " + str(mTotal) + " minute(s)   " + str(sTotal) + " second(s)\n"
+                                       res[0] += "Total upgrade running time - " + machine + ":    " + str(mTotal) + " minute(s)   " + str(sTotal) + " second(s)\n"
+                                       #res[0]=res[0].replace("\"", "\\\"")
+                                    </script>
+                                </sequence>
+                            </if>
+                        </sequence>
+                    </if>
+                </sequence>
+            </iterate>
+                            <!--script>attachments+="TEXTATTACHMENT " + outputFile[0] + "." + e + " "</script-->
+                            <!--script>attachments+="BINARYATTACHMENT " + outputFile[0] + "." + e + " "</script-->
+                            <script>logDir = '/opt/qa/testlogs/%s/%s/%s/upgrade/%s/%s/logs'%(OS, branch, build, timestamp, sut.split('.')[0])</script>
+                            <stafcmd name="'Get logs list'">
+                                <location>gMachines['qa00']</location>
+                                <service>'FS'</service>
+                                <request>'list directory %s type f' % logDir</request>
+                            </stafcmd>
+                            <script>
+                                list=STAFResult
+                                attachments = ''
+                                for file in list:
+                                    attachments += 'BINARYATTACHMENT ' + logDir +os.sep + file + ' '
+                                attachments += 'NOHEADER ATTACHMENTMACHINE '+ gMachines['qa00']
+                            </script>
+<log>'list=%s' % list</log>
+       <log>'att=%s'%attachments</log>
+            <script>
+                if toServStatRes.find(failed) != -1:
+                     passfail = failed
+            </script>
+            <log>'attachments=%s' % attachments</log>
+            <!--#################################
+                # run smoke if smokeorfull=full #
+                #################################-->
+
+            <if expr="smokeOrFull == '0'">
+                <sequence>
+                    <script>
+                        if targetBuild.lower().find('network') == -1:
+                            bits='open'
+                        else:
+                            bits='network'
+                    </script>
+                    <call function="'runSoap'">
+                        {'sut'               : 'localhost',
+                         'areas'             : 'SUITE SMOKE',
+                         'smokeOrFull'       : '1',
+                         'bits'              : bits,
+                         'machine'           : m[0],
+                         'OS'                : OS,
+                         'build'             : build,
+                         'logareas'          : 'upgrade_smoke',
+                         'branch'            : branch,
+                         'timestamp'         : timestamp,
+                         'needNotify'        : needNotify,
+                         'notificationAlias' : notificationAlias,
+                         'needSetUp'         : '0' }
+                    </call>
+                 </sequence>
+            </if>
+
+<!-- #####################
+     temp work for mysql detection 
+     ##################### -->
+<!--if expr="res[0].find('Can\'t connect to local MySQL server') == -1"-->
+            <call function="'endOfJob'">{'jobId':pjobID}</call>
+<!--/if-->
+
+            <if expr="needNotify == '1'">
+                <sequence>
+                    <script>
+                        #######################
+                        # WORKAROUND: a message with {...} may cause email service to fail delivery
+                        # because {...} is interpreted as STAF variable that needs to be resolved
+                        # remove curly braces from the message
+                        #######################
+                        res[0]=res[0].replace("{", "")
+                        res[0]=res[0].replace("}", "")
+                    </script>
+                    <script>logDir = "/opt/qa/testlogs/%s/%s/%s/soap/%s/%s/%s/" % (OS, branch, build, 'upgrade', timestamp, sut.split('.')[0])</script> 
+                    <log message="1">'Test Summary'</log>     
+                    <process name="'Create Log Directory'">
+                        <location>gMachines['qa00']</location>
+                        <command>'/bin/env'</command>
+                        <workdir>logDir</workdir>
+                        <parms>'ruby /opt/qa/main/genesis/reportResult.rb testsummary.txt UPGRADE %s %s %s SMOKE'% (OS, build, branch)</parms>
+                    </process>
+                    <if expr="dbg[0] != 'on'">
+                        <script>attachments = ""</script>
+                    </if>
+                    <timer duration="'20m'">
+                        <stafcmd name="'Send Completion Email'">
+                            <location>gMachines['qa00']</location>
+                            <service>'EMAIL'</service>
+                            <request>'SEND TO %s FROM qa-tms@zimbra.com %s message "Upgrade build on %s: %s%s" \
+                                      SUBJECT "%s %s Upgrade %s->%s Completed"' % (notificationAlias, attachments, machines, passfail, res[0], OS, targetBuild.split('_')[-3], s, e)</request>
+                        </stafcmd>
+                    </timer> 
+                    <return>STAXResult</return>
+                </sequence>
+            </if>   
+
+        </sequence>
+    </function>
+
+    <function name="runTest" scope="local">
+    
+        <function-prolog>
+            Main entry point to set up global variables
+        </function-prolog>
+        
+        <function-map-args>
+                
+            <function-optional-arg name="sut" default="'localhost'">
+                Name of the System Under Test (localhost)
+            </function-optional-arg>  
+
+            <function-optional-arg name="bits" default="'network'">
+                Name of the Zimbra bits that are running on the SUT (network)
+            </function-optional-arg>  
+
+            <function-optional-arg name="machine" default="'qa15'">
+                Name of the target machine
+            </function-optional-arg>
+
+            <function-optional-arg name="needReboot" default="'0'">
+                Is rebooting of the machine required? 1= yes others = no
+            </function-optional-arg>       
+
+            <function-optional-arg name="OS" default="'RHEL4'">
+                Name of the operation system
+            </function-optional-arg>        
+
+            <function-optional-arg name="build" default="'foo'">
+                Name of the build
+            </function-optional-arg>        
+
+            <function-optional-arg name="branch" default="'mebranch'">
+                Name of the branch
+            </function-optional-arg>
+
+            <function-optional-arg name="timestamp" default="'whenever'">
+                Time Stampv
+            </function-optional-arg>
+
+            <function-optional-arg name="needNotify" default="'1'">
+                Is notification required? 1= yes others = no
+            </function-optional-arg>  
+
+            <function-optional-arg name="notificationAlias" default="'vstamatoiu@zimbra.com'">
+                This is email notification alias
+            </function-optional-arg>  
+
+            <function-optional-arg name="smokeOrFull" default="'1'">
+                Run Smoke or Full test, 1 == smoke 0 == full 
+            </function-optional-arg>  
+
+            <function-optional-arg name="needSetUp" default="'1'">
+               Need setting up test ware
+            </function-optional-arg>
+
+            <function-optional-arg name="baseBuild" default="'bURL'">
+               Initial build
+            </function-optional-arg>
+
+            <function-optional-arg name="targetBuild" default="'tURL'">
+               Build to upgrade to
+            </function-optional-arg>
+
+            <function-optional-arg name="configuration" default="'/opt/qa/zimbraInstall/data/zimbraInstall/scriptInput/current/configSingleNodeTemplate.xml'">
+               Install configuration
+            </function-optional-arg>
+
+            <function-optional-arg name="zmsetupConfiguration" default="'zmsetupConfig.txt'">
+               Install configuration
+            </function-optional-arg>
+
+            <function-optional-arg name="pjobID" default="'-1'">
+                JobID to signal job termination
+            </function-optional-arg>
+
+        </function-map-args>
+        
+        <sequence>
+            <script>STAXMessageLog=1</script>
+            <if expr="dbg[0] != 'on'">
+                <sequence>
+                    <!--stafcmd>
+                        <location>gMachines['qa00']</location>
+                        <service>'var'</service>
+                        <request>'resolve string %s' % STAFServicesDir</request>
+                    </stafcmd>
+                    <if expr="RC == 0">
+                        <sequence>
+                            <script>STAFServicesDir = STAFResult</script>
+                        </sequence>
+                        <else>
+                            <sequence>
+                                <log>
+                                    'Error resolving STAFServicesDir: RC=%s, STAFResult=%s, \
+                                     STAFServicesDir=%s' % (RC, STAFResult, STAFServicesDir)
+                                </log>
+                                <log>'Terminating job'</log>
+                                <terminate block="'main'"/>
+                            </sequence>
+                        </else>
+                    </if>
+                    <script>iutilsxml='%s%s'%(STAFServicesDir,"installUtils.xml")</script>
+                    <script>cutilsxml='%s%s'%(STAFServicesDir,"configUtils.xml")</script-->
+                    <script>
+                        branch = targetBuild.split('_')[-3]
+                        staxDir = '/opt/qa/' + branch + '/staf/'
+                    </script>
+	            <stafcmd>
+	                <location>gMachines['qa00']</location>
+	                <service>'fs'</service>
+	                <request>'query entry /opt%s'%staxDir</request>
+	            </stafcmd>
+	            <if expr="RC != STAFRC.Ok">
+	            	<script>
+                            srcDir = "/opt/qa/staf/"
+                        </script>
+	            </if>
+                    <import machine="gMachines['qa00']" file="srcDir + 'installUtils.xml'"/>
+                    <import machine="gMachines['qa00']" file="srcDir + 'configUtils.xml'"/>
+                    <!--import machine="'qa00'" file="iutilsxml"/>
+                    <import machine="'qa00'" file="cutilsxml"/-->
+                </sequence>
+                <else>
+                    <sequence>
+                        <import machine="'qa11'" file="'/VS/zimbra/main/ZimbraQA/data/stax/installUtils.xml'"/>
+                        <import machine="'qa11'" file="'/VS/zimbra/main/ZimbraQA/data/stax/configUtils.xml'"/>
+                    </sequence>
+                </else>
+            </if>
+            <call function="'buildID'">{'uri':baseBuild}</call>
+            <script>s=STAXResult</script>
+            <call function="'buildID'">{'uri':targetBuild}</call>
+            <script>e=STAXResult</script>
+            <script>outputFile[0]="/tmp/install.out." + s</script>
+            <!--if expr="s == e">
+                <sequence>
+                    <call function="'endOfJob'">{'jobId':pjobID}</call>
+                    <if expr="needNotify == '1'">
+                        <sequence>
+                            <stafcmd name="'Send Completion Email'">
+                                <location>gMachines['qa00']</location>
+                                <service>'EMAIL'</service>
+                                <request>'SEND TO %s FROM qa-tms@zimbra.com message "Upgrade SKIPPED - base and target builds are the same" \
+                                          SUBJECT "%s %s Upgrade %s->%s Completed"' % (notificationAlias, OS, branch, s, e)</request>
+                            </stafcmd>
+                            <return>STAXResult</return>
+                        </sequence>
+                    </if>
+                </sequence>
+            </if-->
+            <script>bURL=baseBuild</script>
+            <script>tURL=targetBuild</script>
+            <call function="'buildID'">{'uri':bURL}</call>
+            <script>s=STAXResult</script>
+            <call function="'buildID'">{'uri':tURL}</call>
+            <script>e=STAXResult</script>
+            <script>passfail=passed</script>
+            <script>
+                if baseBuild.lower().find('network') == -1:
+                    bits='open'
+                else:
+                    bits='network'
+                branch = baseBuild.split('_')[-3]
+            </script>
+            <!--iterate var="machine" in="machines">
+                <process name="'Generate install only template - ' + machine">
+                    <location>'qa11'</location>
+                    <command>'./genInstallTemplates.pl'</command>
+                    <workdir>'/VS/zimbra/main/ZimbraQA/data/zimbraInstall/shellScripts/utils'</workdir>
+                    <parms>' -file %s -host %s'% (configuration, machine)</parms>
+                    <stdout>'/tmp/install.out'</stdout>
+                    <stderr mode="'stdout'"/>
+                    <returnstdout/>
+                </process>
+                <log>'installTempl=%s'%STAXResult[0][0]</log>
+            </iterate-->
+            <!--#################
+                 create new config from configuration by replacing localhost with fqdn
+                #################-->
+            <script>machines=[machine]</script>
+            <call function="'getFqdnHostname'">machines[0]</call>
+            <script>fqdn = STAXResult</script>
+            <script>
+                import re
+                import os
+                f = open(configuration)
+                lines = f.readlines()
+                f.close()
+                needNewConfig = 0
+                for i in range(len(lines)):
+                   if lines[i].find('localhost') != -1:
+                      needNewConfig = 1
+                      lines[i] = lines[i].replace('localhost', fqdn)
+                if needNewConfig:
+                   toks = configuration.split(os.sep)
+                   configuration = '/tmp/' + toks[len(toks) - 1] + '.' + fqdn
+                   f = open(configuration, 'w')
+                   f.writelines(lines)
+                   f.close()
+            </script>
+            <call function="'getMachines'">{'file':configuration}</call>
+            <script>machines = STAXResult</script>
+            <script>installSwOnlyRes = passed</script>
+            <script>configFromRes = passed</script>
+            <script>res[0] = "\nInstall"</script>
+            <script>fromServStatRes = "\n"</script>
+            <script>statExitCode = 0</script>
+            <!--iterate var="machine" in="machines"-->
+            <iterate var="machine" in="['qa13']">
+                <sequence>
+                    <call function="'masqueradeURL'">
+                        {'machine' : machine,
+                         'URL' : 'www.zimbra.com'
+                        }
+                    </call>
+                    <if expr="STAXResult[0] != 0">
+                        <sequence>
+                            <script>msg = STAXResult[1]</script>
+                            <process name="'Log message - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/echo'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>msg</parms>
+                                <stdout mode="'append'">outputFile[0]</stdout>  
+                            </process>
+                        </sequence>
+                    </if>
+                    <call function="'genZmsetupTemplate'">
+                        {'file' : configuration,
+                         'machine' : machine,
+                         'template' : zmsetupConfiguration
+                        }
+                    </call>
+                    <script>template = STAXResult</script>
+                    <!--call function="'runZmsetup'">
+                        {'machine'  : machine,
+                         'timeout' : '30m',
+                         'config' : template
+                        }
+                    </call>
+                    <script>
+                        res[0] += "\n" + machine + " - zmsetup: "
+                        if STAXResult == failed:
+                            configFromRes = failed
+                            res[0] += failed
+                        else:
+                            res[0] += passed
+                    </script-->
+                    <call function="'unmasqueradeURL'">
+                        {'machine' : machine,
+                         'URL' : 'www.zimbra.com'
+                        }
+                    </call>
+                    <if expr="STAXResult[0] != 0">
+                        <sequence>
+                            <script>msg = STAXResult[1]</script>
+                            <process name="'Log message - ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/echo'</command>
+                                <workdir>'/tmp'</workdir>
+                                <parms>msg</parms>
+                                <stdout mode="'append'">outputFile[0]</stdout>  
+                            </process>
+                        </sequence>
+                    </if>
+                </sequence>
+            </iterate>
+        </sequence>
+    </function>
+
+
+<!--  filter out certificate, LicenseId, signature, post results, password for ldap/admin
+      cat /tmp/zmsetup.log.14903 | ispell -a > res.txt
+      sed -f sed.cmds res.txt > res1.txt -->
+</stax>
+

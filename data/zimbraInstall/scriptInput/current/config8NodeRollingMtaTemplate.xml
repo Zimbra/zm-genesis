@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <host name="zqa-124.eng.vmware.com">
+            <package name="zimbra-mta">
+            </package>
+            <package name="zimbra-snmp">
+            </package>
+            <option name="zimbraPrefTimeZoneName">
+                America/Chicago
+            </option>
+            <option name="beta-support">
+                yes
+            </option>
+        </host>
+    </config>
+    <plugins>
+    </plugins>
+</plan>

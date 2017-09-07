@@ -1,0 +1,165 @@
+#
+# Genesis test setup
+#
+data/testsetup
+#
+# Multinode do this early to avoid test case collisions
+#
+data/multinode
+#
+# Test plan for smoke test on open bit
+#
+data/zmprov/account
+data/zmprov/log
+data/zmprov/calendar
+data/zmprov/config
+data/zmprov/cos
+data/zmprov/domain
+data/zmprov/list
+data/zmprov/misc
+data/zmprov/mailbox
+#data/zmprov/notebook
+#data/zmprov/search P3
+data/zmprov/server
+data/zmprov/objects
+data/zmmailbox
+#data/thirdparty/webserver/servletscheck.rb P3
+#data/proxyimap/setproxy
+data/nioimap/nioon
+data/imap
+#data/proxyimap/userlimiton P3
+#data/imap/bug/nginxdoublelogin P3
+#data/imap/bug/54039_extrauntagged P3
+#data/imap/login P3
+#data/imap/extension/authenticateplain P3
+#data/imap/extension/gssapi/basic P3
+#data/proxyimap/userlimitoff P3
+#
+data/nioimap/niooff
+data/imap
+data/nioimap/nioon
+data/pop
+data/cronjob
+data/mimefilter
+data/server/binexecute.rb
+data/server/compress.rb
+data/server/envcheck.rb
+data/server/filtercrash.rb
+data/server/installshcheck.rb
+data/server/notificationscheck.rb
+data/server/permisisoncheck.rb
+data/server/zimbraurlscheck.rb
+data/server/security
+data/directory/external/ad
+#data/volume P3
+data/sharemessage/basic.rb
+data/sharemessage/distributionlist
+data/spam
+data/virus
+data/wsdl
+#
+# DB Check
+data/install/dbintegritycheck.rb
+# Redolog check
+data/verification/redolog.rb
+
+# SMTP test
+data/smtp
+
+# Nginx tests
+data/proxyimap/auth
+#data/proxyimap/bug P3
+data/proxyimap/mailthrottle
+data/proxyimap/webproxy
+
+#
+# Test control scripts
+#
+data/zmsoap
+#data/zmfixcalendtime P3
+data/zmaccts
+#data/zmaltermimeconfig
+data/zmantispam
+data/zmantivirus
+data/zmapachectl
+data/zmarchivectl
+data/zmclamdctl
+data/zmfreschclamctl
+#data/zmconvertctl
+data/zmcheckversion
+data/zmconfigure
+data/zmcpustat
+data/zmdiaglog
+data/zmdailyreport
+data/zmdbintegrityreport
+data/zmexplainslow
+data/zmfixperms
+data/zmloggerctl
+data/zmlogswatchctl
+data/zmmailboxdctl
+data/zmmtactl
+data/zmsaslauthdctl
+data/zmsetservername
+data/zmspellctl
+data/zmstatctl
+data/zmstat-ldap
+data/zmstorectl
+data/zmswatchctl
+data/zmldappasswd
+data/zmldapreplicatool
+#data/zmmylogpasswd - removed from GnR
+data/zmmypasswd
+data/zmmysqlstatus
+data/zmtlsctl
+data/zmcontrol
+data/zmdumpenv
+data/zmhostname
+data/zmlocalconfig
+data/zmmetadump
+data/zmtrainsa
+data/zmblobchk
+data/zmproxyctl
+data/zmproxyconfgen
+data/qshape
+data/zmthrdump
+data/zmqstat
+data/zmplayredo
+data/zmgsautil
+#data/zmmsgtrace          - removed from GnR
+data/sa-learn
+data/zmconfigdctl
+data/zmcertmgr
+data/zmcleantmp
+data/zmztozmig
+data/zmhspreport
+#data/zmupdatezco P3
+data/zmproxyconfig
+data/zmfixreminder
+data/zmjavawatch
+data/zmdomaincertmgr
+data/zmpython
+data/zmiostat
+data/zmldapanon
+data/zmnotifyinstall
+data/zmmyinit
+data/zmmtastatus
+#data/zmqaction P3
+#data/zmresetmysqlpassword P3
+data/zmdkimkeyutil
+data/zmslapcat
+data/zmslapadd
+data/zminnotop
+data/zmjava
+
+#data/zmrestoreldap
+
+data/install/symlinkcheck.rb
+data/install/mailservercheck.rb
+data/install/ldapreplicationcheck.rb
+data/custom
+data/docs
+data/zmprov/ldap
+
+# Dumpster Test
+data/dumpster
+#

@@ -1,0 +1,3803 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>  
+   
+    <script>menuTemplate = "\"No\nx\nq\nYes\n\""</script>
+    <script>confirm = "Y\n"</script>
+    <!--defaultcall function="xxxx"/-->
+    <script>document = STAXGlobal(None)</script>
+    <script>CR = STAXGlobal('\n')</script>
+
+    <function name="failoverServiceTo">
+        <function-prolog>
+            This function is used to...
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="service">
+                Which service
+            </function-required-arg>
+            <function-required-arg name="host">
+                Which host
+            </function-required-arg>
+        </function-map-args>
+        <sequence>
+        <process name="'Cluster Relocate'">
+            <location>host</location>
+            <command>'/usr/sbin/clusvcadm'</command> 
+            <parms>'-r %s -m %s' % (service, host)</parms> 
+            <stdout>'/tmp/install.out'</stdout>
+            <stderr mode="'stdout'"/>
+            <returnstdout/>
+        </process>
+        <message>'clusvcadm on %s, RC=%s, STAXResult=%s' % (host, RC, STAXResult)</message>
+        <script>
+            import re
+            match=re.match('success', STAXResult[0][1])
+            if match == "None":
+               res='fail'
+            else:
+               res = 'success'
+        </script>
+        <message>'match %s' % match</message>
+        <return>res</return>
+        </sequence>
+    </function>
+
+    <function name="getClustat">
+        <function-prolog>
+            This function is used to get cluster status
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="host">
+                Which host to run the command on
+            </function-required-arg>
+            <function-optional-arg name="service" default="'qaclus01.liquidsys.com'">
+                Which cluster service we need info on
+            </function-optional-arg>
+        </function-map-args>
+        <sequence>
+        <process name="'Clustat'">
+            <location>host</location>
+            <command>'/usr/sbin/clustat'</command> 
+            <workdir>'/tmp'</workdir>
+            <!-- currently -s service is ignored by clustat-->
+            <parms>'-x -s %s' % service</parms> 
+            <stdout>'/tmp/install.out'</stdout>
+            <stderr mode="'stdout'"/>
+            <returnstdout/>
+        </process>
+        <message>'get clustat on %s, RC=%s, STAXResult=%s' % (host, RC, STAXResult)</message>
+    <script>
+        import re
+        m = re.search("\\n .*(group name=\"qaclus01.*)\/\>\\n", STAXResult[0][1])
+        m = re.search(r"\n .*(group name=\"" + service + ".*)\/\>\n", STAXResult[0][1])
+        m.group(0)
+        from xml.dom.ext.reader import Sax2
+
+        # create Reader object
+        reader = Sax2.Reader()
+
+        # parse the document
+        doc = reader.fromString(STAXResult[0][1])
+        services = doc.getElementsByTagName("group")
+        members = doc.getElementsByTagName("node")
+    </script>
+        <return> 'found "%s %s %s"' % (m.group(1), services.length, members.length) </return>
+        </sequence>
+    </function>
+
+    <function name="install">
+        <function-prolog>
+            This function is used to fetch build from Zimbra build server
+        </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa12'">
+                Name of the target machine
+            </function-optional-arg>
+            <function-optional-arg name="fileName" default="'/var/tmp/zcs.tgz'">
+                Name of the file
+            </function-optional-arg>          
+            <function-optional-arg name="needReboot" default="1">
+                Is rebooting of the machine required? 1= yes others = no
+            </function-optional-arg>       
+            <function-optional-arg name="notificationAlias" default="'vstamatoiu@zimbra.com'">
+                This is email notification alias
+            </function-optional-arg>                        
+        </function-map-args>
+        <sequence>           
+            <process name="'Create Confirm'">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % confirm</parms>
+                <stdout>'/tmp/confirm.file'</stdout>  
+            </process>
+
+            <!--process name="'Uninstall'">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp/zcs'</workdir>
+                <parms>' -c "/bin/cat /tmp/confirm.file | ./install.sh -u"'</parms> 
+                <stdout>'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+                 
+            </process-->
+            <!--process name="'Clean Zimbra'">
+                <location>machine</location>
+                <command>'/bin/rm'</command>
+                <workdir>'/opt'</workdir>
+                <parms>'-r -f zimbra'</parms>  
+                <stderr mode="'stdout'"/>
+                 
+            </process-->
+             <!--process name="'Clean Directory'">
+                <location>machine</location>
+                <command>'/bin/rm'</command>
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-r -f zcs'</parms>  
+                <stderr mode="'stdout'"/>
+               
+	     </process--> 
+             <!--process name="'Clean zimbar log'">
+                <location>machine</location>
+                <command>'/bin/rm'</command>
+		<workdir>'/var/log'</workdir>
+                <parms>'-f zimbra.log'</parms>  
+                <stderr mode="'stdout'"/>
+             
+             </process-->
+            <!--process name="'Untar'">
+                <location>machine</location>
+                <command>'tar'</command>
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-xzf zcs.tgz'</parms> 
+                <stdout>'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+              
+            </process-->                          
+             
+            <!--process name="'Create Config'">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % installTemplate</parms>
+                <stdout>'/tmp/config.file'</stdout>  
+            </process-->             
+            
+            <!--process name="'Install'">
+                <location>machine</location>
+                <command>'/bin/bash'</command>
+                <workdir>'/var/tmp/zcs'</workdir>
+                <parms>' -c "/bin/cat /tmp/config.file | ./install.sh"'</parms>
+                <stdout mode="'append'">'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+               
+            </process-->    
+             
+            <!--process>
+                <location>machine</location>
+                <command>'/bin/bash'</command>
+                <workdir>'/opt/build/zcs'</workdir>
+                <parms>' -c "ls"'</parms>
+                <stdout mode="'append'">'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+              
+            </process-->    
+
+            <script>machList = ['qa11', 'qa12', 'qa13', 'qa14', 'qa15', 'qa16'] </script>
+
+            <call function="'getClustat'">
+                {'host' : "qa12"}
+            </call>
+
+            <message>'getClustat RC=%s, STAXResult=%s' % ( RC, STAXResult)</message>
+
+            <call function="'failoverServiceTo'">
+                {'service' : 'qaclus01.liquidsys.com', 'host' : 'qa15.liquidsys.com'}
+            </call>
+            <message>'failover RC=%s, STAXResult=%s' % ( RC, STAXResult)</message>
+            <if expr="STAXResult != 'success'">
+                <sequence>
+                    <message>'Failover service qaclus01.liquidsys.com to machine qa15.liquidsys.com FAILED'</message>
+                    <return>'FAIL'</return>
+                </sequence>
+                <else>
+                    <sequence>
+                        <call function="'failoverServiceTo'">
+                             {'service' : 'qaclus01.liquidsys.com', 'host' : 'qa12.liquidsys.com'}
+                        </call>
+                        <if expr="STAXResult != 'success'">
+                             <sequence>
+                                  <message>'Failover service qaclus01.liquidsys.com to machine qa12.liquidsys.com FAILED'</message>
+                                  <return>'FAIL'</return>
+                             </sequence>
+                             <else>
+                                <message>'Failover PASSED'</message>
+                             </else>
+                        </if>
+                    </sequence>
+                </else>
+            </if>
+            <message>'failover RC=%s, STAXResult=%s' % ( RC, STAXResult)</message>
+
+            <!--stafcmd name="'Test'">
+                <location>machine</location>
+                <service>'PROCESS'</service>
+                <request>'set processauthmode none'</request>
+            </stafcmd>
+
+<message>'RC=%s, STAXResult=%s' % (RC, STAXResult)</message>
+             
+            <process>
+                <location>machine</location>
+                <command>'/bin/bash'</command>
+                <workdir>'/opt/zimbra/bin'</workdir>
+                <parms>' -c "./zmcontrol status"'</parms>
+                <username>'zimbra'</username>
+                <password>'dumberass'</password>
+                <stdout mode="'append'">'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+              
+            </process-->    
+             
+            <!--process>
+                <location>'local'</location>
+                <command>'cmd'</command>
+                <parms> dir</parms>
+           
+            </process-->
+
+            <!--timer duration="'5m'"-->
+                <stafcmd name="'Send Completion Email'">
+                    <location>gMachines['tms']</location>
+                    <service>'EMAIL'</service>
+                    <request>'SEND TO %s FROM vstamatoiu@zimbra.com TEXTATTACHMENT /tmp/install.out NOHEADER ATTACHMENTMACHINE %s message "TestFailover Completed : %s" SUBJECT "cluster test completed"'% (notificationAlias, 'qa12', STAXResult)</request>
+                </stafcmd>
+            <!--/timer--> 
+            <return>STAXResult</return>
+        </sequence>
+    </function>
+
+
+
+
+  <function name="Main">
+
+    <sequence>
+     
+      <!-- Assign the file name of a STAX xml document you want to parse -->
+      <call function="'parseXML'">'c:/dev/src/stax/leTest.xml'</call>
+
+      <script>
+        document = STAXResult
+
+        # Change code here to parse the document as you desire.
+        # The code shown here is just an example for parsing a STAX xml document
+
+        root = document.getDocumentElement()
+        children = root.getChildNodes()
+
+        msg = ''
+
+        for i in range(children.getLength()):
+          thisChild = children.item(i);
+
+          if (thisChild.getNodeType() == Node.ELEMENT_NODE and
+              thisChild.getNodeName() == 'defaultcall'):
+            msg = '%s\nFound defaultcall element' % (msg)
+          elif thisChild.getNodeType() == Node.COMMENT_NODE:
+            # Do nothing
+            continue
+          elif thisChild.getNodeType() == Node.ELEMENT_NODE:
+            msg = '%s\nFound %s element' % (msg, thisChild.getNodeName())
+      </script>
+
+      <message>'Some parsed data: %s' % (msg)</message>
+      <log>'Some parsed data: %s' % (msg)</log>
+
+    </sequence>
+  </function>
+ 
+  <!-- ******************************************************************* -->
+  <!-- Following function is used to parse an XML file and return the DOM  -->
+  <!-- document object                                                     -->
+  <!-- ******************************************************************* -->
+  <script>
+    # These imports only need to be done once per job, no matter
+    # how many xml documents are parsed 
+
+    from java.io import File
+    from java.io import StringReader
+    from org.xml.sax import InputSource
+    from org.xml.sax import SAXParseException
+    from org.xml.sax.helpers import DefaultHandler
+    from javax.xml.parsers import DocumentBuilderFactory
+    from javax.xml.parsers import DocumentBuilder
+    from org.w3c.dom import Document
+    from org.w3c.dom import Element
+    from org.w3c.dom import Node
+    from org.w3c.dom import NodeList
+
+    # Name of file containing STAX DTD (or whatever DTD you want used) to
+    # when validating/parsing an xml file
+    dtdFileName = 'C:/stax.dtd'  
+
+    # ************************************************************************ #
+    # Following are the private Python classes                                 #
+    # ************************************************************************ #
+
+    # This class handles XML Parsing exceptions
+    class ParserException(Exception):
+        pass
+    
+    # This class handles the exception raised by XML parser
+    class ParserResolver(DefaultHandler):
+        def resolveEntity (self, publicId, systemId):
+            return InputSource(dtdFileName)
+        def error (self, e):
+            raise 'error', e
+        def warning (self, e):
+            raise 'warning', e
+        def fatalError (self, e):
+            raise 'fatal', e
+  </script>
+
+    <function name="parseXML" scope="local">
+    
+        <function-list-args>
+            <function-required-arg name="xmlFileName">
+                Name of file containing XML to be parsed
+            </function-required-arg>
+        </function-list-args>
+        
+        <sequence>
+            <!-- Parse the XML -->
+            <script>
+                from java.io import File
+                from java.io import StringReader
+                from org.xml.sax import InputSource
+                from org.xml.sax import SAXParseException
+                from org.xml.sax.helpers import DefaultHandler
+                from javax.xml.parsers import DocumentBuilderFactory
+                from javax.xml.parsers import DocumentBuilder
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                
+                factory = DocumentBuilderFactory.newInstance();
+                #factory.setValidating(1)
+                factory.setIgnoringElementContentWhitespace(0)
+                
+                # Name of file containing STAX DTD (or whatever DTD you want used) to
+                # when validating/parsing an xml file
+                #dtdFileName = 'C:/stax.dtd'  
+	      	      
+                # ************************************************************************ #
+                # Following are the private Python classes                                 #
+                # ************************************************************************ #
+	      	      
+                # This class handles XML Parsing exceptions
+                class ParserException(Exception):
+                    pass
+                 
+                # This class handles the exception raised by XML parser
+                class ParserResolver(DefaultHandler):
+                    def resolveEntity (self, publicId, systemId):
+                        return InputSource(dtdFileName)
+                    def error (self, e):
+                        raise 'error', e
+                    def warning (self, e):
+                        raise 'warning', e
+                    def fatalError (self, e):
+                        raise 'fatal', e
+                
+                try:
+                    parseError    = 0
+                    builder  = factory.newDocumentBuilder()
+                    #resolver = ParserResolver()
+                    #builder.setEntityResolver(resolver)
+                    #builder.setErrorHandler(resolver)
+                    doc = builder.parse(xmlFileName)
+                except SAXParseException, spe:
+                    parseError = 1
+            </script>
+            
+            <!-- Quit if there is any parsing error -->
+            <if expr="parseError">
+                <sequence>
+                    <script>
+                        errmsg = 'Error occurred parsing file %s\n  line: %s\n  msg: %s' % (
+                                 xmlFileName, spe.getLineNumber(), spe.getMessage()) 
+                    </script>         
+                    <log>errmsg</log>
+                    <message>errmsg</message>
+                    <terminate/>
+                </sequence>
+            </if>
+            <return>doc</return>
+        
+        </sequence>
+    </function> 
+
+    <!--################################
+        # initializer should be the first function form this file
+        # when importing, root scripts content is not executed, therefore
+        # invoking the initializer is mandatory
+        ################################-->
+
+    <function name="___initConfigUtils">
+        <function-prolog>
+            This function acts like a constructor
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="configFile">
+                Configuration file
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = STAXGlobal('\n')</script>
+            <call function="'parseXML'">configFile</call>
+            <script>document = STAXGlobal(STAXResult)</script>
+        </sequence>
+    </function>
+
+    <function name="genInstallTemplates" scope="local">
+        <function-prolog>
+            This function is used to create install templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+            <function-required-arg name="file">
+                Configuration file
+            </function-required-arg>
+            <function-optional-arg name="template" default="None"></function-optional-arg>
+        </function-map-args>
+
+        <sequence>
+            <!--log level="'debug'">'all packages=%s'% allPackages</log-->
+            <call function="'checkZimbraMountpoints'">machine</call>
+            <script>hasMountpoints = STAXResult</script>
+            <call function="'parseXML'">file</call>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                error = STAFRC.Ok
+                # parse the document
+                document = STAXResult
+                mhost = 'none'
+                hosts = document.getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                   h = hosts.item(i)
+                   attr= h.getAttributes().getNamedItem('name')
+                   if attr.getNodeValue() == machine or attr.getNodeValue() == "localhost":
+                      mhost = h
+                if mhost == 'none':
+                   res = "error - host " + machine + " not found in the configuration"
+                   error = 1
+                else:
+                   res = "\\\\n"
+                   pkgs = []
+                   nodes = mhost.getChildNodes()
+                   for i in range(nodes.getLength()):
+                      n=nodes.item(i)
+                      if n.getNodeName() == 'package':
+                         #reqPkgs[n.getAttributes().getNamedItem('name').getNodeValue()] = '1'
+                         pkgs.append("'" + n.getAttributes().getNamedItem('name').getNodeValue() + "'")
+                   res += "Y\\\\n"
+            </script>
+            <call function="'isClusterNode'">machine</call>
+            <script>isInCluster = STAXResult</script>
+            <call function="'isStandbyNode'">machine</call>
+            <script>isStandby = STAXResult</script>
+            <call function="'getZimbraHostname'">machine</call>
+            <script>zimbraHost = STAXResult</script>
+            <call function="'getZimbraHostOption'">'beta-support', machine</call>
+            <script>
+                betaSupport = STAXResult
+                if betaSupport is None:
+                   betaSupport = 'yes'
+            </script>
+            <if expr="template is None">
+                <sequence>
+                    <call function="'genPrefixTemplate'">{'machine':machine}</call>
+                    <script>
+                        installTemplate = STAXResult
+                    </script>
+                </sequence>
+                <else>
+                    <script>
+                        installTemplate = template
+                    </script>
+                </else>
+            </if>
+            <script>
+                installTemplate += "  pkgs = [" + ','.join(pkgs) + "]\n"
+                installTemplate += "  san_mounted_pat = 'Was the service IP configured and SAN volumes mounted\\\\? \\\\[N\\\\]'\n"
+                installTemplate += "  active_srvname_pat = 'Enter the active cluster service name for this node: \\\\[.*\\\\]'\n"
+                installTemplate += "  cont_pat = 'Press Return to continue'\n"
+                installTemplate += "  wish_no_pat = 'Do you wish to continue\\\\? \\\\[N\\\\]'\n"
+                installTemplate += "  eula_pat = 'Do you agree with the terms of the software license agreement\\\\? \\\\[N\\\\]'\n"
+                installTemplate += "  unsupp_pat = 'Support will not be provided if you choose to continue'\n"
+                installTemplate += "  prereq_pat = 'Checking for suggested prerequisites...'\n"
+                installTemplate += "  repo_pat = 'Use Zimbra\\\\'s package repository \\\\[Y\\\\]'\n"
+                installTemplate += "  repo_int_pat = 'Use internal \\\\w* repo \\\\[N\\\\]'\n"  
+                installTemplate += "  keepGoing = true\n"
+                installTemplate += "  unsupported = false\n"
+                installTemplate += "  while keepGoing\n"
+                installTemplate += "    r_f.expect(%r/^\\\\s*(#^{san_mounted_pat}|#^{active_srvname_pat}|#^{cont_pat}|#^{wish_no_pat}|#^{eula_pat}|#^{unsupp_pat}|#^{prereq_pat}|#^{repo_pat}|#^{repo_int_pat})\\\\s*/) do |output|\n"
+                installTemplate += "      if output.first =~ %r/$\\\\s*#^{repo_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{repo_int_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "         keepGoing = false\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{san_mounted_pat}\\\\s*/\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{active_srvname_pat}\\\\s*/\n"
+                installTemplate += "        w_f.puts '" + zimbraHost + "'\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{wish_no_pat}\\\\s*/\n"
+                installTemplate += "        if unsupported\n"
+                installTemplate += "          w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "          unsupported = false\n"
+                installTemplate += "        else\n"
+                installTemplate += "          w_f.puts \\\"" + betaSupport + "\\\\n\\\"\n"
+                installTemplate += "        end\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{eula_pat}\\\\s*/\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "        #keepGoing = false\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{unsupp_pat}\\\\s*/\n"
+                installTemplate += "        unsupported = true\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{prereq_pat}\\\\s*/\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      else #continue\n"
+                installTemplate += "        w_f.puts \\\"\\\\n\\\"\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "  end\n"
+                installTemplate += "  keepGoing = true\n"
+                installTemplate += "  delete_pat = 'Would you like to delete \\\\/opt\\\\/zimbra before installing\\\\? \\\\[N\\\\]'\n"
+                installTemplate += "  install_pat = 'Install zimbra-.*\\\\s*\\\\[(Y|N)\\\\]'\n"
+                installTemplate += "  store_pat = 'Install (mailstore|UI) .*\\\\s*\\\\[(Y|N)\\\\]'\n"
+                installTemplate += "  modify_pat = 'The system will be modified\\\\.\\\\s+Continue\\\\? \\\\[N\\\\]'\n"
+                installTemplate += "  platf_pat = 'Install anyway\\\\? \\\\[N\\\\]'\n" 
+                installTemplate += "  while keepGoing\n"
+                installTemplate += "    r_f.expect(%r/^\\\\s*(#^{delete_pat}|#^{install_pat}|#^{modify_pat}|#^{wish_no_pat}|#^{platf_pat}|#^{store_pat}|#^{repo_pat}|#^{repo_int_pat})\\\\s*/) do |output|\n"
+                installTemplate += "      if output.first =~ %r/$\\\\s*#^{repo_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{repo_int_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{delete_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"N\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{wish_no_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{install_pat}\\\\s*/\n"
+                installTemplate += "        pkg = output.first.split(/\\\\s+/)[-2]\n"
+                installTemplate += "        if pkgs.include\?(pkg)\n"
+                installTemplate += "          answer = \\\"Y\\\\n\\\"\n"
+                installTemplate += "        else\n"
+                installTemplate += "          answer = \\\"N\\\\n\\\"\n"
+                installTemplate += "        end\n"
+                installTemplate += "        w_f.puts answer\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{store_pat}\\\\s*/\n"
+                installTemplate += "        app = output.first.split(/\\\\(|\\\\)/)[-2]\n"
+                installTemplate += "        if pkgs.include\?(pkg)\n"
+                installTemplate += "          answer = \\\"Y\\\\n\\\"\n"
+                installTemplate += "        else\n"
+                installTemplate += "          answer = \\\"Y\\\\n\\\"\n"
+                installTemplate += "        end\n"
+                installTemplate += "        w_f.puts answer\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{platf_pat}\\\\s*/\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      else #modify\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "  end\n"
+                #installTemplate += "  r_f.expect(completion_pat) do |output| if output == nil then exit(1) else exit(0) end end rescue nil\n"
+                #installTemplate += "#  w_f.puts(\"Y\n\") rescue nil\n"
+                #installTemplate += "end\n"
+            </script>
+            <!-- IT SHOULDNT ASK THIS QUESTION -->
+            <script>
+                if isStandby:
+                   hosts = document.getElementsByTagName("zimbrahost")
+                   zimbraHost = hosts.item(0).getAttributes().getNamedItem('name').getNodeValue()
+                   installTemplate += "  r_f.expect(%r/^\\\\s*Enter the active cluster service name for this node: \\\\[.*\\\\]\\\\s*/) ^{w_f.puts '" + zimbraHost + "'}\n"
+            </script>
+            <call function="'genSuffixTemplate'">
+                {'machine' : machine,
+                 'prompt'  : 'Run \\\\/opt\\\\/zimbra\\\\/libexec\\\\/zmsetup\\\\.pl to configure the system\\\\s*'}
+            </call>
+            <script>
+                installTemplate += STAXResult
+            </script>
+            <process name="'Create Install File - ' + machine">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % installTemplate</parms>
+                <stdout>'/tmp/install.rb'</stdout>  
+            </process>
+            <return>[error, installTemplate]</return>
+        </sequence>
+    </function>
+    
+    <function name="genInstallTemplatesMAC" scope="local">
+        <function-prolog>
+            This function is used to create install templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+            <function-required-arg name="file">
+                Configuration file
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>
+                mhost = None
+                hosts = document.getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                    h = hosts.item(i)
+                    attr= h.getAttributes().getNamedItem('name')
+                    if attr.getNodeValue() == machine or attr.getNodeValue() == "localhost":
+                        mhost = h
+                        configPackages = mhost.getElementsByTagName('package')
+                        break
+            </script>
+            <if expr="mhost is None">
+                <return>[STAFRC.DoesNotExist, "error - host " + machine + " not found in the configuration"]</return>
+            </if>
+            <log level="'debug'">'%s packages=%s.'% ('configuration', configPackages)</log>
+            <stafcmd>
+                <location>machine</location>
+                <service>'fs'</service>
+                <request>'GET FILE /var/tmp/zimbra/zcs.mpkg/Contents/distribution.dist'</request>
+            </stafcmd>
+            <script>
+                mres = STAFResult
+            </script>
+            <script>
+                from java.io import File
+                from java.io import StringReader
+                from java.io import StringWriter
+                from org.xml.sax import InputSource
+                from org.xml.sax import SAXException
+                from org.xml.sax.helpers import DefaultHandler
+                from javax.xml.parsers import DocumentBuilderFactory
+                from javax.xml.parsers import DocumentBuilder
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from javax.xml.transform import Transformer
+                from javax.xml.transform import TransformerFactory
+                from javax.xml.transform import TransformerException
+                from javax.xml.transform import Source
+                from javax.xml.transform.dom import DOMSource
+                from javax.xml.transform import Result
+                from javax.xml.transform.stream import StreamResult
+                
+                factory = DocumentBuilderFactory.newInstance()
+                #factory.setValidating(1)
+                factory.setIgnoringElementContentWhitespace(0)
+                res = []
+                try:
+                    error = STAFRC.Ok
+                    builder = factory.newDocumentBuilder()
+                    distribdoc = builder.parse(InputSource(StringReader(mres)))
+                    requiredRefs = []
+                    refs = distribdoc.getElementsByTagName('pkg-ref')
+                    for i in range(refs.getLength()):
+                        if not refs.item(i).hasChildNodes():
+                            continue
+                        #res.append(refs.item(i).getAttributes().getNamedItem('id').getNodeValue() + ", " +
+                        #           str(refs.item(i).hasChildNodes()) + ", ")
+                        for j in range(configPackages.getLength()):
+                            pname = configPackages.item(j).getAttributes().getNamedItem('name').getNodeValue()
+#                           #res.append(pname + ", " + refs.item(i).getFirstChild().getNodeValue())
+                            if refs.item(i).getFirstChild().getNodeValue().find(pname) != -1:
+                                requiredRefs.append(refs.item(i).getAttributes().getNamedItem('id').getNodeValue())
+                                break
+                    elems = distribdoc.getElementsByTagName('choice')
+                    for i in range(elems.getLength()):
+                        e = elems.item(i)
+                        if e.getAttributes().getNamedItem('start_enabled').getNodeValue() != 'false':
+                            e.setAttribute('start_selected', 'false')
+                    for i in range(elems.getLength()):
+                        e = elems.item(i)
+                        ps = e.getElementsByTagName('pkg-ref')
+                        for j in range(ps.getLength()):
+#                           #res.append(ps.item(j).getAttributes().getNamedItem('id').getNodeValue())
+                            if ps.item(j).getAttributes().getNamedItem('id').getNodeValue() in requiredRefs:
+                                #res.append(ps.item(j).getAttributes().getNamedItem('id').getNodeValue())
+                                e.setAttribute('start_selected', 'true')
+                                #res.append(e.getAttributes().getNamedItem('id').getNodeValue() +
+                                #           ", " + e.getAttributes().getNamedItem('start_selected').getNodeValue())
+                    source = DOMSource(distribdoc)
+                    file = File('/tmp/distribution.dist.' + machine)
+                    result = StreamResult(file)
+                    #sw = StringWriter()
+                    #result = StreamResult(sw)
+                    xformer = TransformerFactory.newInstance().newTransformer()
+                    xformer.transform(source, result)
+                    #res=sw.toString()
+                    #file.close()
+                    res = '/tmp/distribution.dist.' + machine
+                except (SAXException, TransformerException), exc:
+                    error = 1
+                    res = "install template creation error"
+                </script>
+            <log level="'debug'">'res=%s.'%res</log>
+            <return>[error, res]</return>
+        </sequence>
+    </function>
+    
+    <function name="getFqdnHostname" scope="local">
+        <function-prolog>
+            This function returns fqdn hostname
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                cmd = 'hostname -f'
+            </script>
+            <process name="'Get fqdn - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command>
+                <parms>' -l -c "%s"'%cmd</parms>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>
+        <!--    <if expr="STAXResult[0][1].find('localhost') == -1">
+                <return>STAXResult[0][1].strip().replace('\n', '')</return>
+            </if> -->
+            <return>machine</return>
+        </sequence>
+    </function>
+
+    <function name="getDnsHostname" scope="local">
+        <function-prolog>
+            This function returns dns entry
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <if expr = "machine == 'localhost'">
+                <sequence>
+                    <log level = "'error'">'invalid machine name localhost'</log>
+                    <return>None</return>
+                </sequence>
+            </if>
+            <script>
+                from java.net import InetAddress
+                from java.net import UnknownHostException
+
+                dnsName = None
+                try:
+                   inetAddress = InetAddress.getByName(machine).getCanonicalHostName()
+                   dnsName = inetAddress
+                   if machine.find('zimbra') != -1:
+                      dnsName = dnsName.replace('vmware', 'zimbra')
+                except UnknownHostException, uhe:
+                   pass
+            </script>
+            <if expr = "dnsName is None">
+                <log level="'error'">'unknown host %s' % uhe.getMessage()</log>
+            </if>
+            <return>dnsName</return>
+        </sequence>
+    </function>
+    
+    <function name="getDnsServers" scope="local">
+        <function-prolog>
+            This function returns dns server(s)
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <if expr = "machine == 'localhost'">
+                <sequence>
+                    <log level = "'error'">'invalid machine name localhost'</log>
+                    <return>''</return>
+                </sequence>
+            </if>
+            <process name="'Get dns info - ' + machine">
+                <location>machine</location>
+                <command>'dig'</command>
+                <parms>'+nocomments +noquestion +noanswer +noauthority %s' % machine</parms>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>
+            <if expr="STAXResult[0] == STAFRC.Ok">
+                <return>''</return>
+            </if>
+            <script>
+                import re
+                res = STAXResult[0][1].replace('\n', '')
+                server = ''
+                m = re.match(r".*;;\s+SERVER:\s+([\d\.]+).*", res)
+                if m != None:
+                   server = m.group(1)
+            </script>
+            <if expr = "server is None">
+                <log level="'error'">'unable to obtain DNS servers - %s' % res</log>
+            </if>
+            <return>server</return>
+        </sequence>
+    </function>
+
+    <function name="getNodePackages" scope="local">
+        <function-prolog>
+            This function returns the list of packages for the node
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which fqdn host to get pkgs for
+            </function-required-arg>
+            <function-required-arg name="document">
+                config in dom format
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # get missing packages in fromConfig
+                #mhost = 'none'
+                hosts = document.getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                   h = hosts.item(i)
+                   attr= h.getAttributes().getNamedItem('name')
+                   if attr.getNodeValue() == machine:
+                      mhost = h
+                      break
+                if mhost == None:
+                   ret = "error - host " + machine + " not found in this configuration"
+                else:
+                   ret = []
+                   nodes = mhost.getElementsByTagName('package')
+                   for i in range(nodes.getLength()):
+                      n=nodes.item(i)
+                      ret.append(n.getAttributes().getNamedItem('name').getNodeValue())
+                   if mhost.getParentNode().getNodeName() == 'cluster':
+                      ret.append('zimbra-cluster')
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+    <function name="genUpgradeTemplate" scope="local">
+        <function-prolog>
+            This function is used to create install templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+            <function-required-arg name="fromConfig">
+                Upgrade from configuration file
+            </function-required-arg>
+            <function-required-arg name="toConfig">
+                Upgrade to configuration file
+            </function-required-arg>
+            <!--function-optional-arg name="bits">
+                Bits: foss/network
+            </function-optional-arg-->
+        </function-map-args>
+
+        <sequence>
+            <call function="'parseXML'">toConfig</call>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                error = STAFRC.Ok
+                # get missing packages in fromConfig
+                document = STAXResult
+                mhost = 'none'
+                hosts = document.getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                   h = hosts.item(i)
+                   attr= h.getAttributes().getNamedItem('name')
+                   if attr.getNodeValue() == machine or attr.getNodeValue() == "localhost":
+                      mhost = h
+                      break
+                if mhost == 'none':
+                   ret = "error - host " + machine + " not found in " + fromConfig
+                   error = 1
+                else:
+                   res = "\\\\n"
+                   pkgs = []
+                   nodes = mhost.getChildNodes()
+                   for i in range(nodes.getLength()):
+                      n=nodes.item(i)
+                      if n.getNodeName() == 'package':
+                         #reqPkgs[n.getAttributes().getNamedItem('name').getNodeValue()] = '1'
+                         pkgs.append("'" + n.getAttributes().getNamedItem('name').getNodeValue() + "'")
+                   res += "Y\\\\n"
+            </script>
+            <call function="'genPrefixTemplate'">{'machine':machine}</call>
+            <script>
+                installTemplate = STAXResult
+            </script>
+            <script>
+                installTemplate += "  pkgs = [" + ','.join(pkgs) + "]\n"
+                installTemplate += "  continue = %r/Press Return to continue/\n"
+                installTemplate += "  fossovernetcontinue = %r/Do you wish to continue\\\\? \\\\[N\\\\]/\n"
+                installTemplate += "  eula = %r/Do you agree with the terms of the software license agreement\\\\? \\\\[N\\\\]/\n"
+                installTemplate += "  prereq_pat = 'Checking for suggested prerequisites...'\n"
+                installTemplate += "  clusterServiceName = %r/Enter the active cluster service name for this node: \\\\[.*\\\\]/\n"
+                installTemplate += "  repo_pat = 'Use Zimbra\\\\'s package repository \\\\[Y\\\\]'\n"
+                installTemplate += "  repo_int_pat = 'Use internal \\\\w* repo \\\\[N\\\\]'\n"
+                installTemplate += "  verifyStDbIntegrity = %r/Do you want to verify message store database integrity\\\\? \\\\[(Y|N)\\\\]/\n"
+                installTemplate += "  verifyLgDbIntegrity = %r/Do you want to verify logger database integrity\\\\? \\\\[(Y|N)\\\\]/\n"
+                installTemplate += "  continueYN = 'Do you wish to continue\\\\? \\\\[N\\\\]'\n"
+                installTemplate += "  continueNoBackup = %r/Do you wish to continue without a backup\\\\? \\\\[(Y|N)\\\\]/\n"
+                installTemplate += "  keepGoing = true\n"
+                installTemplate += "  while keepGoing\n"
+                installTemplate += "    r_f.expect(/^\\\\s*(#^{continue}|#^{continueNoBackup}|#^{fossovernetcontinue}|#^{verifyStDbIntegrity}|#^{verifyLgDbIntegrity}|#^{clusterServiceName}|#^{eula}|#^{prereq_pat}|#^{repo_pat}|#^{repo_int_pat})\\\\s*/) do |output|\n"
+                installTemplate += "      line = output.first.split('\\\\n')[-1]\n"
+                installTemplate += "      if line =~ %r/$\\\\s*#^{repo_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ %r/^\\\\s*#^{repo_int_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"       
+                installTemplate += "         keepGoing = false\n"         
+                installTemplate += "      elsif line =~  fossovernetcontinue\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif line =~  clusterServiceName\n"
+                installTemplate += "        w_f.puts \\\"\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ continueNoBackup\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ eula\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "        #keepGoing = false\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{prereq_pat}\\\\s*/\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      elsif line =~ verifyStDbIntegrity\n"
+                installTemplate += "        w_f.puts \\\"N\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ verifyLgDbIntegrity\n"
+                installTemplate += "        w_f.puts \\\"N\\\\n\\\"\n"
+                installTemplate += "        w_f.puts \\\"\\\\n\\\"\n"
+                installTemplate += "      else\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "  end\n"
+                installTemplate += "  continueYN = 'Do you wish to continue\\\\? \\\\[N\\\\]'\n"
+                installTemplate += "  continueNoBackup = %r/Do you wish to continue without a backup\\\\? \\\\[(Y|N)\\\\]/\n"
+                installTemplate += "  upgrade = %r/Do you wish to upgrade\\\\? \\\\[(Y|N)\\\\]/\n"
+                installTemplate += "  keepGoing = true\n"
+                installTemplate += "  while keepGoing\n"
+                installTemplate += "    r_f.expect(/^\\\\s*(#^{continueYN}|#^{continueNoBackup}|#^{verifyStDbIntegrity}|#^{verifyLgDbIntegrity}|#^{upgrade}|#^{repo_pat}|#^{repo_int_pat})\\\\s*/) do |output|\n"
+                installTemplate += "      line = output.first.split('\\\\n')[-1]\n"
+                installTemplate += "      if line =~ %r/$\\\\s*#^{repo_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ %r/^\\\\s*#^{repo_int_pat}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"                       
+                installTemplate += "      elsif line =~ continueNoBackup\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif output.first =~ %r/^\\\\s*#^{continueYN}\\\\s*/\n"
+                installTemplate += "         w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ verifyStDbIntegrity\n"
+                installTemplate += "        w_f.puts \\\"N\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ verifyLgDbIntegrity\n"
+                installTemplate += "        w_f.puts \\\"N\\\\n\\\"\n"
+                installTemplate += "      else\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "  end\n"
+                installTemplate += "  keepGoing = true\n"
+                installTemplate += "  while keepGoing\n"
+                installTemplate += "    r_f.expect(%r/^\\\\s*(Install zimbra-.*\\\\s*\\\\[(Y|N)\\\\]\\\\s*|The system will be modified\\\\.\\\\s+Continue\\\\? \\\\[N\\\\]\\\\s*)/) do |output|\n"
+                installTemplate += "      if output.first =~ %r/^\\\\s*Install zimbra-.*\\\\s*\\\\[(Y|N)\\\\]\\\\s*/\n"
+                installTemplate += "        pkg = output.first.split(/\\\\s+/)[-2]\n"
+                installTemplate += "        if pkgs.include\?(pkg)\n"
+                installTemplate += "          answer = \\\"Y\\\\n\\\"\n"
+                installTemplate += "        else\n"
+                installTemplate += "          answer = \\\"N\\\\n\\\"\n"
+                installTemplate += "        end\n"
+                installTemplate += "        w_f.puts answer\n"
+                installTemplate += "      else #modify\n"
+                installTemplate += "        w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "  end\n"
+            </script>
+            <call function="'isStandbyNode'">machine</call>
+            <script>
+                isStandby = STAXResult
+                if isStandby:
+                  done_pattern = 'Installing ssh key into authorized_keys\\\\.\\\\.\\\\.done.\\\\s*'
+                else:
+                  done_pattern = 'Run \\\\/opt\\\\/zimbra\\\\/libexec\\\\/zmsetup\\\\.pl to configure the system\\\\s*'
+            </script>
+            <call function="'genSuffixTemplate'">
+                {'machine' : machine,
+                 'prompt'  : done_pattern #'Run \\\\/opt\\\\/zimbra\\\\/libexec\\\\/zmsetup\\\\.pl to configure the system\\\\s*'
+                }
+            </call>
+            <script>
+                installTemplate += STAXResult
+            </script>
+            <process name="'Create Install File - ' + machine">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % installTemplate</parms>
+                <stdout>'/tmp/upgrade.rb'</stdout>  
+            </process>
+            <return>[error, installTemplate]</return>
+        </sequence>
+    </function>
+    
+    <function name="genZmupgradeTemplate" scope="local">
+        <function-prolog>
+            This function is used to create the upgrade template for zmsetup
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+            <function-required-arg name="toConfig">
+                Upgrade to configuration file
+            </function-required-arg>
+            <function-optional-arg name="fromConfig">
+                Base config file. Currently a placeholder
+            </function-optional-arg>
+        </function-map-args>
+
+        <sequence>
+            <call function="'parseXML'">toConfig</call>
+            <!--TODO: parse doc and get version update setup
+                For Now ignore it, set it to FALSE -->
+            <!--call function="'isInstalled'">'zimbra-store'</call>
+            <script>
+                       if STAXResult == 1:
+                          installedPackages[pkg] = pkg
+                          enabledPackages[pkg] = "Enabled"
+            </script-->
+            <!--call function="'genPrefixTemplate'">{'machine':machine}</call-->
+            <call function="'getDnsServers'">machine</call>
+            <script>
+                installTemplate  = "#!/bin/env ruby\n#\n"
+                installTemplate += "require 'pty'\n"
+                installTemplate += "require 'expect'\n\n"
+                installTemplate += "STDOUT.sync     = true\n"
+                installTemplate += "STDERR.sync     = true\n"
+                installTemplate += "$expect_verbose = true\n"
+                installTemplate += "versions        = []\n"
+                installTemplate += "exitCode        = 0\n"
+                installTemplate += "STDERR.sync     = true\n"
+                installTemplate += "\n"
+                installTemplate += "PTY.spawn(\\\"/opt/zimbra/libexec/zmsetup.pl\\\") do |r_f,w_f,pid|\n"
+                installTemplate += "  w_f.sync = true\n"
+            </script>
+            <script>
+                installTemplate += "  ldap_menu_start = %r/\\\d+\\\)\\\s+zimbra-ldap:/\n"
+                installTemplate += "  #store_menu_start = %r/(\\\d+)\\\)\\\s+zimbra-store:/\n"
+                installTemplate += "  dns_menu_start = %r/(\\\d+)\\\)\\\s+zimbra-dnscache:/\n"
+                installTemplate += "  dns_ip_menu_start = %r/(\\\d+)\\\)\\\s+Master DNS IP address\\\(es\\\):\\\s+(\\\S\\\S)/\n"
+                installTemplate += "  dns_ip = %r/IP Address\\\(es\\\) of Master DNS Server\\\(s\\\), space separated:/\n"
+                installTemplate += "  version_update_enable = %r/(\\\d+)\\\)\\\s+Enable version update checks:\\\s+((TRUE|FALSE|UNSET))/\n"
+                installTemplate += "  main_menu_end_incomplete = %r/Address unconfigured \\\(\\\*\\\*\\\) items\\\s+\\\(\\\? - help\\\)/\n"
+                installTemplate += "  main_menu_end_complete = %r/Select from menu, or press 'a' to apply config \\\(\\\? - help\\\)/\n"
+                installTemplate += "  crt_menu_start = %r/1\\\)\\\s+/\n"
+                installTemplate += "  crt_menu_end = %r/Select, or 'r' for previous menu \\\\[r\\\\]/\n"
+                installTemplate += "  notify_zimbra = %r/Notify Zimbra of your installation\\\\? \\\\[Yes\\\\]/\n"
+                installTemplate += "  setup_complete = %r/Configuration complete - press return to exit/\n"
+                installTemplate += "  continue = %r/Press Return to continue\s*/\n"
+                installTemplate += "  dns_servers = '" + STAXResult + "'\n"
+                installTemplate += "  keepGoing = true\n"
+                installTemplate += "  matched = nil\n"
+                installTemplate += "  completed = false\n"
+                installTemplate += "  while keepGoing\n"
+                installTemplate += "    r_f.expect(/^\\\\s*(#^{dns_menu_start}|#^{main_menu_end_incomplete}|#^{continue}|#^{notify_zimbra}|#^{setup_complete})/) do |output|\n"
+                installTemplate += "      line = output.first.split(\\\"\\\\n\\\")[-1]\n"
+                installTemplate += "      if (data = dns_menu_start.match(line))\n"
+                installTemplate += "        matched = data\n"
+                installTemplate += "      elsif line =~ main_menu_end_incomplete\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "        w_f.puts \\\"#^{matched[1]}\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ setup_complete\n"
+                installTemplate += "        w_f.puts \\\"\\\\n\\\"\n"
+                installTemplate += "        puts \\\"\\\\n\\\"\n"
+                installTemplate += "        completed = true\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      elsif line =~ notify_zimbra\n"
+                installTemplate += "        w_f.puts \\\"No\\\\n\\\"\n"
+                installTemplate += "      elsif line =~ continue\n"
+                installTemplate += "        w_f.puts \\\"\\\\n\\\"\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      else\n" #UNEXPECTED
+                installTemplate += "        #w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "        keepGoing = false\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "  end\n"
+                installTemplate += "  if !completed\n"
+                installTemplate += "    keepGoing = true\n"
+                installTemplate += "    matched = nil\n"
+                installTemplate += "    while keepGoing\n"
+                installTemplate += "      r_f.expect(/(#^{dns_ip_menu_start}|#^{dns_ip}|#^{continue}|#^{crt_menu_end})/) do |output|\n"
+                installTemplate += "        line = output.first.split(\\\"\\\\n\\\")[-1]\n"
+                installTemplate += "        if (data = dns_ip_menu_start.match(line))\n"
+                installTemplate += "          matched = data\n"
+                installTemplate += "        elsif line =~ crt_menu_end\n"
+                installTemplate += "          if matched[2] == 'UN'\n"
+                installTemplate += "            w_f.puts \\\"#^{matched[1]}\\\\n\\\"\n"
+                installTemplate += "          else\n"
+                installTemplate += "            keepGoing = false\n"
+                installTemplate += "            w_f.puts \\\"r\\\\n\\\"\n"
+                installTemplate += "          end\n"
+                installTemplate += "        elsif line =~ dns_ip\n"
+                installTemplate += "          w_f.puts \\\"10.210.0.166\\\\n\\\"\n"
+                installTemplate += "        elsif line =~ continue\n"
+                installTemplate += "          w_f.puts \\\"\\\\n\\\"\n"
+                installTemplate += "          keepGoing = false\n"
+                installTemplate += "        else\n" #UNEXPECTED
+                installTemplate += "          #w_f.puts \\\"Y\\\\n\\\"\n"
+                installTemplate += "          keepGoing = false\n"
+                installTemplate += "        end\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "    r_f.expect(%r/^\\\\s*#^{main_menu_end_complete}/) do |output|\n"
+                installTemplate += "      w_f.puts \\\"a\\\\n\\\"\n"
+                installTemplate += "    end\n"
+                installTemplate += "    keepGoing = true\n"
+                installTemplate += "    matched = nil\n"
+                installTemplate += "    while keepGoing\n"
+                installTemplate += "      begin\n"
+                installTemplate += "        r_f.expect(%r/^\\\\s*(#^{setup_complete}|#^{notify_zimbra})/) do |output|\n"
+                installTemplate += "          if output == nil\n"
+                installTemplate += "            exitCode = 1\n"
+                installTemplate += "            keepGoing = false\n"
+                installTemplate += "          elsif output.first.split(\\\"\\\\n\\\")[-1] =~ notify_zimbra\n"
+                installTemplate += "            w_f.puts \\\"No\\\\n\\\"\n"
+                installTemplate += "          else\n"
+                installTemplate += "            w_f.puts \\\"\\\\n\\\"\n"
+                installTemplate += "            puts \\\"\\\\n\\\"\n"
+                installTemplate += "            keepGoing = false\n"
+                installTemplate += "          end\n"
+                installTemplate += "        end\n"
+                installTemplate += "      rescue\n"
+                installTemplate += "        exit(0)\n"
+                installTemplate += "      end\n"
+                installTemplate += "    end\n"
+                installTemplate += "  end\n"
+                installTemplate += "end\n"
+                installTemplate += "exit(exitCode)\n"
+            </script>
+            <!--call function="'genSuffixTemplate'">
+                {'machine' : machine,
+                 'prompt'  : 'Configuration complete - press return to exit'}
+            </call>
+            <script>
+                installTemplate += STAXResult
+            </script-->
+            <process name="'Create Install File - ' + machine">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % installTemplate</parms>
+                <stdout>'/tmp/zmupgrade.rb'</stdout>  
+            </process>
+            <return>[STAFRC.Ok, installTemplate]</return>
+        </sequence>
+    </function>
+    
+    <function name="getLdapHost" scope="local">
+        <function-prolog>
+            This function returns the master/replica host
+            ####### only 1master+1replica for now #######
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="optName">
+                Name of the option replica/master
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                ret = None
+                mpkg = None
+                pkgs = document.getElementsByTagName("package")
+                for i in range(pkgs.getLength()):
+                    p = pkgs.item(i)
+                    pname = p.getAttributes().getNamedItem('name').getNodeValue()
+                    if pname == 'zimbra-ldap':
+                       options = p.getElementsByTagName('option')
+                       replica = None
+                       master = None
+                       for j in range(options.getLength()):
+                          opt = options.item(j)
+                          if opt.getAttributes().getNamedItem('name').getNodeValue() == 'replica':
+                             replica = opt.getFirstChild().getNodeValue().strip()
+                          elif opt.getAttributes().getNamedItem('name').getNodeValue() == 'LDAPMASTER':
+                             master = opt.getFirstChild().getNodeValue().strip()
+                       if ((optName == 'master') and (replica is None)):
+                          mpkg = p
+                          break
+                       if ((optName == 'replica') and (replica == 'yes')):
+                          mpkg = p
+                          break
+            </script>
+            <if expr="mpkg is not None">
+                <sequence>
+                   <!--call function="'getFqdnHostname'">mpkg.getParentNode().getAttributes().getNamedItem("name").getNodeValue()</call>
+                   <script>
+                      ret = STAXResult
+                      node = mpkg.getParentNode()
+                      if node.getElementsByTagName('zimbrahost').getLength() == 1:
+                         ret = node.getElementsByTagName('zimbrahost').item(0).getAttributes().getNamedItem('name').getNodeValue()
+                   </script-->
+                   <call function="'getZimbraHostname'">mpkg.getParentNode().getAttributes().getNamedItem("name").getNodeValue()</call>
+                   <script>ret = STAXResult</script>
+                </sequence>
+            </if>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+    <function name="getAdminHost" scope="local">
+        <function-prolog>
+            This function returns the host where admin password is configured
+            i.e. option ADMINPASS is configured. It should be on only one host
+        </function-prolog>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                options = document.getElementsByTagName("option")
+                for i in range(options.getLength()):
+                    option = options.item(i)
+                    ret = None
+                    if option.hasAttributes():
+                       if option.getAttributes().getNamedItem('name').getNodeValue() == 'ADMINPASS':
+                          ret = option.getParentNode().getParentNode().getAttributes().getNamedItem('name').getNodeValue()
+                          break
+            </script>
+            <if expr="ret is not None">
+                <sequence>
+                    <call function="'getZimbraHostname'">ret</call>
+                    <return>STAXResult</return>
+                </sequence>
+            </if>
+            <return/>
+        </sequence>
+    </function>
+
+    <function name="getLdapMaster" scope="local">
+        <function-prolog>
+            This function 
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="file">
+                Name of the option
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                try:
+                   document
+                except NameError:
+                   document = None
+            </script>
+            <if expr="document is None">
+                <sequence>
+                    <call function="'parseXML'">file</call>
+                    <script>document = STAXResult</script>
+                </sequence>
+            </if>
+            <!--script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                mpkg = 'none'
+                pkgs = document.getElementsByTagName("package")
+                for i in range(pkgs.getLength()):
+                    p = pkgs.item(i)
+                    attr1 = p.getAttributes().getNamedItem('name')
+                    attr2 = p.getAttributes().getNamedItem('replica')
+                    if (attr1.getNodeValue() == 'zimbra-ldap') and ((attr2 is None) or (attr2.getNodeName() != 'yes')):
+                        mpkg = p
+                if mpkg != 'none':
+                   node = mpkg.getParentNode()
+                   ret = node.getAttributes().getNamedItem("name").getNodeValue()
+                else:
+                   ret = None
+            </script>
+            <return>ret</return-->
+            <call function="'getLdapHost'">'master'</call>
+            <return>STAXResult</return>
+        </sequence>
+    </function>
+
+    <function name="getLdapReplica" scope="local">
+        <function-prolog>
+            This function returns the replica host
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="file">
+                Configuration file
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                try:
+                   document
+                except NameError:
+                   document = None
+            </script>
+            <if expr="document is None">
+                <sequence>
+                    <call function="'parseXML'">file</call>
+                    <script>document = STAXResult</script>
+                </sequence>
+            </if>
+            <!--script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                mpkg = 'none'
+                pkgs = document.getElementsByTagName("package")
+                for i in range(pkgs.getLength()):
+                    p = pkgs.item(i)
+                    attr1 = p.getAttributes().getNamedItem('name')
+                    attr2 = p.getAttributes().getNamedItem('replica')
+                    if attr2 is None:
+                       break
+                    if (attr1.getNodeValue() == 'zimbra-ldap') and (attr2.getNodeValue() == 'yes'):
+                        mpkg = p
+                if mpkg != 'none':
+                   node = mpkg.getParentNode()
+                   ret = node.getAttributes().getNamedItem("name").getNodeValue()
+                else:
+                   ret = None
+            </script-->
+            <call function="'getLdapHost'">'replica'</call>
+            <return>STAXResult</return>
+        </sequence>
+    </function>
+
+    <function name="getLoggerHost" scope="local">
+        <function-prolog>
+            This function returns the logger host:
+               finds all zimbra-logger package
+               if only one, returns parent host name
+               else parent host name for the package with attribute enable="yes"
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="file">
+                Configuration file
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                try:
+                   document
+                except NameError:
+                   document = None
+            </script>
+            <if expr="document is None">
+                <sequence>
+                    <call function="'parseXML'">file</call>
+                    <script>document = STAXResult</script>
+                </sequence>
+            </if>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                lpkg = None
+                enableCnt = 0
+                pkgs = document.getElementsByTagName("package")
+                for i in range(pkgs.getLength()):
+                   p = pkgs.item(i)
+                   attr = p.getAttributes().getNamedItem('name')
+                   if (attr.getNodeValue() == 'zimbra-logger'):
+                      attr2 = p.getAttributes().getNamedItem('enable')
+                      if attr2 is None or attr2.getNodeValue() == 'yes':
+                         enableCnt += 1
+                         lpkg = p
+                if enableCnt == 1:
+                   ret = lpkg.getParentNode().getAttributes().getNamedItem("name").getNodeValue()
+                else:
+                   ret = None
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>    
+
+
+
+    <function name="getServiceHosts" scope="local">
+        <function-prolog>
+            This function returns the host(s) where service is to be installed:
+               finds all zimbra-mta packages
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="service">
+                Service name
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                res = []
+                pkgs = document.getElementsByTagName("package")
+                for i in range(pkgs.getLength()):
+                   p = pkgs.item(i)
+                   attr = p.getAttributes().getNamedItem('name')
+                   if (attr.getNodeValue() == 'zimbra-' + service):
+                      attr2 = p.getAttributes().getNamedItem('enable')
+                      if attr2 is None or attr2.getNodeValue() == 'yes':
+                         attr = p.getParentNode().getAttributes().getNamedItem("zimbrahost")
+                         if attr is not None:
+                            zhost = attr.getNodeValue()
+                         else:
+                            zhost = p.getParentNode().getAttributes().getNamedItem("name").getNodeValue()
+                         res.append(zhost)
+            </script>
+            <return>[STAFRC.Ok, res]</return>
+        </sequence>
+    </function>    
+
+
+
+
+    <function name="getZimbraHostname" scope="local">
+        <function-prolog>
+            This function returns zimbra hostname or None if host not found
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="machine">
+                hostname
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+        <call function="'getFqdnHostname'">machine</call>
+            <script>thisHostname = STAXResult</script>
+            <script>
+                zimbraHostname = None
+                hosts = document.getElementsByTagName('host')
+                theHost = None
+                for i in range(hosts.getLength()):
+                   crt = hosts.item(i)
+                   if machine.find(crt.getAttributes().getNamedItem('name').getNodeValue()) != -1:
+                      theHost = crt
+                      break
+                if theHost is not None:
+                   if theHost.getElementsByTagName('zimbrahost').getLength() == 1:
+                      zimbraHostname = theHost.getElementsByTagName('zimbrahost').item(0).getAttributes().getNamedItem('name').getNodeValue()
+                   else:
+                      zimbraHostname = thisHostname
+            </script>
+            <return>zimbraHostname</return>
+        </sequence>
+    </function>
+
+
+
+
+    <function name="getLdapOption" scope="local">
+        <function-prolog>
+            This function is used to retrieve unique ldap options i.e. not for LDAPMASTER
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="optName">
+                Name of the option
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                mpkg = 'none'
+                ret = None
+                pkgs = document.getElementsByTagName("package")
+                for i in range(pkgs.getLength()):
+                    p = pkgs.item(i)
+                    attr= p.getAttributes().getNamedItem('name')
+                    if attr.getNodeValue() == 'zimbra-ldap':
+                        options = p.getChildNodes()
+                        for i in range(options.getLength()):
+                            option = options.item(i)
+                            if option.hasAttributes():
+                                if option.getAttributes().getNamedItem('name').getNodeValue() == optName:
+                                    ret = option.getFirstChild().getNodeValue().strip().replace('\n', '')
+                                    break
+                        if ret is not None:
+                            break
+                    
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+    
+    <function name="getPackageOption" scope="local">
+        <function-prolog>
+            This function is used to retrieve zimbra package option
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="package">
+                Name of the option
+            </function-required-arg>
+            <function-required-arg name="optName">
+                Name of the option
+            </function-required-arg>
+            <function-optional-arg name="host" default="''">
+                Name of the host
+            </function-optional-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                mpkg = 'none'
+                ret = None
+                options = None
+                if host == "":
+                   pkgs = document.getElementsByTagName("package")
+                else:
+                   hosts = document.getElementsByTagName("host")
+                   for i in range(hosts.getLength()):
+                      crt = hosts.item(i)
+                      if crt.getElementsByTagName("zimbrahost").getLength() == 1:
+                         crt = crt.getElementsByTagName("zimbrahost").item(0)
+                      if crt.getAttributes().getNamedItem('name').getNodeValue().find(host) != -1:
+                         pkgs = hosts.item(i).getElementsByTagName("package")
+                         break
+                for i in range(pkgs.getLength()):
+                    p = pkgs.item(i)
+                    attr= p.getAttributes().getNamedItem('name')
+                    if attr.getNodeValue() == 'zimbra-' + package:
+                       options = p.getChildNodes()
+                       for i in range(options.getLength()):
+                           option = options.item(i)
+                           if option.hasAttributes():
+                              if option.getAttributes().getNamedItem('name').getNodeValue() == optName:
+                                 ret = option.getFirstChild().getNodeValue()
+                                 ret = ret.strip().replace('\n', '')
+                                 break
+            </script>
+            <log>'getPackageOption(%s, %s, %s)=%s[%s].'%(package, optName, host, ret, options)</log>
+            <return>ret</return>
+        </sequence>
+    </function>
+    
+    <function name="getStoreOption" scope="local">
+        <function-prolog>
+            This function is used to retrieve zimbra store option
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="optName">
+                Name of the option
+            </function-required-arg>
+            <function-optional-arg name="host" default="''">
+                Name of the host
+            </function-optional-arg>
+        </function-list-args>
+
+        <sequence>
+            <call function="'getPackageOption'">'store', optName, host</call>
+            <return>STAXResult</return>
+        </sequence>
+    </function>
+    
+    <function name="getZimbraHostOption" scope="local">
+        <function-prolog>
+            This function is used to retrieve a zimbra server level option (non-package option)
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="optName">
+                Name of the option
+            </function-required-arg>
+            <function-required-arg name="host">
+                Name of the host
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <call function="'getFqdnHostname'">host</call>
+            <script>
+                myMachine = STAXResult
+                res = None
+                opts = document.getElementsByTagName('option')
+                for i in range(opts.getLength()):
+                   crt = opts.item(i)
+                   if crt.getAttributes().getNamedItem('name').getNodeValue() == optName:
+                      if crt.getParentNode().getAttributes().getNamedItem('name').getNodeValue() == myMachine:
+                         res = crt.getFirstChild().getNodeValue().strip()
+                         break
+            </script>
+            <log>'%s[%s]=%s, options=%s'%(myMachine, optName, res, opts)</log>
+            <return>res</return>
+        </sequence>
+    </function>
+
+    <function name="getMachines" scope="local">
+        <function-prolog>
+            This function returns the machine list in install order
+        </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="file" default="None">
+                Name of the configuration file
+            </function-optional-arg>
+        </function-map-args>
+
+        <sequence>
+            <if expr="file is not None">
+                <sequence>
+                    <call function="'parseXML'">file</call>
+                    <script>document = STAXResult</script>
+                </sequence>
+            </if>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                machines = []
+                # the order is ldaps stores mtas others replicas
+                pool = {'cluster' : {'active' : [],
+                                     'standby' : []},
+                        'noncluster' : {'ldaps' : [],
+                                        'replicas' : [],
+                                        'stores' : [],
+                                        'mtas' : [],
+                                        'others' : []}
+                       }
+                pkgs = document.getElementsByTagName("package")
+                for i in range(pkgs.getLength()):
+                    p = pkgs.item(i)
+                    pkgname= p.getAttributes().getNamedItem('name').getNodeValue()
+                    hostname = p.getParentNode().getAttributes().getNamedItem('name').getNodeValue()
+                    if p.getParentNode().getParentNode().getTagName() == 'cluster':
+                        clustered = 'cluster'
+                        type = p.getParentNode().getAttributes().getNamedItem('type')
+                        if type:
+                           category = type.getNodeValue()
+                        else:
+                           category = 'active'
+                    else:
+                        clustered = 'noncluster'
+                        if pkgname == 'zimbra-ldap':
+                            replica = None
+                            opts = p.getElementsByTagName('option')
+                            for j in range(opts.getLength()):
+                               if opts.item(j).getAttributes().getNamedItem('name').getNodeValue() == 'replica':
+                                  if opts.item(j).getFirstChild().getNodeValue().strip() == 'yes':
+                                     replica = hostname
+                            if replica is not None:
+                               category = 'replicas'
+                            else:
+                               category = 'ldaps'
+                        elif pkgname == 'zimbra-store':
+                            category = 'stores'
+                        elif pkgname == 'zimbra-mta':
+                            category = 'mtas'
+                        else:
+                            category = 'others'
+                    if hostname not in pool[clustered][category]:
+                        pool[clustered][category].append(hostname)
+                machines = []
+                for category in ['ldaps', 'stores', 'mtas', 'others', 'replicas']:
+                    for m in pool['noncluster'][category]:
+                        if m not in machines:
+                            machines.append(m)
+                for category in ['active', 'standby']:
+                    for m in pool['cluster'][category]:
+                        if m not in machines:
+                            machines.append(m)
+            </script>
+<log>'machines=%s,poolnonc=%s.'%(machines, pool['noncluster'])</log>
+            <return>machines</return>
+        </sequence>
+    </function>
+
+    <function name="isInstalled" scope="local">
+        <function-prolog>
+            This function sets config defaults
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="package">
+                Name of the config hash
+            </function-required-arg>
+        </function-list-args>
+        <sequence>
+            <process name="'Get platform - ' + targetMachine">
+                <location>targetMachine</location>
+                <command>'/opt/zimbra/libexec/get_plat_tag.sh'</command>
+                <workdir>'/opt/zimbra'</workdir>
+                <stdout>'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>
+            <script>
+                platform = STAXResult[0][1].strip().replace('\n', '')
+            </script>
+            <log>'platform=%s'%platform</log>
+            <script>
+                import re
+                pkgQuery = ""
+
+                good = 1
+                if platform == "DEBIAN3.1":
+                    pkgQuery = "dpkg -s " + package + " | egrep '^Status: ' | grep 'not-installed'"
+                elif re.match('MACOSX', platform) != None:
+                    good = 0;
+                else:
+                    pkgQuery = "rpm -q " + package
+                    good = 0
+                rc = 0
+            </script>
+<log>'cmd=%s'%pkgQuery</log>
+            <process name="'Get pkg stat - ' + targetMachine">
+                <location>targetMachine</location>
+                <command>'/bin/bash'</command>
+                <parms>' -l -c "%s"'%pkgQuery</parms>
+                <stdout>'/dev/null'</stdout>
+                <stderr mode="'stdout'"/>
+            </process>
+<log>'rc=%s res=%s'%(RC, STAXResult)</log>
+            <script>rc = RC</script>
+            <return>rc == good</return>
+        </sequence>
+    </function>
+
+    <function name="getInstalledPackages" scope="local">
+        <function-prolog>
+            This function sets config defaults
+        </function-prolog>
+        <function-list-args>
+            <function-optional-arg name="config">
+                Name of the config hash
+            </function-optional-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                packageList = ['zimbra-core',
+                               'zimbra-ldap',
+                               'zimbra-store',
+                               'zimbra-mta',
+                               'zimbra-snmp',
+                               'zimbra-logger',
+                               'zimbra-apache',
+                               'zimbra-spell']
+                installedPackages = {}
+                enabledPackages = {}
+            </script>
+            <iterate var="pkg" in="packageList">
+                <sequence>
+                    <call function="'isInstalled'">pkg</call>
+                    <log>'pkg %s=%s'%(pkg,STAXResult)</log>
+                    <script>
+                       if STAXResult == 1:
+                          installedPackages[pkg] = pkg
+                          enabledPackages[pkg] = "Enabled"
+                    </script>
+                </sequence>
+            </iterate>
+<log>'ip=%s'%installedPackages</log>
+            <return>installedPackages, enabledPackages</return>
+        </sequence>
+    </function>
+
+    <function name="setDefaults" scope="local">
+        <function-prolog>
+            This function sets config defaults
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="config">
+                Name of the config hash
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                hostname='localhost'
+            </script>
+            <call function="'getInstalledPackages'"/>
+            <script>installedPackages,enabledPackages=STAXResult</script>
+<log>'installed=%s'%installedPackages</log>
+<log>'ena=%s'%enabledPackages</log>
+            <script>
+                import os
+                config['EXPANDMENU'] = "no"
+                config['REMOVE'] = "no"
+                config['UPGRADE'] = "yes"
+                config['LDAPPORT'] = 389;
+                config['USESPELL'] = "no";
+                config['SPELLURL'] = "";
+                config['IMAPPORT'] = 143;
+                config['IMAPSSLPORT'] = 993;
+                config['POPPORT'] = 110;
+                config['POPSSLPORT'] = 995;
+                config['HTTPPORT'] = 80;
+                config['HTTPSPORT'] = 443;
+                config['USEIMAPPROXY'] = "no";
+                config['IMAPPROXYPORT'] = 143;
+                config['IMAPSSLPROXYPORT'] = 993;
+                config['POPPROXYPORT'] = 110;
+                config['POPSSLPROXYPORT'] = 995;
+                config['HOSTNAME'] = hostname
+                #config['HOSTNAME'] = config['HOSTNAME'].strip().replace('\n', '')
+                config['SMTPHOST'] = "";
+                config['SNMPTRAPHOST'] = config['HOSTNAME'];
+                config['DOCREATEDOMAIN'] = "no";
+                config['CREATEDOMAIN'] = config['HOSTNAME'];
+                config['DOCREATEADMIN'] = "no"
+            </script>
+            <if expr="enabledPackages['zimbra-store'] == 'Enabled'">
+                <sequence>
+<log>'zimbra-store state %s'%enabledPackages["zimbra-store"]</log>
+                <script>
+                    config['MTAAUTHHOST'] = config['HOSTNAME']
+                    config['DOCREATEADMIN'] = "yes"
+                    config['DOTRAINSA'] = "yes"
+                    config['TRAINSASPAM'] = 'lc_genrandompass'
+                    config['TRAINSASPAM'] = config['TRAINSASPAM'] + '@' + config['CREATEDOMAIN']
+                    config['TRAINSAHAM'] = 'lc_genrandompass'
+                    config['TRAINSAHAM'] = config['TRAINSAHAM'] + '@' + config['CREATEDOMAIN']
+                    config['NOTEBOOKACCOUNT'] = 'lc_genrandompass'
+                    config['NOTEBOOKACCOUNT'] = config['NOTEBOOKACCOUNT'] + '\@' + config['CREATEDOMAIN']
+                    config['NOTEBOOKPASS'] = 'genRandomPass'
+                </script>
+                </sequence>
+            </if>
+            <if expr="enabledPackages['zimbra-ldap'] == 'Enabled'">
+                <sequence>
+                    <script>
+                        config['DOCREATEDOMAIN'] = "yes"
+                        config['LDAPPASS'] = 'genRandomPass'
+                    </script>
+                </sequence>
+            </if>
+            <script>
+                config['CREATEADMIN'] = "admin\@" + config['CREATEDOMAIN']
+                config['SMTPSOURCE'] = config['CREATEADMIN']
+                config['SMTPDEST'] = config['CREATEADMIN']
+                config['AVUSER'] = config['CREATEADMIN']
+                config['SNMPNOTIFY'] = "yes"
+                config['SMTPNOTIFY'] = "yes"
+                config['STARTSERVERS'] = "yes"
+                config['MODE'] = "http"
+                config['CREATEADMINPASS'] = ""
+            </script>
+        </sequence>
+    </function>
+
+    <function name="getMenu" scope="local">
+        <function-prolog>
+            This function runs /opt/zimbra/libexec/zmsetup.pl
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="machine">
+                Name of the target machine
+            </function-required-arg>
+            <function-optional-arg name="template" default="'No\n'">
+                Extra commands to add to the template
+            </function-optional-arg>
+            <function-optional-arg name="truncate" default="'yes'">
+                Extra commands to add to the template
+            </function-optional-arg>
+        </function-list-args>
+
+        <sequence>
+            <!--script>menuTemplate = "\"No\nx\nq\nYes\n\""</script-->
+            <call function="'getNodePackages'">
+                {'machine':machine,
+                 'document':document
+                }
+            </call>
+            <script>
+                menuTemplate = '"'
+                nodePkgs = STAXResult
+                if 'zimbra-ldap' in nodePkgs:
+                    menuTemplate += 'No' + CR
+            </script>
+            <script>menuTemplate += template + "x\nq\nYes\n\""</script>
+<log>'menutmpl=%s'%menuTemplate</log>
+            <!--process name="'Get menu - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/opt/zimbra'</workdir>
+                <parms>' -l -c "/bin/echo -e \\\"%s\\\" | /opt/zimbra/libexec/zmsetup.pl"' % menuTemplate</parms> 
+                <stdout>'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process-->
+            <process name="'Create Config'">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % menuTemplate</parms>
+                <stdout>'/tmp/config.file'</stdout>  
+            </process>
+            <process name="'Get menu - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-l -c "/bin/cat /tmp/config.file | /bin/env perl /opt/zimbra/libexec/zmsetup.pl"'</parms>
+                <stdout>'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>    
+            <script>menu=STAXResult[0][1].split('\n')</script>
+            <if expr='truncate!="yes"'>
+                <return>menu</return>
+            </if>
+            <!-- keep only last part -->
+            <script>
+                import re
+                for i in range(len(menu) - 1, 0, -1):
+                   if re.match("^Main menu.*", menu[i]) == None:
+                      continue
+                   else:
+                      menu = menu[i:]
+                      break
+            </script>
+            <log>'getMenu complete on %s, RC %s, menu=%s' % (machine, RC, menu)</log>
+            <return>menu</return>
+        </sequence>
+    </function>
+
+    <function name="genCommonConfigTemplate" scope="local">
+        <function-prolog>
+            This function ....
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate zmconfig file for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>hostName = STAXResult</script>
+            <call function="'getLdapHost'">'master'</call>
+            <script>ldapmaster=STAXResult</script>
+            <call function="'getLdapOption'">'LDAPADMINPASS'</call>
+            <script>ldapapass = STAXResult</script>
+            <call function="'getZimbraHostOption'">'zimbraIPMode', hostName</call>
+            <script>ipmode = STAXResult</script>
+            <call function="'getZimbraHostname'">hostName</call>
+            <script>
+               import re
+
+               zimbraHostname = STAXResult
+               ret = ""
+               for i in range(len(menu)):
+                  line = menu[i]
+                  if line.find('Common Configuration') != -1:
+                     m = re.match(r".*\s+(\S+)\)\s+Common Configuration:\s+.*", line)
+                     ret += m.group(1) + CR
+                     offset = 1
+                     while len(menu[i + offset]) != 0:
+                        line = menu[i + offset]
+                        if (line.find('Hostname:') != -1):
+                           ret += str(offset) + CR + zimbraHostname + CR #+ 'r' + CR
+                           #offset += 1
+                           #break
+                        elif (line.find('Ldap master host:') != -1):
+                           ret += str(offset) + CR + ldapmaster + CR #+ 'r' + CR
+                           #offset += 1
+                           #break
+                        elif (line.find('Ldap Admin password:') != -1):
+                           ret += str(offset) + CR + ldapapass + CR #+ 'r' + CR
+                           #offset += 1
+                           #break
+                        elif (line.find('IP Mode:') != -1) and (ipmode is not None):
+                           ret += str(offset) + CR + ipmode + CR #+ 'r' + CR
+                           #offset += 1
+                           #break
+                        offset += 1
+                     ret += 'r' + CR
+                  #legacy code
+                  #elif line.find(') Hostname:') != -1:
+                  #   m = re.match(r".*\s+(\S+)\)\s+Hostname:\s+(\S+)\s+", line)
+                  #   #ret += m.group(1) + "\\\\n" + m.group(2) + "\\\\n"
+                  #   ret += m.group(1) + CR + zimbraHostname + CR
+                  #   break
+            </script>
+            <log>'genCommonConfigTemplate(%s, %s): %s.'%(machine, menu, ret)</log>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+    <function name="genLdapTemplate" scope="local">
+        <function-prolog>
+            This function ....
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate zmconfig file for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getZimbraHostname'">machine</call>
+            <script>
+                thisMachine = STAXResult
+            </script>
+            <call function="'getLdapHost'">'master'</call>
+            <script>ldaphost=STAXResult</script>
+            <!--call function="'getFqdnHostname'">STAXResult</call>
+            <script>ldaphost = STAXResult</script-->
+
+            <if expr="ldaphost is None">
+                <sequence>
+                   <log>'error - invalid config, missing LDAP host'</log>
+                   <return>'FAILED'</return>
+                </sequence>
+            </if>
+            <call function="'getLdapOption'">'LDAPPASS'</call>
+            <script>ldappass = STAXResult</script>
+            <call function="'getLdapOption'">'LDAPPORT'</call>
+            <script>ldapport = STAXResult</script>
+            <call function="'getLdapOption'">'LDAPADMINPASS'</call>
+            <script>ldapapass = STAXResult</script>
+            <call function="'getLdapOption'">'LDAPPOSTPASS'</call>
+            <script>postfixpass = STAXResult</script>
+            <call function="'getLdapOption'">'LDAPREPLPASS'</call>
+            <script>replpass = STAXResult</script>
+            <call function="'getLdapOption'">'LDAPAMAVISPASS'</call>
+            <script>amavispass = STAXResult</script>
+            <call function="'getLdapOption'">'ldap_nginx_password'</call>
+            <script>nginxpass = STAXResult</script>
+            <call function="'getAdminHost'"/>
+            <script>defaultDomain = STAXResult</script>
+            <script>
+               import re
+               ret = ""
+               for i in range(len(menu)):
+                  line = menu[i]
+                  if line.find('Common Configuration') != -1:
+                     m = re.match(r".*\s+(\S+)\)\s+Common Configuration:\s*.*", line)
+                     ret += m.group(1) + CR
+                     offset = 1
+                     while len(menu[i + offset]) != 0:
+                        line = menu[i + offset]
+                        if (line.find('Hostname:') != -1):
+                           ret += str(offset) + CR + thisMachine + CR
+                        if line.find('Ldap master host') != -1:
+                           ret += str(offset) + CR + ldaphost + CR
+                        elif (line.find('Ldap port') != -1) and (ldapport is not None):
+                           ret += str(offset) + CR + ldapport + CR
+                        elif (line.find('Ldap Admin password') != -1) and (ldapapass is not None):
+                           ret += str(offset) + CR + ldapapass + CR
+                        offset += 1
+                     ret += 'r' + CR
+                     j = i + offset + 1
+                     while len(menu[j]) != 0:
+                        line = menu[j]
+                        if line.find('zimbra-ldap') != -1:
+                          m = re.match(r".*\s+(\S+)\)\s+zimbra-ldap:\s*.*", line)
+                          ret += m.group(1) + CR
+                          offset = 1
+                          while len(menu[j + offset]) != 0:
+                            line = menu[j + offset]
+                            if (re.match(r".*Ldap Root password:", line, re.I) is not None) and (ldappass is not None):
+                               ret += str(offset + 1) + CR + ldappass + CR
+                            elif (re.match(r".*Ldap Replication password:", line, re.I) is not None) and (replpass is not None):
+                               ret += str(offset + 1) + CR + replpass + CR
+                            elif (re.match(r".*Ldap Postfix password:", line, re.I) is not None) and (postfixpass is not None):
+                               ret += str(offset + 1) + CR + postfixpass + CR
+                            elif (re.match(r".*Ldap Amavis password:", line, re.I) is not None) and (amavispass is not None):
+                               ret += str(offset + 1) + CR + amavispass + CR
+                            elif (re.match(r".*Ldap Nginx password:", line, re.I) is not None) and (nginxpass is not None):
+                               ret += str(offset + 1) + CR + nginxpass + CR
+                            elif (re.match(r".*Domain to create:", line, re.I) is not None) and (defaultDomain is not None):
+                               ret += str(offset + 1) + CR + defaultDomain + CR + 'No' + CR
+                            offset += 1
+                          ret += 'r' + CR
+                          break
+                        j += 1
+                     break
+                  elif line.find('Ldap master host') != -1:
+                     m = re.match(r".*\s+(\S+)\)\s+Ldap master host:\s+(\S+)\s+", line)
+                     ##ret += m.group(1) + "\\\\n" + m.group(2) + "\\\\n"
+                     ret += m.group(1) + CR + ldaphost + CR
+                  elif (line.find('Ldap password') != -1) and (ldappass is not None):
+                     m = re.match(r".*\s+(\S+)\)\s+Ldap password:.*", line)
+                     ret += m.group(1) + CR + ldappass + CR
+                  elif (line.find('Ldap Root password') != -1) and (ldappass is not None):
+                     m = re.match(r".*\s+(\S+)\)\s+Ldap Root password:.*", line)
+                     ret += m.group(1) + CR + ldappass + CR
+                  elif (line.find('Ldap Admin password') != -1) and (ldapapass is not None):
+                     m = re.match(r".*\s+(\S+)\)\s+Ldap Admin password:.*", line)
+                     ret += m.group(1) + CR + ldapapass + CR
+                  elif (line.find('Ldap port') != -1) and (ldapport is not None):
+                     m = re.match(r"\s+(\S+)\)\s+Ldap port:.*", line)
+                     ret += m.group(1) + CR + ldapport + CR
+                  #elif line.find('ldap-users') != -1:
+                  #   m = re.match(r".*\s+(\S+)\)\s+ldap-users:\s+(\S+)\s+", line)
+                  #   ret += m.group(1) + CR
+                  #   offset = 1
+                  #   while len(menu[i + offset]) != 0:
+                  #      line = menu[i + offset]
+                  #      if (line.find('Ldap Postfix password') != -1) and (postfixpass is not None):
+                  #         ret += str(offset) + CR + postfixpass + CR
+                  #      elif (line.find('Ldap Amavis password') != -1) and (amavispass is not None):
+                  #         ret += str(offset) + CR + amavispass + CR
+                  #      offset += 1
+                  #   ret += 'r' + CR
+                  #   i += offset
+                  ##if replica, disable ldap service
+                  #elif line.find(r'zimbra-ldap:') != -1:
+                  #   mline = line
+                  #   if not ldaphost.startswith(thisMachine):
+                  #      m = re.match(r"\s+(\S+)\)\s+zimbra-ldap.*", line)
+                  #      ret += m.group(1) + CR + '1' + CR + 'r' + CR
+            </script>
+            <log>'genLdapTemplate(machine=%s, menu=%s): %s.'%(machine, menu, ret)</log>
+            <return>ret</return>
+        </sequence>
+    </function>
+    
+    <function name="genProxyTemplate" scope="local">
+        <function-prolog>
+            This function generates the proxy menu actions:
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>myMachine = STAXResult</script>
+            <call function="'getLdapOption'">'ldap_nginx_password'</call>
+            <script>nginxpass = STAXResult</script>
+            <call function="'getStoreOption'">'HTTPPORT'</call>
+            <script>httpport = STAXResult</script>
+            <call function="'getStoreOption'">'HTTPSPORT'</call>
+            <script>httpsport = STAXResult</script>
+            <script>
+                enabled = 'FALSE'
+                myHost = None
+                hosts = document.getElementsByTagName('host')
+                for i in range(hosts.getLength()):
+                   crt = hosts.item(i)
+                   if crt.getAttribute('name') == myMachine:
+                      myHost = crt
+                      break
+                proxy = None
+                pkgs = myHost.getElementsByTagName('package')
+                for i in range(pkgs.getLength()):
+                   crt = pkgs.item(i)
+                   if crt.getAttribute('name') == 'zimbra-proxy':
+                      proxy = crt
+                      break
+            </script>
+            <if expr="proxy is None">
+                <return>[STAFRC.Ok, '']</return>
+            </if>
+            <script>
+                ret = ''
+                options = {}
+                #if proxy is not None:
+                opts = proxy.getElementsByTagName('option')
+                for i in range(opts.getLength()):
+                   opt = opts.item(i)
+                   options[opt.getAttribute('name')] = opt.getFirstChild().getNodeValue().strip()
+                import re
+                startindex = -1
+                portsfound = 1==0
+                for i in range(len(menu)):
+                   if menu[i].find('zimbra-proxy') != -1:
+                      startindex = i
+                      break
+                if startindex != -1:
+                   for i in range(startindex + 1, len(menu)):
+                      endindex = i
+                      if re.match(r"\s+\d+\)\s+\S+.*", menu[i]) != None:
+                         break
+                   submenu = menu[startindex:endindex]
+                   m = re.match(r"\s+(\S+)\).*zimbra-proxy:\s+(\S+).*", submenu[0])
+                   msubindex = m.group(1)
+                   #TODO: fix portsfound logic
+                   if options.has_key('HTTPPROXY'):
+                      val = options['HTTPPROXY']
+                      for i in range(len(submenu)):
+                        if (submenu[i].find('Bind password for nginx ldap user:') != -1) and (submenu[i].find(val) == -1):
+                          ret += msubindex + CR + str(i + 1) + CR + nginxpass + CR + 'r' + CR
+                        elif (submenu[i].find('Enable HTTP[S] Proxy:') != -1) and (submenu[i].find(val) == -1):
+                          ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                        elif (submenu[i].find('HTTP proxy port:') != -1) and options.has_key('HTTPPROXYPORT'):
+                          portsfound = 1==1
+                          ret += msubindex + CR + str(i + 1) + CR + options['HTTPPROXYPORT'] + CR + 'r' + CR
+                        elif (submenu[i].find('HTTPS proxy port:') != -1) and options.has_key('HTTPSPROXYPORT'):
+                          portsfound = 1==1
+                          ret += msubindex + CR + str(i + 1) + CR + options['HTTPSPROXYPORT'] + CR + 'r' + CR
+                        elif (submenu[i].find('Web server HTTP port:') != -1) and (httpport != None):
+                          portsfound = 1==1
+                          ret += msubindex + CR + str(i + 1) + CR + httpport + CR + 'r' + CR
+                        elif (submenu[i].find('Web server HTTPS port:') != -1) and (httpsport != None):
+                          portsfound = 1==1
+                          ret += msubindex + CR + str(i + 1) + CR + httpsport + CR + 'r' + CR
+                        elif (submenu[i].find('Proxy server mode:') != -1) and options.has_key('PROXYMODE'):
+                          ret += msubindex + CR + str(i + 1) + CR + options['PROXYMODE'] + CR + 'r' + CR
+                          #break
+                   if options.has_key('MAILPROXY'):
+                      val = options['MAILPROXY']
+                      for i in range(len(submenu)):
+                        if (submenu[i].find('Enable POP/IMAP Proxy:') != -1) and (submenu[i].find(val) == -1):
+                         ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                         break
+            </script>
+            <if expr="not portsfound and (options.has_key('HTTPPROXYPORT') or options.has_key('HTTPPSROXYPORT'))">
+                <sequence>
+                    <call function="'getMenu'">[machine, ret]</call>
+                    <script>menu = STAXResult</script>
+                    <call function="'genProxyTemplate'">
+                       {'menu':menu,
+                        'machine':machine}
+                    </call>
+                    <script>ret += STAXResult[1]</script>
+                </sequence>
+            </if>
+            <return>[STAFRC.Ok, ret]</return>
+        </sequence>
+    </function>
+
+    <function name="genStoreTemplate" scope="local">
+        <function-prolog>
+            This function ....
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate zmconfig file for
+            </function-required-arg>
+            <function-required-arg name="template">
+                Template prefix - used when a new dynamically generated menu is needed
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getZimbraHostname'">machine</call>
+            <script>machine = STAXResult</script>
+            <call function="'getAdminHost'"/>
+            <script>adminhost = STAXResult</script>
+            <if expr="STAXResult is None">
+               <!-- handle LDAP only install -->
+               <return>[STAFRC.Ok, '']</return>
+            </if>
+            <!--call function="'getFqdnHostname'">STAXResult</call>
+            <script>adminhost = STAXResult</script-->
+            <call function="'getStoreOption'">'SMTPHOST', machine</call>
+            <if expr="STAXResult is not None">
+                <sequence>
+                    <!--call function="'getFqdnHostname'">STAXResult</call-->
+                    <script>smtphost = STAXResult</script>
+                </sequence>
+                <else>
+                    <sequence>
+                        <call function="'getServiceHosts'">'mta'</call>
+                        <log>'ffff %s'%STAXResult[1]</log>
+                        <script>
+                            smtphost = machine
+                            if len(STAXResult[1]) != 0 and machine not in STAXResult[1]:
+                               smtphost = STAXResult[1][0]
+                            </script>
+                    </sequence>
+                </else>
+            </if>
+            <call function="'getStoreOption'">'ADMINPASS'</call>
+            <script>adminpass = STAXResult</script>
+            <call function="'getStoreOption'">'USEIMAPPROXY', machine</call>
+            <script>imapEnable = STAXResult</script>
+            <call function="'getStoreOption'">'MODE', machine</call>
+            <script>webServerMode = STAXResult</script>
+            <call function="'getStoreOption'">'zimbraMailProxy', machine</call>
+            <script>mailProxyEnable = STAXResult</script>
+            <call function="'getStoreOption'">'zimbraWebProxy', machine</call>
+            <script>webProxyEnable = STAXResult</script>
+            <call function="'getStoreOption'">'HTTPPORT', machine</call>
+            <script>httpport = STAXResult</script>
+            <call function="'getStoreOption'">'HTTPSPORT', machine</call>
+            <script>httpsport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'HTTPPROXYPORT'</call>
+            <script>httppport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'HTTPSPROXYPORT'</call>
+            <script>httpspport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'IMAPPORT'</call>
+            <script>imapport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'IMAPSPORT'</call>
+            <script>imapsport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'IMAPPROXYPORT'</call>
+            <script>imappport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'IMAPSPROXYPORT'</call>
+            <script>imapspport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'POPPORT'</call>
+            <script>popport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'POPSPORT'</call>
+            <script>popsport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'POPPROXYPORT'</call>
+            <script>poppport = STAXResult</script>
+            <call function="'getPackageOption'">'proxy', 'POPSPROXYPORT'</call>
+            <script>popspport = STAXResult</script>
+            <script>versionUpdateNotificationEnable = 'FALSE'</script>
+            <call function="'getStoreOption'">'zimbraVersionCheckSendNotifications', machine</call>
+            <script>versionUpdateNotificationEnable = STAXResult</script>
+            <if expr="STAXResult is None">
+                <script>versionUpdateNotificationEnable = 'TRUE'</script>
+            </if>
+            <!--SERVICEWEBAPP=yes
+            UIWEBAPPS=no-->
+            <call function="'getStoreOption'">'SERVICEWEBAPP', machine</call>
+            <script>serviceWebapp = STAXResult</script>
+            <if expr="STAXResult is None">
+                <script>serviceWebapp = 'yes'</script>
+            </if>
+            <log>'swa=%s'%serviceWebapp</log>
+            <call function="'getStoreOption'">'UIWEBAPPS', machine</call>
+            <script>uiWebapp = STAXResult</script>
+            <if expr="STAXResult is None">
+                <script>uiWebapp = 'yes'</script>
+            </if>
+            <log>'uwa=%s'%uiWebapp</log>
+            <script>
+               import re
+               ret = ''
+               startindex = -1
+               reloadMenu = 1==0
+               for i in range(len(menu)):
+                  if menu[i].find('zimbra-store:') != -1:
+                     startindex = i
+                     break
+            </script>
+            <if expr="startindex == -1">
+                <return>[STAFRC.Ok, ret]</return>
+            </if>
+            <script>
+                #get new menu(s)
+                for i in range(startindex + 1, len(menu)):
+                   if re.match(r"\s+\d+\)\s+\S+", menu[i]) != None:
+                      endindex = i - 1
+                      break
+                submenu = menu[startindex:endindex]
+                m = re.match(r"\s+(\S+)\).*zimbra-store.*", submenu[0])
+                msubindex = m.group(1)
+                if mailProxyEnable != None:
+                   for i in range(len(submenu)):
+                      if (submenu[i].find('Configure for use with mail proxy') != -1) and (submenu[i].find(mailProxyEnable) == -1):
+                         ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                         reloadMenu = 1==1
+                         break
+            </script>
+            <log>'ret=%s, reload=%s.'%(ret, reloadMenu)</log>
+            <if expr="reloadMenu">
+                <sequence>
+                    <call function="'getMenu'">[machine, template + ret]</call>
+                    <script>menu = STAXResult</script>
+                </sequence>
+            </if>
+            <script>
+                #get new menu(s)
+                reloadMenu = 1==0
+                for i in range(len(menu)):
+                  if menu[i].find('zimbra-store:') != -1:
+                     startindex = i
+                     break
+                for i in range(startindex + 1, len(menu)):
+                   if re.match(r"\s+\d+\)\s+\S+", menu[i]) != None:
+                      endindex = i - 1
+                      break
+                submenu = menu[startindex:endindex]
+                m = re.match(r"\s+(\S+)\).*zimbra-store.*", submenu[0])
+                msubindex = m.group(1)
+                if webProxyEnable != None:
+                   for i in range(len(submenu)):
+                      if (submenu[i].find('Configure for use with web proxy') != -1) and (submenu[i].find(webProxyEnable) == -1):
+                         ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                         reloadMenu = 1==1
+                         break
+            </script>
+            <log>'ret=%s, reload=%s.'%(ret, reloadMenu)</log>
+            <if expr="reloadMenu">
+                <sequence>
+                    <call function="'getMenu'">[machine, template + ret]</call>
+                    <script>menu = STAXResult</script>
+                </sequence>
+            </if>
+            <script>
+                for i in range(len(menu)):
+                  if menu[i].find('zimbra-store:') != -1:
+                     startindex = i
+                     break
+                for i in range(startindex + 1, len(menu)):
+                   if re.match(r"\s+\d+\)\s+\S+", menu[i]) != None:
+                      endindex = i - 1
+                      break
+                submenu = menu[startindex:endindex]
+                ret += msubindex + CR
+                for i in range(len(submenu)):
+                   if (submenu[i].find('Install mailstore (service webapp):') != -1) and (submenu[i].find(serviceWebapp) == -1):
+                      ret += str(i + 1) + CR
+                   elif (submenu[i].find('Install UI (zimbra,zimbraAdmin webapps):') != -1) and (submenu[i].find(uiWebapp) == -1):
+                      ret += str(i + 1) + CR
+                
+                for i in range(len(submenu)):
+                   if (submenu[i].find('Enable version update notifications:') != -1) and (submenu[i].find(versionUpdateNotificationEnable) == -1):
+                      ret += str(i + 1) + CR
+                if webProxyEnable != None:
+                   for i in range(len(submenu)):
+                      if (submenu[i].find('Web server mode:') != -1) and (webServerMode != None):
+                         ret += str(i + 1) + CR + webServerMode + CR
+                      elif (submenu[i].find('Web server HTTP port:') != -1) and (httpport != None):
+                         ret += str(i + 1) + CR + str(httpport) + CR
+                      elif (submenu[i].find('Web server HTTPS port:') != -1) and (httpsport != None):
+                         ret += str(i + 1) + CR + str(httpsport) + CR
+                      elif (submenu[i].find('HTTP proxy port:') != -1) and (httppport != None):
+                         ret += str(i + 1) + CR + str(httppport) + CR
+                      elif (submenu[i].find('HTTPS proxy port:') != -1) and (httpspport != None):
+                         ret += str(i + 1) + CR + str(httpspport) + CR
+                      elif (submenu[i].find('IMAP server port:') != -1) and (imapport != None):
+                         ret += str(i + 1) + CR + str(imapport) + CR
+                      elif (submenu[i].find('IMAP server SSL port:') != -1) and (imapsport != None):
+                         ret += str(i + 1) + CR + str(imapsport) + CR
+                      elif (submenu[i].find('IMAP proxy port:') != -1) and (imappport != None):
+                         ret += str(i + 1) + CR + str(imappport) + CR
+                      elif (submenu[i].find('IMAP SSL proxy port:') != -1) and (imapspport != None):
+                         ret += str(i + 1) + CR + str(imapspport) + CR
+                      elif (submenu[i].find('POP server port:') != -1) and (popport != None):
+                         ret += str(i + 1) + CR + str(popport) + CR
+                      elif (submenu[i].find('POP server SSL port:') != -1) and (popsport != None):
+                         ret += str(i + 1) + CR + str(popsport) + CR
+                      elif (submenu[i].find('POP proxy port:') != -1) and (poppport != None):
+                         ret += str(i + 1) + CR + str(poppport) + CR
+                      elif (submenu[i].find('POP SSL proxy port:') != -1) and (popspport != None):
+                         ret += str(i + 1) + CR + str(popspport) + CR
+                if smtphost is not None:
+                   for i in range(len(submenu)):
+                      if submenu[i].find('SMTP host:') != -1:
+                         ret += str(i + 1) + CR + smtphost + CR
+                         break
+                i = 1
+                if adminhost.startswith(machine):
+                   while submenu[i - 1].find('Admin Password') == -1:
+                      i += 1
+                   ret += str(i) + CR + adminpass + CR
+                else:
+                   while submenu[i - 1].find('Admin user to create') == -1:
+                      i += 1
+                   ret += str(i) + CR + 'admin@' + adminhost + CR + str(i+1) + CR + adminpass + CR
+                ret += 'r' + CR
+            </script>
+            <return>[STAFRC.Ok, ret]</return>
+        </sequence>
+    </function>
+    
+    <function name="genDnscacheTemplate" scope="local">
+        <function-prolog>
+            This function generates dnscache menu actions:
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>myMachine = STAXResult</script>
+            <!--call function="'getLdapOption'">'ldap_nginx_password'</call>
+            <script>nginxpass = STAXResult</script>
+            <call function="'getStoreOption'">'HTTPPORT'</call>
+            <script>httpport = STAXResult</script>
+            <call function="'getStoreOption'">'HTTPSPORT'</call>
+            <script>httpsport = STAXResult</script-->
+            
+            <script>
+                dnsServers = ''
+                enabled = 'Enabled'
+                myHost = None
+                hosts = document.getElementsByTagName('host')
+                for i in range(hosts.getLength()):
+                   crt = hosts.item(i)
+                   if crt.getAttribute('name') == myMachine:
+                      myHost = crt
+                      break
+                package = None
+                if myHost is not None:
+                   pkgs = myHost.getElementsByTagName('package')
+                   for i in range(pkgs.getLength()):
+                      crt = pkgs.item(i)
+                      if crt.getAttribute('name') == 'zimbra-dnscache':
+                         package = crt
+                         break
+            </script>
+            <if expr="package is None">
+                <return>[STAFRC.Ok, '']</return>
+            </if>
+            <call function="'getPackageOption'">'dnscache', 'ENABLED', myMachine</call>
+            <script>
+                if STAXResult != 'yes':
+                   enabled = 'Disabled'
+            </script>
+            <call function="'getPackageOption'">'dnscache', 'zimbraDNSMasterIP', myMachine</call>
+            <script>
+                if STAXResult is not None:
+                   dnsServers += STAXResult
+            </script>
+            <call function="'getDnsServers'">myMachine</call>
+            <script>
+                if STAXResult is not None and dnsServers.find(STAXResult) == -1:
+                   dnsServers += ' ' + STAXResult
+            </script>
+            <if expr="dnsServers == ''">
+                <return>[STAFRC.Ok, '']</return>
+            </if>
+            
+            <script>
+                ret = ''
+                #options = {}
+                #opts = package.getElementsByTagName('option')
+                #for i in range(opts.getLength()):
+                #   opt = opts.item(i)
+                #   options[opt.getAttribute('name')] = opt.getFirstChild().getNodeValue().strip()
+                import re
+                startindex = -1
+                for i in range(len(menu)):
+                   if menu[i].find('zimbra-dnscache') != -1:
+                      startindex = i
+                      break
+                if startindex != -1:
+                   for i in range(startindex + 1, len(menu)):
+                      endindex = i
+                      if re.match(r"\s+\d+\)\s+\S+.*", menu[i]) != None:
+                         break
+                   submenu = menu[startindex:endindex]
+                   m = re.match(r"\s+(\S+)\).*zimbra-dnscache:\s+(\S+).*", submenu[0])
+                   msubindex = m.group(1)
+                   for i in range(len(submenu)):
+                     if (submenu[i].find('zimbra-dnscache:') != -1) and (submenu[i].find(enabled) == -1):
+                       ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                       break
+                     elif (submenu[i].find('Master DNS IP address(es):') != -1) and (submenu[i].find(dnsServers) == -1):
+                       ret += msubindex + CR + str(i + 1) + CR + dnsServers + CR + 'r' + CR
+            </script>
+            <return>[STAFRC.Ok, ret]</return>
+        </sequence>
+    </function>
+    
+    <function name="genPackageTemplate" scope="local">
+        <function-prolog>
+            This function ....
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate zmconfig file for
+            </function-required-arg>
+            <function-optional-arg name="kind" default="'octopus'">
+                store/octopus
+            </function-optional-arg>
+        </function-map-args>
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getZimbraHostname'">machine</call>
+            <script>machine = STAXResult</script>
+            <call function="'getAdminHost'"/>
+            <script>adminhost = STAXResult</script>
+            <if expr="STAXResult is None">
+               <!-- handle LDAP only install -->
+               <return>[STAFRC.Ok, '']</return>
+            </if>
+            <!--call function="'getFqdnHostname'">STAXResult</call>
+            <script>adminhost = STAXResult</script-->
+            <call function="'getPackageOption'">kind, 'SMTPHOST', machine</call>
+            <if expr="STAXResult is not None">
+               <call function="'getFqdnHostname'">STAXResult</call>
+            </if>
+            <script>smtphost = STAXResult</script>
+            <call function="'getPackageOption'">kind, 'ADMINPASS'</call>
+            <script>adminpass = STAXResult</script>
+            <call function="'getPackageOption'">kind, 'USEIMAPPROXY', machine</call>
+            <script>imapEnable = STAXResult</script>
+            <call function="'getPackageOption'">kind, 'MODE', machine</call>
+            <script>webServerMode = STAXResult</script>
+            <call function="'getPackageOption'">kind, 'zimbraMailProxy', machine</call>
+            <script>mailProxyEnable = STAXResult</script>
+            <call function="'getPackageOption'">kind, 'zimbraWebProxy', machine</call>
+            <script>webProxyEnable = STAXResult</script>
+            <call function="'getPackageOption'">kind, 'HTTPPORT', machine</call>
+            <script>httpport = STAXResult</script>
+            <call function="'getPackageOption'">kind, 'HTTPSPORT', machine</call>
+            <script>httpsport = STAXResult</script>
+            <script>versionUpdateNotificationEnable = 'FALSE'</script>
+            <call function="'getPackageOption'">kind, 'zimbraVersionCheckSendNotifications', machine</call>
+            <if expr="STAXResult is not None">
+                <script>versionUpdateNotificationEnable = STAXResult</script>
+            </if>
+            <script>
+               import re
+               ret = ''
+               startindex = -1
+               reloadMenu = 1==0
+               for i in range(len(menu)):
+                  if menu[i].find('zimbra-' + kind + ':') != -1:
+                     startindex = i
+                     break
+            </script>
+            <if expr="startindex == -1">
+                <return>[STAFRC.Ok, ret]</return>
+            </if>
+            <script>
+               if startindex != -1:
+                  for i in range(startindex + 1, len(menu)):
+                     if re.match(r"\s+\d+\)\s+\S+", menu[i]) != None:
+                        endindex = i - 1
+                        break
+                  submenu = menu[startindex:endindex]
+                  #set admin password
+                  m = re.match(r"\s+(\S+)\).*zimbra-" + kind + ".*", submenu[0])
+                  msubindex = m.group(1)
+                  #process options in reverse order they appear in the menu
+                  if imapEnable is None:
+                     imapEnable = 'no'
+                  for i in range(len(submenu)):
+                     if (submenu[i].find('Enable POP/IMAP proxy:') != -1) and (submenu[i].find(imapEnable) == -1):
+                        ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                        break
+                  if mailProxyEnable != None:
+                     for i in range(len(submenu)):
+                        if (submenu[i].find('Configure for use with mail proxy:') != -1) and (submenu[i].find(mailProxyEnable) == -1):
+                           ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                           reloadMenu = 1==1
+                           break
+            </script>
+            <if expr="reloadMenu">
+                <sequence>
+                    <call function="'getMenu'">[machine, ret]</call>
+                    <script>menu = STAXResult</script>
+                    <call function="'genPackageTemplate'">
+                       {'kind': kind,
+                        'menu':menu,
+                        'machine':machine}
+                    </call>
+                    <script>ret += STAXResult[1]</script>
+                    <return>[STAFRC.Ok, ret]</return>
+                </sequence>
+            </if>
+            <script>
+                for i in range(len(submenu)):
+                   if (submenu[i].find('Enable version update notifications:') != -1) and (submenu[i].find(versionUpdateNotificationEnable) == -1):
+                      ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                if webProxyEnable != None:
+                   for i in range(len(submenu)):
+                      if (submenu[i].find('Configure for use with web proxy:') != -1) and (submenu[i].find(webProxyEnable) == -1):
+                         ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                   for i in range(len(submenu)):
+                      if (submenu[i].find('Web server mode:') != -1) and (webServerMode != None):
+                         ret += msubindex + CR + str(i + 1) + CR + webServerMode + CR + 'r' + CR
+                      elif (submenu[i].find('Web server HTTP port:') != -1) and (httpport != None):
+                         ret += msubindex + CR + str(i + 1) + CR + str(httpport) + CR + 'r' + CR
+                      elif (submenu[i].find('Web server HTTPS port:') != -1) and (httpsport != None):
+                         ret += msubindex + CR + str(i + 1) + CR + str(httpsport) + CR + 'r' + CR
+                if smtphost is not None:
+                   for i in range(len(submenu)):
+                      if submenu[i].find('SMTP host:') != -1:
+                         ret += msubindex + CR + str(i + 1) + CR + smtphost + CR + 'r' + CR
+                         break
+                i = 1
+                if adminhost.startswith(machine):
+                   while submenu[i - 1].find('Admin Password') == -1:
+                      i += 1
+                   ret += msubindex + CR + str(i) + CR + adminpass + CR + 'r' + CR
+                else:
+                   while submenu[i - 1].find('Admin user to create') == -1:
+                      i += 1
+                   ret += msubindex + CR + str(i) + CR + 'admin@' + adminhost + CR + adminpass + CR + 'r' + CR
+            </script>
+            <return>[STAFRC.Ok, ret]</return>
+        </sequence>
+    </function>
+
+    <function name="genMtaTemplate" scope="local">
+        <function-prolog>
+            This function generates the MTA menu actions:
+               if option mtaauthhost exists, host = option value
+               else host = the host with store installed
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>
+                theMachine = STAXResult
+                mtaAuthHost = None
+                pkgs = document.getElementsByTagName('package')
+                for i in range(pkgs.getLength()):
+                   pkg = pkgs.item(i)
+                   if pkg.getAttributes().getNamedItem('name').getNodeValue() == 'zimbra-store':
+                      break
+                storeHost = pkg.getParentNode().getAttributes().getNamedItem('name').getNodeValue()
+                options = document.getElementsByTagName('option')
+                authHost = None
+                for i in range(options.getLength()):
+                   option = options.item(i)
+                   if option.getAttributes().getNamedItem('name').getNodeValue() == 'MTAAUTHHOST':
+                      authHost = option.getFirstChild().getNodeValue().strip()
+                      if theMachine.startswith(option.getParentNode().getParentNode().getAttributes().getNamedItem('name').getNodeValue()):
+                         break
+            </script>
+            <call function="'getPackageOption'">'mta', 'RUNDKIM', theMachine</call>
+            <script>
+                runDkim = 'yes'
+                if STAXResult is not None and STAXResult.lower() == 'no':
+                   runDkim = 'no'
+            </script>
+            <call function="'getFqdnHostname'">storeHost</call>
+            <call function="'getZimbraHostname'">STAXResult</call>
+            <script>storeHost = STAXResult</script>
+            <if expr="authHost is not None">
+                <sequence>
+                   <call function="'getFqdnHostname'">authHost</call>
+                   <script>mtaAuthHost = STAXResult</script>
+                </sequence>
+            </if>
+            <call function="'getLdapOption'">'LDAPPOSTPASS'</call>
+            <script>postfixpass = STAXResult</script>
+            <call function="'getLdapOption'">'LDAPAMAVISPASS'</call>
+            <script>amavispass = STAXResult</script>
+            <script>
+                authHost = None
+                hosts = document.getElementsByTagName('host')
+                for i in range(hosts.getLength()):
+                   host = hosts.item(i)
+                   if theMachine.startswith(host.getAttributes().getNamedItem('name').getNodeValue()):
+                      break
+                packages = host.getElementsByTagName('package')
+                mtaPkg = None
+                storePkg = None
+                for i in range(packages.getLength()):
+                   package = packages.item(i)
+                   if package.getAttributes().getNamedItem('name').getNodeValue() == 'zimbra-mta':
+                      mtaPkg = package
+                   if package.getAttributes().getNamedItem('name').getNodeValue() == 'zimbra-store':
+                      storePkg = package
+                      storeHost = host.getAttributes().getNamedItem('name').getNodeValue()
+                if mtaPkg is None:
+                   ret = ""
+                else:
+                   options = mtaPkg.getElementsByTagName('option')
+                   for i in range(options.getLength()):
+                      option = options.item(i)
+                      if option.getAttributes().getNamedItem('name').getNodeValue() == 'MTAAUTHHOST':
+                         #authHost = option.getFirstChild().getNodeValue().strip()
+                         authhost = mtaAuthHost
+                         break
+                   if authHost is None:
+                      authHost = storeHost
+                   #generate template here
+                   # authHost = getFqdnHostname(authHost)                   
+                   ret = ""
+                   startindex = -1
+                   for i in range(len(menu)):
+                      if menu[i].find('zimbra-mta') != -1:
+                         startindex = i
+                         break
+                   if startindex != -1:
+                      for i in range(startindex + 1, len(menu)):
+                         if re.match(r"\s+\d+\)\s+\S+", menu[i]) != None:
+                            endindex = i - 1
+                            break
+                   submenu = menu[startindex:endindex]
+                   m = re.match(r"\s+(\S+)\).*zimbra-mta.*", submenu[0])
+                   msubindex = m.group(1)
+                   ret += msubindex + CR
+                   i = 1
+                   #while submenu[i].find('MTA Auth host') == -1:
+                   #      i += 1
+                   #ret += str(i + 1) + CR + authHost + CR + 'r' + CR
+                   for i in range(len(submenu)):
+                      line = submenu[i]
+                      if line.find('MTA Auth host') != -1:
+                         ret += str(i + 1) + CR + authHost + CR
+                      elif (line.find('Enable OpenDKIM:') != -1):
+                         m = re.match(r".*Enable OpenDKIM:\s+(\S+).*", line)
+                         val = m.group(1)
+                         if val.lower() != runDkim:
+                            ret += str(i + 1) + CR
+                      elif (line.find('Bind password for postfix ldap user') != -1) and (postfixpass is not None):
+                         ret += str(i + 1) + CR + postfixpass + CR
+                      elif (line.find('Bind password for amavis ldap user') != -1) and (amavispass is not None):
+                         ret += str(i + 1) + CR + amavispass + CR
+                   ret += 'r' + CR
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+    <function name="genLoggerTemplate" scope="local">
+        <function-prolog>
+            This function generates the logger menu actions:
+                Expects only one logger enabled
+                If logger option enabled is missing, assume disabled
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>myMachine = STAXResult</script>
+            <script>
+                enabled = 'Disabled'
+                myHost = None
+                hosts = document.getElementsByTagName('host')
+                for i in range(hosts.getLength()):
+                   crt = hosts.item(i)
+                   if crt.getAttributes().getNamedItem('name').getNodeValue() == myMachine:
+                      myHost = crt
+                      break
+                logger = None
+                pkgs = myHost.getElementsByTagName('package')
+                for i in range(pkgs.getLength()):
+                   crt = pkgs.item(i)
+                   if crt.getAttributes().getNamedItem('name').getNodeValue() == 'zimbra-logger':
+                      logger = crt
+                      break
+                if logger is not None:
+                   opt = None
+                   opts = logger.getElementsByTagName('option')
+                   for i in range(opts.getLength()):
+                      crt = opts.item(i)
+                      if crt.getAttributes().getNamedItem('name').getNodeValue() == 'enabled':
+                         opt = crt
+                         break
+                   if opt is not None:
+                      enabled = opt.getFirstChild().getNodeValue().strip()
+               import re
+               ret = ''
+               startindex = -1
+               for i in range(len(menu)):
+                  if menu[i].find('zimbra-logger') != -1:
+                     startindex = i
+                     break
+               if startindex != -1:
+                  for i in range(startindex + 1, len(menu)):
+                     endindex = i
+                     if re.match(r"\s+\d+\)\s+\S+.*", menu[i]) != None:
+                        break
+                  submenu = menu[startindex:endindex]
+                  m = re.match(r"\s+(\S+)\).*zimbra-logger:\s+(\S+).*", submenu[0])
+                  msubindex = m.group(1)
+                  msubval = m.group(2)
+                  if msubval.lower() != enabled.lower():
+                     ret += msubindex + CR
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+   <function name="genHostOption" scope="local">
+        <function-prolog>
+            This function returns the specified host option
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="host">
+                Name of the option
+            </function-required-arg>
+            <function-required-arg name="optName">
+                Name of the option
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getFqdnHostname'">host</call>
+            <script>myMachine = STAXResult</script>
+            <script>
+                ret = None
+                hosts = document.getElementsByTagName('host')
+                for i in range(hosts.getLength()):
+                   crt = hosts.item(i)
+                   if crt.getAttributes().getNamedItem('name').getNodeValue() == myMachine:
+                      ret = crt
+                      break
+                if ret is not None:
+                   ret = None
+                   options = myHost.getElementsByTagName('option')
+                   for i in range(options.getLength()):
+                      crt = options.item(i)
+                      if crt.getAttributes().getNamedItem('name').getNodeValue() == optName:
+                         ret = crt.getFirstChild().getNodeValue().strip()
+                         break
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+    <function name="genServerStartTemplate" scope="local">
+        <function-prolog>
+            This function generates the backup schedule
+            Defaults to yes if not specified in the config
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getHostOption'">machine, 'STARTSERVERS'</call>
+            <script>ret = STAXResult</script>
+            <if expr="ret is None">
+                <return>''</return>
+            </if>
+            <script>
+               import re
+               ret = ''
+               for i in range(len(menu)):
+                  m = re.match(r"\s+(\S+)\) Start servers after configuration:\s+(\S+).*", menu[i])
+                  if m is not None:
+                     index = m.group(1)
+                     val = m.group(2)
+                     if val.lower() != ret.lower():
+                        ret += index + CR
+                     break
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+
+    <function name="genBackupScheduleTemplate" scope="local">
+        <function-prolog>
+            This function generates the backup schedule
+            Defaults to yes if not specified in the config
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>myMachine = STAXResult</script>
+            <script>
+                enabled = "yes"
+                myHost = None
+                backups = document.getElementsByTagName('option')
+                for i in range(backups.getLength()):
+                   crt = backups.item(i)
+                   if crt.getAttributes().getNamedItem('name').getNodeValue() == "ENABLEDEFAULTBACKUP":
+                      if crt.getParentNode().getAttributes().getNamedItem('name').getNodeValue() == myMachine:
+                         enabled = crt.getFirstChild().getNodeValue().strip()
+                         break
+               import re
+               ret = ''
+               startindex = -1
+               for i in range(len(menu)):
+                  m = re.match(r"\s+(\S+)\) Enable default backup schedule:\s+(\S+).*", menu[i])
+                  if m is not None:
+                     index = m.group(1)
+                     val = m.group(2)
+                     if val.lower() != enabled.lower():
+                        ret += index + CR
+                     break
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+    <function name="genTimeZoneTemplate" scope="local">
+        <function-prolog>
+            This function generates the menu actions for timezone setup
+            Defaults to America/Chicago if not specified in the config
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <if expr="menu==''">
+                <sequence>
+                    <call function="'getMenu'">machine</call>
+                    <script>menu = STAXResult</script>
+                </sequence>
+            </if>
+            <script>
+                CR = '\n'
+                defaultTzName = "America/Chicago"
+            </script>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>myMachine = STAXResult</script>
+            <script>
+                ret = ""
+                for i in range(len(menu)):
+                   line = menu[i]
+                   if line.find('Common Configuration') != -1:
+                      m = re.match(r".*\s+(\S+)\)\s+Common Configuration:\s+.*", line)
+                      ret += m.group(1) + CR
+                      break
+                offset = 1
+                while len(menu[i + offset]) != 0:
+                   line = menu[i + offset]
+                   if (line.find('TimeZone:') != -1):
+                      ret += str(offset) + CR
+                      break
+                   offset += 1
+            </script>
+            <if expr="menu[i + offset].find('TimeZone:') == -1">
+                <return>''</return>
+            </if>
+            <call function="'getMenu'">[machine, ret + CR + 'r' + CR, 'no']</call>
+            <script>menu = STAXResult</script>
+            <script>
+                tzName = defaultTzName
+                opts = document.getElementsByTagName('option')
+                for i in range(opts.getLength()):
+                   crt = opts.item(i)
+                   if crt.getAttributes().getNamedItem('name').getNodeValue() == "zimbraPrefTimeZoneName":
+                      if crt.getParentNode().getAttributes().getNamedItem('name').getNodeValue() == myMachine:
+                         tzName = crt.getFirstChild().getNodeValue().strip()
+                         break
+                tzId = ''
+                for i in range(len(menu)):
+                   line = menu[i]
+                   if line.find(tzName) != -1:
+                      m = re.match(r"(\d+)\s+.*", line)
+                      if m is None:
+                         continue
+                      tzId = m.group(1)
+                      break
+                ret += tzId + CR + 'r' + CR
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+
+    <function name="genArchivingTemplate" scope="local">
+        <function-prolog>
+            This function enables/disables archiving
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="menu">
+                The menu
+            </function-required-arg>
+            <function-required-arg name="machine">
+                Which host to generate config for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'getFqdnHostname'">machine</call>
+            <script>
+                myMachine = STAXResult
+            </script>
+            <call function="'getNodePackages'">
+                {'machine' : myMachine,
+                 'document' : document
+                }
+            </call>
+            <script>
+                nodePkgs = STAXResult
+            </script>
+            <if expr="'zimbra-mta' not in nodePkgs">
+                <return>''</return>
+            </if>
+            <script>
+                runit = None
+                opts = document.getElementsByTagName('option')
+                for j in range(opts.getLength()):
+                   arch = opts.item(j)
+                   if arch.getAttributes().getNamedItem('name').getNodeValue() == "RUNARCHIVING":
+                      runit = arch.getFirstChild().getNodeValue().strip()
+                      if runit.lower() != 'yes':
+                         runit = 'no'
+                      break
+            </script>
+            <if expr="runit is None">
+                <return>''</return>
+            </if>
+            <script>
+                import re
+                ret = ''
+                startindex = -1
+                for i in range(len(menu)):
+                   if menu[i].find('zimbra-mta') != -1:
+                      startindex = i
+                      break
+                if startindex != -1:
+                   for i in range(startindex + 1, len(menu)):
+                      if re.match(r"\s+\d+\)\s+\S+", menu[i]) != None:
+                         endindex = i - 1
+                         break
+                submenu = menu[startindex:endindex]
+                m = re.match(r"\s+(\S+)\).*zimbra-mta.*", submenu[0])
+                mtaindex = m.group(1)
+                msubindex = m.group(1)
+                #ret += msubindex + CR
+                for i in range(len(submenu)):
+                   if submenu[i].find('Enable Archiving and Discovery:') != -1:
+                      m = re.match(r".*Enable Archiving and Discovery:\s+(\S+).*", submenu[i])
+                      val = m.group(1)
+                      if val.lower() != runit.lower():
+                         ret += msubindex + CR + str(i + 1) + CR + 'r' + CR
+                         break
+            </script>
+            <return>ret</return>
+        </sequence>
+    </function>
+    
+    <function name="genZmsetupTemplate" scope="local">
+        <function-prolog>
+            This function is used to create install templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="file">
+                Configuration file
+            </function-required-arg>
+
+            <function-required-arg name="machine">
+                Which host to generate zmconfig file for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>CR = '\n'</script>
+            <call function="'parseXML'">file</call>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                document = STAXResult
+            </script>
+            <log>'doc=%s'%document</log>
+			<!--call function="'getNodePackages'">
+                {'machine':machine,
+                 'document':document
+                }
+            </call>
+            <script>
+                nodePkgs = STAXResult
+                if 'zimbra-ldap' not in nodePkgs:
+                  template = ''
+                else:
+                  template='No' + CR
+	        </script-->
+            <script>template = ''</script>
+            <call function="'getMenu'">machine, template</call>
+            <script>menu = STAXResult</script>
+            <log>'menu=%s'%menu</log>
+            <!--script>template='No' + CR</script-->
+            <call function="'genCommonConfigTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template += STAXResult</script>
+            <log>'after commonconfigtemplate: %s'% template</log>
+            <call function="'getMenu'">machine, template</call>
+            <script>menu = STAXResult</script>
+            <call function="'genLdapTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template += STAXResult</script>
+            <log>'after ldap: %s'% template</log>
+            <!--call function="'genProxyTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template += STAXResult</script-->
+            <call function="'safeInvoke'">
+                {'functionToInvoke' : 'genProxyTemplate',
+                 'functionArguments': {'machine': machine, 'menu': menu},
+                 'timeout': '5m'
+                }
+            </call>
+            <!--script>
+                addIpResult = STAXResult
+            </script-->
+            <if expr="STAXResult[0] == STAFRC.Ok">
+                <script>template += STAXResult[1]</script>
+            </if>
+            <log>'after proxy: %s'% template</log>
+            <call function="'getMenu'">[machine, template]</call>
+            <script>menu = STAXResult</script>
+            <log>'menu=%s'%menu</log>
+            <!--call function="'genStoreTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call-->
+            <if expr="baseBuildProps['build'].lower().find('octopus') == -1">
+                <call function="'safeInvoke'">
+                   {'functionToInvoke' : 'genStoreTemplate',
+                    'functionArguments': {'machine' : machine, 'menu' : menu, 'template' : template},
+                    'timeout': '15m'
+                   }
+                </call>
+                <else>
+                    <call function="'safeInvoke'">
+                       {'functionToInvoke' : 'genPackageTemplate',
+                        'functionArguments': {'machine': machine, 'menu': menu, 'kind':'octopus'},
+                        'timeout': '5m'
+                       }
+                    </call>
+                </else>
+            </if>
+            <!--script>
+                addIpResult = STAXResult
+            </script-->
+            <if expr="STAXResult[0] == STAFRC.Ok">
+                <script>template += STAXResult[1]</script>
+            </if>
+            <log>'after store: %s'% template</log>
+            <call function="'genMtaTemplate'">
+               {'menu': menu,
+                'machine': machine}
+            </call>
+            <script>template = template + STAXResult</script>
+            <log>'after mta: %s'% template</log>
+            <call function="'getMenu'">[machine, template]</call>
+            <script>menu = STAXResult</script>
+            <log>'menu=%s'%menu</log>
+            <call function="'genDnscacheTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template = template + STAXResult[1]</script>
+            <log>'after dnscache: %s'% template</log>
+            <call function="'genArchivingTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template = template + STAXResult</script>
+            <log>'after Archiving: %s'% template</log>
+            <!--call function="'genSnmpTemplate'">menu</call>
+            <script>template = template + STAXResult</script>
+            <log>'after snmp: %s'% template</log-->
+            <call function="'genLoggerTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template = template + STAXResult</script>
+            <log>'after logger: %s'% template</log>
+            <!--call function="'genSpellTemplate'">menu</call>
+            <script>template = template + STAXResult</script>
+            <log>'after spell: %s'% template</log-->
+            <log>'itempl=%s.'%template</log>
+            <call function="'getMenu'">[machine, template]</call>
+            <script>menu = STAXResult</script>
+            <log>'menu=%s'%menu</log>
+            <call function="'genBackupScheduleTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template = template + STAXResult</script>
+            <log>'after backupSchedule: %s'% template</log>
+            <!--call function="'genServerStartTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template = template + STAXResult</script>
+            <log>'after serverStart: %s'% template</log-->
+            <call function="'genTimeZoneTemplate'">
+               {'menu':menu,
+                'machine':machine}
+            </call>
+            <script>template = template + STAXResult</script>
+            <log>'after timezone: %s'% template</log>
+            <!-- handle imapproxy-memcached-->
+            <!-- is proxy && !memcached insert a CR-->
+            <call function="'getNodePackages'">
+                {'machine':machine,
+                 'document':document
+                }
+            </call>
+            <script>
+                nodePkgs = STAXResult
+                if 'zimbra-ldap' in nodePkgs:
+                   template = 'No' + CR + template
+                template += "a" + CR + 'Yes' + CR + CR + 'Yes' + CR
+                if 'zimbra-proxy' in nodePkgs and 'zimbra-memcached' not in nodePkgs:
+                    template += CR
+                    statusCheck[0] = 1 == 0
+                template += 'No' + CR
+                #template += "a" + CR + 'Yes' + CR + CR # + 'Yes' + CR + 'No' + CR
+            </script>
+            <log>'itempl=%s.'%template</log>
+            <if expr="dbg[0] == 'on'">
+                <process name="'Create Install File - ' + machine">
+                    <location>machine</location>
+                    <command>'/bin/echo'</command>
+                    <workdir>'/tmp'</workdir>
+                    <parms>'%s' % template</parms>
+                    <stdout>'/tmp/zmSetup.rb'</stdout>
+                </process>
+            </if>
+            <return>template</return>
+        </sequence>
+    </function>
+
+    <function name="checkZimbraMountpoints" scope="local">
+        <function-prolog>
+            This function returns fqdn hostname
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>rex = "^LABEL=\\\(\\\/\\\?\\\w\\\+\\\)\\\+[[:space:]]\\\+\\\/opt\\\/zimbra\\\(\\\/\\\|[^[:space:]]\\\)" </script>
+            <process name="'Scan fstab - ' + machine">
+                <location>machine</location>
+                <command>'grep'</command>
+                <workdir>'/var/tmp'</workdir>
+                <parms>' -i "%s" %s' % (rex, '/etc/fstab')</parms>
+                <stdout>'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>
+            <return>[(RC != STAFRC.Ok) or (STAXResult[0][1] == ''), '/etc/fstab - found %s entries'%len(STAXResult[0][1].split('\n'))]</return>
+        </sequence>
+    </function>
+
+
+
+    <function name="getOS" scope="local">
+        <function-prolog>
+            This function returns OS name of machine
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <process name="'Get OS name - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command>
+                <parms>' -l -c "uname -a"'</parms>
+                <!--stdout>'/tmp/install.out'</stdout-->
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>
+            <return>STAXResult[0][1]</return>
+        </sequence>
+    </function>
+
+    <function name="getMachineIPAddresses" scope="local">
+        <function-prolog>
+            This function returns all configured ip addresses
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <call function="'getOS'">{'machine': machine}</call>
+            <script>
+                osName = STAXResult
+                if osName.find('Darwin') == -1:
+                   nif = 'eth'
+                   #rex = "^\s+inet\s+addr:(\S+)/\d?\s+.*\s*(eth\d?)$"
+                   rex = "^\s+inet\s+(\S+)/\d+\s+.*\s+((eth|en\D*)\d+)(:\d+)?$"
+                else:
+                   nif = 'en'
+                   rex = "^\s+inet\s+(\S+).*netmask\s+(\S*).*$"
+            </script>
+            <if expr="nif == 'eth'">
+                <sequence>
+                    <process name="'ip addr show - ' + machine">
+                        <location>machine</location>
+                        <command>'/sbin/ip'</command>
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'addr show label e*'</parms>
+                        <stdout>'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                        <returnstdout/>
+                    </process>
+                    <script>
+                        import re
+	    	    
+                        res=STAXResult
+                        lines = STAXResult[0][1].split('\n')
+                        devices = {}
+                        found = None
+                        for i in range(len(lines)):
+                           match = re.match(rex, lines[i])
+                           if match:
+                              key = match.group(1)
+                              val = match.group(2)
+                              devices[key] = val
+                    </script> 
+                    <return>[STAFRC.Ok, devices]</return>
+                </sequence>
+                <else>
+                    <sequence>
+                        <script>
+                            from java.net import InetAddress
+                            from java.net import UnknownHostException
+
+                            try:
+                                hostIpAddr = InetAddress.getByName(machine).getHostAddress()
+                                hostname = InetAddress.getByName(machine).getCanonicalHostName()
+                            except UnknownHostException, uhe: 
+                                hostIpAddr = None
+                        </script>
+                        <if expr="hostIpAddr is None">
+                            <return>[STAFRC.InvalidValue, 'skip - machine(%s) ip address not found.'%machine]</return>
+                        </if>
+                        <log>'getIpAddresses on MACOSX not implemented'</log>
+                        <return>[STAFRC.Ok, {hostIpAddr : 'en'}]</return>
+                    </sequence>
+                </else>
+            </if>
+            <return>[STAFRC.InvalidValue, None]</return>
+        </sequence>
+    </function>
+
+    <function name="addIpAddress" scope="local">
+        <function-prolog>
+            This function adds a new ip address to the netw interface
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+            <function-required-arg name="zimbraHostname">
+                New ip address
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>
+                from java.net import InetAddress
+                from java.net import UnknownHostException
+
+                try:
+                  ipAddr = InetAddress.getByName(zimbraHostname).getHostAddress()
+                except UnknownHostException, uhe: 
+                   ipAddr = None
+                   message = 'unknown hostname: %s'%zimbraHostname
+            </script>
+            <if expr="ipAddr is None">
+                <return>[STAFRC.InvalidValue, message]</return>
+            </if>
+            <call function="'getMachineIPAddresses'">{'machine': machine}</call>
+            <script>
+                devices = STAXResult[1]
+            </script>
+            <if expr="devices.has_key(ipAddr)">
+                <sequence>
+                   <return>[STAFRC.Ok, 'ip address %s already configured'%ipAddr]</return>
+                </sequence>
+            </if>
+<log>'devices=%s'%devices</log>
+            <script>
+                from java.net import InetAddress
+                from java.net import UnknownHostException
+
+                try:
+                   dnsAddress = InetAddress.getByName(machine).getHostAddress()
+                except UnknownHostException, uhe: 
+                   dnsAddress = devices.keys()[0]
+            </script>
+            <process name="'ip add addr - ' + machine">
+                <location>machine</location>
+                <command>'/sbin/ip'</command>
+                <workdir>'/var/tmp'</workdir>
+                <parms>'addr add %s dev %s'%(ipAddr, devices[dnsAddress])</parms>
+                <stdout>'/tmp/install.out'</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>
+            <if expr="RC == STAFRC.Ok">
+                <return>[RC, 'ip address ' + ipAddr + ' configured']</return>
+                <else>
+                    <return>[RC, 'ip address ' + ipAddr + ' configuration failed ' + STAXResult[0][1]]</return>
+                </else>
+            </if>
+        </sequence>
+    </function>
+
+    <function name="deleteIpAddress" scope="local">
+        <function-prolog>
+            This function deletes an ip address from the netw interface
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Name of the machine
+            </function-required-arg>
+            <function-required-arg name="zimbraHostname">
+                New ip address
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>
+                from java.net import InetAddress
+                from java.net import UnknownHostException
+
+                try:
+                  zimbraIpAddr = InetAddress.getByName(zimbraHostname).getHostAddress()
+                except UnknownHostException, uhe: 
+                   zimbraIpAddr = None
+                   message = 'unknown zimbra hostname: %s'%zimbraHostname
+            </script>
+            <if expr="zimbraIpAddr is None">
+                <return>[STAFRC.InvalidValue, message]</return>
+            </if>
+            <script>
+                from java.net import InetAddress
+                from java.net import UnknownHostException
+
+                try:
+                   hostIpAddr = InetAddress.getByName(machine).getHostAddress()
+                   hostname = InetAddress.getByName(machine).getCanonicalHostName()
+                except UnknownHostException, uhe: 
+                   hostIpAddr = None
+            </script>
+            <if expr="hostIpAddr is None">
+                <return>[STAFRC.InvalidValue, 'skip - machine(%s) ip address not found.'%machine]</return>
+            </if>
+            <if expr="hostIpAddr == zimbraIpAddr">
+                <return>[STAFRC.InvalidValue, 'skip - machine/ip address(%s/%s) and zimbra hostname/ip address(%s/%s) must be different'%(hostname, hostIpAddr, zimbraHostname, zimbraIpAddr)]</return>
+            </if>
+            <call function="'getMachineIPAddresses'">{'machine': machine}</call>
+            <script>
+                devices = STAXResult[1]
+            </script>
+            <if expr="not devices.has_key(zimbraIpAddr)">
+                <sequence>
+                   <log>'skip - zimbra hostname/ip address(%s/%s) unconfigured'%(zimbraHostname, zimbraIpAddr)</log>
+                   <return>[STAFRC.Ok, 'skip - zimbra hostname/ip address(%s/%s) unconfigured'%(zimbraHostname, zimbraIpAddr)]</return>
+                </sequence>
+            </if>
+            <call function="'getOS'">{'machine': machine}</call>
+            <if expr="STAXResult.find('Darwin') == -1">
+                <sequence>
+                    <process name="'ip addr del - ' + machine">
+                        <location>machine</location>
+                        <command>'/sbin/ip'</command>
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'addr del %s dev eth0'%(zimbraIpAddr)</parms>
+                        <stdout>'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                        <returnstdout/>
+                    </process>
+                    <if expr="RC == STAFRC.Ok">
+                        <return>[RC, 'ip address ' + zimbraIpAddr + ' removed']</return>
+                        <else>
+                            <return>[RC, 'ip address ' + zimbraIpAddr + ' delete failed ' + STAXResult[0][1]]</return>
+                        </else>
+                    </if>
+                    <return>[STAFRC.Ok, '%s - ip address %s deleted' %(machine, zimbraIpAddr)]</return>
+                </sequence>
+            </if>
+            <!-- only REDHAT supported at this time-->
+            <return>[STAFRC.InvalidValue, 'skip - unsupported']</return>
+        </sequence>
+    </function>
+
+    <function name="getAllPackages" scope="local">
+        <function-prolog>
+            Get the list with all installable packages
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Target machine
+            </function-required-arg>
+            <function-required-arg name="tarFile">
+                Tarfile
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <if expr="tarFile.find('MACOSX') != -1">
+                <sequence>
+                    <script>
+                        packages = ['zimbra-ldap', 'zimbra-logger', 'zimbra-mta',
+                                    'zimbra-snmp', 'zimbra-store', 'zimbra-apache', 'zimbra-spell']
+                        if tarFile.find('_FRANK_') == -1:
+                           packages.append('zimbra-proxy')
+                           packages.append('zimbra-archiving')
+                    </script>
+                    <return>[STAFRC.Ok, packages]</return>
+                </sequence>
+            </if>
+            <call function="'isClusterNode'">machine</call>
+            <script>
+                isCluster = STAXResult
+            </script>
+            <process name="'Get PACKAGES - ' + machine">
+                <location>machine</location>
+                <command>'tar'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'-xzf %s --wildcards -O "*globals.sh"' % tarFile</parms>  
+                <stdout>'/tmp/glob.txt'</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>      
+            <log>'globals from %s on %s, RC=%s, res=%s' % (tarFile, machine, RC, STAXResult)</log>
+            <if expr="RC != STAFRC.Ok">
+                <return>[RC, STAXResult]</return>
+            </if>
+            <script>
+                startindex = 0
+                packages = []
+                done = 0
+                allPkgs = ""
+                lines = STAXResult[0][1].split("\n")
+                for i in range(len(lines)):
+                   match = re.match('^(OPTIONAL_){0,1}PACKAGES\s*=\s*\"(.*)', lines[i])
+                   if match:
+                      done += 1
+                      startindex = i
+                      #allPkgs += match.group(2).replace('zimbra-apache', '').replace('zimbra-qatest', '').replace('"', ' ').replace("\\", ' ')
+                      allPkgs += match.group(2).replace('"', ' ').replace("\\", ' ')
+                      for j in range(i + 1, len(lines)):
+                         if lines[j] == "":
+                            i = j
+                            break
+                         #allPkgs += lines[j].replace('zimbra-apache', '').replace('zimbra-qatest', '').replace("\\", ' ').replace('"', ' ')
+                         allPkgs += lines[j].replace("\\", ' ').replace('"', ' ')
+                   if done == 2:
+                      break
+                if (tarFile.find('_FOSS') != -1) or (tarFile.find('RHEL') == -1) or not isCluster:
+                   allPkgs = allPkgs.replace('zimbra-cluster', '')
+                if tarFile.find('_FOSS') != -1:
+                   allPkgs = allPkgs.replace('zimbra-archiving', '')
+                #if (baseBuildProps['branch'] == 'FRANK') or (baseBuildProps['branch'] == 'FRANKLIN_D4') or (baseBuildProps['branch'] == 'FRANKLIN_D5'):
+                #if (tarFile.find('_FRANK_') != -1) or (tarFile.find('FRANKLIN_D4') != -1) or (tarFile.find('FRANKLIN_D5') != -1):
+                if re.match(".*_FRANK(LIN_D(4|5))?_.*", tarFile) != None:
+                   allPkgs = allPkgs.replace('zimbra-apache', '')
+                packages = allPkgs.replace('zimbra-qatest', '').strip().split()
+            </script>
+<log>'ap=%s.'%(allPkgs)</log>
+            <return>[STAFRC.Ok, packages]</return>
+        </sequence>
+    </function>
+
+</stax>

@@ -1,0 +1,99 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<t:property name="account1.name" value="testuser_bug_42874_test@${defaultdomain.name}"/>
+<t:property name="account2.name" value="bug42874@zimbra.com"/>
+<t:property name="folder.name" value="bug_42874" /> 
+<t:property name="root"				value="${soapxml.root}/MailClient/Mail/lmtp/MimeBasic/"/>
+<t:property name="msg01.file"		value="${root}/lmtp_basic01.txt"/>
+<t:property name="subject" value="Post upgrade"/>
+<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+         <t:response>
+             <t:select path="//admin:PingResponse"/>
+         </t:response>
+    </t:test>
+    
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+	    <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <GetAccountRequest xmlns="urn:zimbraAdmin">
+                <account by="name">${account1.name}</account>
+            </GetAccountRequest>
+        </t:request>
+	    <t:response>
+                <t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="test_account1.id"/>
+                <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct1.server"/>
+	    </t:response>
+    </t:test>
+
+</t:test_case>
+
+<t:property name="server.zimbraAccount" value="${test_acct1.server}"/>
+
+<t:test_case testcaseid="Filter_Address_In_Contact_PostUpgrade" type="always" bugids="42874">
+        <t:objective> Verify filter works after upgradation if from field of the mail matches the contacts saved </t:objective>
+	    <t:steps> 
+			  1. Login to test account 1
+			  2. Inject a Mail with From field is one of the contact that is being saved.
+			  3. Search mail get filtered.
+        </t:steps>
+
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+   <t:mailinjecttest >
+        <t:lmtpInjectRequest>
+            <filename>${msg01.file}</filename>
+			<to>${account1.name}</to>
+			<from>${account2.name}</from>
+			<server>${test_acct1.server}</server>
+            <modify>
+                <header a="X-Spam-Score">0</header>
+                <header a="From">${account2.name}</header>
+                <header a="Subject">${subject}</header>
+            </modify>
+        </t:lmtpInjectRequest>
+    </t:mailinjecttest>
+    
+    <t:test id="searchRequest1">
+        <t:request>
+            <SearchRequest xmlns="urn:zimbraMail" types="message">
+ 				 <query>in:${folder.name}</query>
+            </SearchRequest>
+        </t:request>
+        <t:response>
+   			<t:select path="//mail:SearchResponse/mail:m/mail:e[@t='f']" attr="a" match="${account2.name}" />        
+			<t:select path="//mail:SearchResponse/mail:m" attr="su" match="${subject}" /> 
+   		</t:response>
+    </t:test>
+</t:test_case>
+
+
+</t:tests>
+

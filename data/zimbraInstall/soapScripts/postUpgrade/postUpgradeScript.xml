@@ -1,0 +1,410 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<!-- Define acct_upgrade1.name and acct_upgrade2.name in global.properties -->
+    
+<t:property name="COS.name" value="upgradecosa"/>
+<t:property name="DL.name" value="upgradedla@${defaultdomain.name}"/>
+<t:property name="alias.name" value="upgradealiasa@${defaultdomain.name}"/>
+<t:property name="domainA.name" value="upgradedomaina.com"/>
+<t:property name="server.name" value="upgrade.testserver.com"/>
+<t:property name="server.notes" value="test of adding Server via SOAP"/>
+<t:property name="server.desc" value="test server description"/>
+<t:property name="volume.name" value="upgradeVolume"/>
+
+<t:property name="tempdir" value="/tmp/volumes"/>
+<t:system command="mkdir" parms="${tempdir}"/>
+<t:system command="chmod" parms="777 ${tempdir}"/>
+<t:property name="basedir" value="${tempdir}/volumeRoot${COUNTER}${TIME}"/>
+<t:system command="mkdir" parms="${basedir}"/>
+<t:system command="chmod" parms="777 ${basedir}"/>
+
+<t:property name="folder.name" value="upgradeFolderA"/>
+<t:property name="folder2.name" value="upgradeFolderB"/>
+<t:property name="contact.mailid" value="email@domain.com"/>
+<t:property name="tag.name" value="upgradeTagA" />
+
+<t:property name="mail1.subject" value="subject1" />
+<t:property name="mail1.content" value="mail1 simple content in a message" />
+<t:property name="mail2.subject" value="subject2" />
+<t:property name="mail2.content" value="mail2 simple content in a message" />
+
+<t:property name="appt1.subject" value="appt1 subject" />
+<t:property name="appt1.location" value="appt1 location" />
+<t:property name="appt1.content" value="appt1 content" />
+
+<t:property name="calender.s" value="${TIME}"/>
+<t:property name="calender.e" value="${TIME(+1d)}"/>
+
+<t:property name="dlMember.name" value="upgradedlmember@${defaultdomain.name}"/>
+
+<t:property name="test_acct1.server" value="NOT_DEFINED"/>
+<t:property name="test_acct2.server" value="NOT_DEFINED"/>
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+<t:test_case testcaseid="upgrade_account_verify_01" type="always" >
+    <t:objective>Verify the upgrade test accounts</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+	<t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${acct_upgrade1.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="acct_upgrade1.id"/>
+                        <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct1.server"/>
+		</t:response>
+	</t:test>
+
+	<t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${acct_upgrade2.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="acct_upgrade2.id"/>
+                        <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct2.server"/>
+		</t:response>
+	</t:test>
+
+
+
+</t:test_case>
+
+
+<t:test_case testcaseid="upgrade_account_verify_02" type="smoke" >
+    <t:objective>Verify account 2 with different settings</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+	<t:test >
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${acct_upgrade2.name}</account>
+			</GetAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetAccountResponse/admin:account">
+            <t:select path="admin:a[@n='zimbraPrefMailPollingInterval']" match="5m"/>
+			<t:select path="admin:a[@n='zimbraFeatureCalendarEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraPrefMailInitialSearch']" match="in:inbox"/>
+			<t:select path="admin:a[@n='zimbraPop3Enabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraImapEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraContactMaxNumEntries']" match="0"/>
+			<t:select path="admin:a[@n='zimbraNewMailNotificationBody']" match="New message received"/>
+			<t:select path="admin:a[@n='zimbraFeatureGalEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraPrefSentMailFolder']" match="sent"/>
+			<t:select path="admin:a[@n='zimbraPasswordMaxAge']" match="0"/>
+			<t:select path="admin:a[@n='zimbraNewMailNotificationSubject']" match="New message received"/>
+			<t:select path="admin:a[@n='zimbraPasswordEnforceHistory']" match="0"/>
+			<t:select path="admin:a[@n='zimbraMailStatus']" match="enabled"/>
+			<t:select path="admin:a[@n='zimbraPasswordMinLength']" match="6"/>
+			<t:select path="admin:a[@n='zimbraMailTrashLifetime']" match="7d"/>
+			<t:select path="admin:a[@n='zimbraMailIdleSessionTimeout']" match="0"/>
+			<t:select path="admin:a[@n='zimbraFeatureTaggingEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraMailQuota']" match="0"/>
+			<t:select path="admin:a[@n='givenName']" match="yttyy"/>
+			<t:select path="admin:a[@n='zimbraMailMessageLifetime']" match="0"/>
+			<t:select path="admin:a[@n='zimbraFeatureChangePasswordEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraMailMinPollingInterval']" match="2m"/>
+			<t:select path="admin:a[@n='zimbraPrefReplyIncludeOriginalText']" match="includeBody"/>
+			<t:select path="admin:a[@n='zimbraPrefForwardIncludeOriginalText']" match="includeBody"/>
+			<t:select path="admin:a[@n='zimbraFeatureFiltersEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraPrefSaveToSent']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraAdminAuthTokenLifetime']" match="12h"/>
+			<t:select path="admin:a[@n='zimbraAttachmentsViewInHtmlOnly']" match="FALSE"/>
+			<t:select path="admin:a[@n='zimbraAttachmentsBlocked']" match="FALSE"/>
+			<t:select path="admin:a[@n='zimbraPrefMessageViewHtmlPreferred']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraFeatureSavedSearchesEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='displayName']" match="yttyy admin"/>
+			<t:select path="admin:a[@n='zimbraFeatureContactsEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraPrefIncludeSpamInSearch']" match="FALSE"/>
+			<t:select path="admin:a[@n='zimbraPrefMailItemsPerPage']" match="25"/>
+			<t:select path="admin:a[@n='zimbraPasswordMinAge']" match="0"/>
+			<t:select path="admin:a[@n='zimbraPrefContactsPerPage']" match="25"/>
+			<t:select path="admin:a[@n='zimbraAccountStatus']" match="active"/>
+			<t:select path="admin:a[@n='zimbraMailSpamLifetime']" match="7d"/>
+			<t:select path="admin:a[@n='zimbraPrefAutoAddAddressEnabled']" match="FALSE"/>
+			<t:select path="admin:a[@n='zimbraPrefMailSignatureStyle']" match="internet"/>
+			<t:select path="admin:a[@n='zimbraFeatureConversationsEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraFeatureAdvancedSearchEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraPasswordLocked']" match="FALSE"/>
+			<t:select path="admin:a[@n='zimbraPrefGroupMailBy']" match="conversation"/>
+			<t:select path="admin:a[@n='zimbraPrefIncludeTrashInSearch']" match="FALSE"/>
+			<t:select path="admin:a[@n='zimbraFeatureInitialSearchPreferenceEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraAuthTokenLifetime']" match="12h"/>
+			<t:select path="admin:a[@n='zimbraAttachmentsIndexingEnabled']" match="TRUE"/>
+			<t:select path="admin:a[@n='zimbraPasswordMaxLength']" match="64"/>
+			<t:select path="admin:a[@n='zimbraPrefDedupeMessagesSentToSelf']" match="dedupeNone"/>
+			<t:select path="admin:a[@n='zimbraPrefForwardReplyPrefixChar']" match="&gt;"/>
+			<t:select path="admin:a[@n='zimbraPrefMailPollingInterval']" match="5m"/>
+			<t:select path="admin:a[@n='sn']" match="test.1117345120686.1"/>
+			<t:select path="admin:a[@n='zimbraPrefContactsInitialView']" match="cards"/>
+			<t:select path="admin:a[@n='cn']" match="test.1117345120686.1"/>
+			<t:select path="admin:a[@n='zimbraPrefUseKeyboardShortcuts']" match="FALSE"/>
+			<t:select path="admin:a[@n='zimbraNewMailNotificationFrom']" match="Notification &lt;notify@RECIPIENT_DOMAINgt;"/>
+            </t:select>
+        </t:response>
+    </t:test>
+    
+</t:test_case>
+
+  
+<t:test_case testcaseid="upgrade_account_verify_03" type="smoke" >
+    <t:objective>Verify account 1 with different data</t:objective>
+
+    <t:property name="server.zimbraAccount" value="${test_acct1.server}"/>
+
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${acct_upgrade1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+            </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:lifetime"  match="^\d+$"/>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <!-- find out which folder ID is the inbox -->
+    <t:test id="getFolderRequest">
+        <t:request>
+               <GetFolderRequest xmlns = "urn:zimbraMail"/>
+        </t:request>
+        <t:response>              
+            <t:select path="//mail:folder[@name='${folder.name}']"/>
+        </t:response>
+    </t:test>
+
+	<t:test >
+        <t:request>
+            <GetContactsRequest xmlns="urn:zimbraMail"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetContactsResponse/mail:cn/mail:a[@n='email']" match="${contact.mailid}"/>
+        </t:response>
+    </t:test>
+    
+	<t:test >
+	 <t:request>
+	   <GetTagRequest xmlns="urn:zimbraMail"/>
+	 </t:request>
+	  <t:response>
+		<t:select path="//mail:GetTagResponse/mail:tag" attr="name" match="${tag.name}"/>
+	 </t:response>
+	</t:test>
+
+	<t:test>
+	 <t:request>
+	   <SearchRequest xmlns="urn:zimbraMail" types="message">
+	   <query>subject:(${mail1.subject})</query>
+	   </SearchRequest>
+	 </t:request>
+	  <t:response>
+		<t:select path="//mail:SearchResponse/mail:m/mail:su" match="${mail1.subject}"/>
+		<t:select path="//mail:SearchResponse/mail:m/mail:fr" match="${mail1.content}"/>
+	 </t:response>
+	</t:test>
+
+<!--
+	<t:test>
+	 <t:request>
+	   <SearchRequest xmlns="urn:zimbraMail" types="message">
+	   <query>content:(${mail2.content})</query>
+	   </SearchRequest>
+	 </t:request>
+	  <t:response>
+		<t:select path="//mail:SearchResponse/mail:m"/>
+	 </t:response>
+	</t:test>
+-->
+
+
+    <t:test id="GetApptSummaries1">
+        <t:request>
+            <GetApptSummariesRequest xmlns="urn:zimbraMail" s="${calender.s}" e="${calender.e}"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetApptSummariesResponse"/>
+            <!-- TODO: verify appt data -->
+        </t:response>
+    </t:test>
+
+    <t:test id="getFolderRequest">
+        <t:request>
+               <GetFolderRequest xmlns = "urn:zimbraMail"/>
+        </t:request>
+        <t:response>              
+            <t:select path="//mail:folder[@name='Inbox']">
+            	<t:select path="mail:folder[@name='${folder2.name}']">
+           		 <t:select path="mail:acl/mail:grant">
+           		 	<t:select attr="perm" match="r"/>
+           		 	<t:select attr="d" match="${acct_upgrade2.name}"/>
+            	 </t:select>
+            	</t:select>
+            </t:select>
+        </t:response>
+    </t:test>
+
+    <t:test> 
+        <t:request>
+            <GetInfoRequest xmlns="urn:zimbraAccount"/>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:GetInfoResponse/acct:identities[count(.//acct:identity) = 1]"/>
+            <t:select path="//acct:GetInfoResponse/acct:identities/acct:identity[@name='DEFAULT']">
+                <t:select path="//acct:a[@name='zimbraPrefSentMailFolder']"             match="sent"/>
+                <!--t:select path="//acct:a[@name='zimbraPrefForwardIncludeOriginalText']" match="includeBody"/-->
+                <t:select path="//acct:a[@name='zimbraPrefFromAddress']"                match="${acct_upgrade1.name}"/>
+                <t:select path="//acct:a[@name='zimbraPrefMailSignatureStyle']"         match="outlook"/>
+                <t:select path="//acct:a[@name='zimbraPrefSaveToSent']"                 match="TRUE"/>
+                <t:select path="//acct:a[@name='zimbraPrefIdentityName']"               match="DEFAULT"/>
+                <t:select path="//acct:a[@name='zimbraPrefForwardReplyPrefixChar']"     match=">"/>
+            </t:select>
+        </t:response>
+    </t:test> 
+  
+    
+</t:test_case>
+
+<t:test_case testcaseid="upgrade_verify_server_01" type="smoke" >
+    <t:objective>Veriify server settings</t:objective>
+
+	<t:property name="uri" value="${admin.uri}"/>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request xmlns="urn:zimbraAdmin">
+            <GetAllCosRequest/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetAllCosResponse/admin:cos[@name='${COS.name}']" attr="id" set="cos.id"/>
+        </t:response>
+    </t:test>
+
+    <t:test required="true" >
+        <t:request>
+	    <GetAccountRequest xmlns="urn:zimbraAdmin">
+	        <account by="name">${dlMember.name}</account>
+	    </GetAccountRequest>
+        </t:request>
+        <t:response>
+	    <t:select path="//admin:GetAccountResponse/admin:account/admin:a[@n='zimbraCOSId']"  match="${cos.id}"/>
+            <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct1.server"/>
+	</t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <GetDistributionListRequest xmlns="urn:zimbraAdmin">
+                <dl by="name">${DL.name}</dl>
+            </GetDistributionListRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetDistributionListResponse/admin:dl" attr="name" match="${DL.name}">
+            	<t:select attr="dlm" match="${dlMember.name}"/>
+			</t:select>
+        </t:response>
+    </t:test>
+
+	<t:test>
+		<t:request>
+			<GetAllDomainsRequest xmlns="urn:zimbraAdmin"/>
+		</t:request>
+		<t:response>
+            <t:select path="//admin:GetAllDomainsResponse/admin:domain[@name='${domainA.name}']">
+            </t:select>
+        </t:response>
+	</t:test>
+
+ 
+    <t:test>
+        <t:request>
+            <GetAllConfigRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetAllConfigResponse"/>
+        	<!-- <a n="zimbraGalMaxResults">100</a> -->
+        </t:response>
+    </t:test>
+
+
+    <t:test >
+        <t:request>
+            <GetAllServersRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+             <t:select path="//admin:GetAllServersResponse/admin:server[@name='${server.name}']"/>
+        </t:response>
+    </t:test>
+
+    <t:test>
+        <t:request>
+            <GetAllVolumesRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetAllVolumesResponse/admin:volume[@name='${volume.name}']"/>
+            <!-- TODO: -->
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+</t:tests>
+

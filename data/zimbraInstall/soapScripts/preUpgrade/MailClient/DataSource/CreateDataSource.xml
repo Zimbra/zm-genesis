@@ -1,0 +1,181 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<!-- Shared variables between Pre and Post upgrade scripts -->
+
+<t:property name="account1.name" value="datasource.1@${defaultdomain.name}"/>
+<t:property name="account1.datasource.pop.name" value="account1.datasource.pop.name"/>
+
+<!-- End shared variables -->
+
+
+
+<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+
+<t:test_case testcaseid="PreUpgrade_DataSource_AccountSetup" type="always">
+    <t:objective>create accounts</t:objective>
+
+	<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+
+    <t:test >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${account1.name}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <GetAccountRequest xmlns="urn:zimbraAdmin">
+                <account by="name">${account1.name}</account>
+            </GetAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account1.id"/>
+            <t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>	 
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <DeleteAccountRequest xmlns="urn:zimbraAdmin">
+                <id>${account1.id}</id>
+            </DeleteAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:DeleteAccountResponse"/>
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${account1.name}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="account1.id"/>
+            <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>	 
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+<t:test_case testcaseid="CreateDataSourceUpgrade_01" type="smoke">
+    <t:objective>create accounts</t:objective>
+
+	<t:property name="server.zimbraAccount" value="${account1.server}"/>
+	<t:property name="folder.pop.name" value="pop${TIME}${COUNTER}"/>
+
+    <t:test >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+	<t:test>
+		<t:request>
+			<GetFolderRequest xmlns="urn:zimbraMail"/>
+		</t:request>
+		<t:response>
+			<t:select path="//mail:GetFolderResponse/mail:folder/mail:folder[@name='${globals.inbox}']" attr="id" set="account1.folder.inbox.id"/>
+		</t:response>
+	</t:test>
+
+    <t:test>
+        <t:request>
+            <CreateFolderRequest xmlns="urn:zimbraMail">
+                <folder name="${folder.pop.name}" l="${account1.folder.inbox.id}"/>
+            </CreateFolderRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:CreateFolderResponse">
+            	<t:select path="//mail:folder" attr="id" set="folder.pop.id"/>
+        	</t:select>
+        </t:response>
+	</t:test>
+
+	<t:property name="datasource.pop.id" value="popid${TIME}${COUNTER}"/>
+	<t:test>
+		<t:request>
+			<CreateDataSourceRequest xmlns="urn:zimbraMail">
+				<pop3 id="${datasource.pop.id}" name="${account1.datasource.pop.name}" isEnabled="${globals.true}" l="${folder.pop.id}" 
+				 host="${POP3.gmail.host}" port="${POP3.gmail.port}" username="${POP3.gmail.username}" password="${POP3.gmail.password}" connectionType="${POP3.gmail.connectionType}" leaveOnServer="${globals.true}"/>
+			</CreateDataSourceRequest>
+		</t:request>
+		<t:response>
+            <t:select path="//mail:CreateDataSourceResponse">
+            	<t:select path="//mail:pop3" attr="id" set="account1.pop.id"/>
+        	</t:select>
+		</t:response>
+	</t:test>
+
+	<t:test>
+		<t:request>
+			<ImportDataRequest xmlns="urn:zimbraMail">
+				<pop3 id="${account1.pop.id}"/>
+			</ImportDataRequest>
+		</t:request>
+		<t:response>
+            <t:select path="//ImportDataResponse"/>
+		</t:response>
+	</t:test>
+
+	<t:for start="1" end="60" break="response">
+	
+		<t:delay msec="1000"/>
+	
+		<t:test >
+			<t:request>
+				<GetImportStatusRequest xmlns="urn:zimbraMail" />
+			</t:request>
+			<t:response>
+				<t:select path="//mail:GetImportStatusResponse">
+					<t:select path="//mail:pop3[@isRunning='0']" query="response"/>
+				</t:select>
+			</t:response>
+		</t:test>
+
+	</t:for>
+
+</t:test_case>
+
+
+</t:tests>
+

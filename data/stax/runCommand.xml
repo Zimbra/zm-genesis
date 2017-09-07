@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>
+    
+    <defaultcall function="runCommand"/>
+    
+    
+    <function name="runCommand" scope="local">
+        
+        <function-prolog> Main entry point to set up global variables </function-prolog>
+        
+        <function-map-args>  
+            <function-optional-arg name="machine" default="'qapc02'"> Name of the target machine </function-optional-arg>
+            <function-optional-arg name="pCommand" default="''">Command to be invonked</function-optional-arg>
+            <function-optional-arg name="pWorkDir" default="'.'">Working directory</function-optional-arg>
+            <function-optional-arg name="pParams" default="' '">Parameters </function-optional-arg>
+            <function-optional-arg name="pjobID" default="'-1'">
+                JobID to signal job termination
+            </function-optional-arg> 
+            <function-optional-arg name="tms" default="'tms.lab.zimbra.com'">Location of TMS server </function-optional-arg>
+            <function-optional-arg name="tmsStax" default="'tms-stax.lab.zimbra.com'">Location of TMS server </function-optional-arg>
+            <function-optional-arg name="resultFile" default="'result.txt'">Name of result file</function-optional-arg>
+        </function-map-args>
+        
+        <sequence>   
+        
+        	<signalhandler signal="'STAXPythonEvaluationError'"> 
+                <sequence>
+                    <log message="1" level="'Error'">
+                        'STAXPythonEvaluationError signal raised. Clean up and terminate the job.%s' % \
+                        (STAXPythonEvalMsg)
+	            	</log>
+                    <process name="'End Job'">
+                        <location>tmsStax</location>
+                        <command>'/bin/env'</command>
+                        <workdir>'/opt/qa/tools'</workdir>
+                        <parms>'ruby /opt/qa/tools/endJob.rb %s %s' % (pjobID, tms)</parms>
+                        <stdout>'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                    <terminate block="'main'"/>
+                </sequence>
+            </signalhandler>
+            
+        	<log>"Run %s %s"%(pCommand, pParams)</log>
+ 
+                <script>
+                import os
+                if os.path.isabs(resultFile):
+                   theFile = resultFile
+                else:
+                   if (len(resultFile) > 1) and (resultFile[1] == ':'):
+                      theFile = resultFile
+                   else:
+                      theFile = os.path.join(pWorkDir, resultFile)
+               </script>
+
+               <log>"result file %s"%theFile</log>
+
+        	 
+        	<process name="'Run Command'">
+                        <location>machine</location>
+                        <command mode="'shell'">pCommand</command>
+                        <workdir>pWorkDir</workdir>
+                        <parms>pParams</parms>
+                        <stdout>theFile</stdout>
+                        <stderr mode="'stdout'" /> 
+			<returnstdout />
+		</process> 
+            
+	    <!--
+            <log>"Process result %s"%STAXResult[0][1]</log>  
+	    -->
+             
+            
+            <if expr="pjobID != '-1'">
+                <sequence>
+                    <log>'Notify termination of job %s' % pjobID</log>
+                    <process name="'End Job'">
+                        <location>tmsStax</location>
+                        <command>'/bin/env'</command>
+                        <workdir>'/opt/qa/tools'</workdir>
+                        <parms>'ruby /opt/qa/tools/endJob.rb %s %s' % (pjobID, tms)</parms>
+                        <stdout mode="'append'">'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                </sequence>
+            </if>
+        </sequence>
+        
+    </function>
+    
+</stax>

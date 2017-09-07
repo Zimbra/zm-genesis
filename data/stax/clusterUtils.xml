@@ -1,0 +1,1436 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>  
+   
+    <script>failed = "FAILED"</script>
+    <script>passed = "PASSED"</script>
+    <script>stopTimeout = "3m"</script>
+    <script>STAXMessageLog=1</script>
+
+    <function name="uninstallClusterLocalBlah" scope="local">
+        <function-prolog>
+            This function is used to locally uninstall zimbra
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Name of the target machine
+            </function-required-arg>
+            <function-optional-arg name="currentZcs" default="'/var/tmp/zcs'">
+                Crt zcs location
+            </function-optional-arg>          
+        </function-map-args>
+        <sequence>
+            <script>confirm = "Y\nY\n"</script>
+            <process name="'Create Confirm'">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % confirm</parms>
+                <stdout>'/tmp/confirm.file'</stdout>  
+            </process>
+            <process name="'Uninstall - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>currentZcs</workdir>
+                <parms>' -l -c "/bin/cat /tmp/confirm.file | ./install.sh -u"'</parms> 
+                <stdout mode="'append'">outputFile[0]</stdout>  
+                <stderr mode="'stdout'"/>
+                 
+            </process>
+            <return>RC</return>
+        </sequence>
+    </function>
+
+    <function name="clusterPreInstall" scope="local">
+        <function-prolog>
+            This function: untar zcs-cluster; gen template; run zcs-cluster install
+                for non-cluster configs, it's a nop
+                ret codes: - STAFRC.DoesNotExist(48) if bits not found
+        </function-prolog>
+        <function-map-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <call function="'isClusterNode'">machine</call>
+            <if expr="not STAXResult">
+                <return>[STAFRC.Ok, 'skip - %s not clustered' % machine]</return>
+            </if>
+            <!--script>dir = '/var/tmp/zcs/packages/'</script>
+            <stafcmd>
+                <location>machine</location>
+                <service>'fs'</service>
+                <request>'list directory %s name *cluster* ext tgz type f caseinsensitive' % dir</request>
+            </stafcmd>
+            <if expr="RC != STAFRC.Ok">
+                <return>[RC, 'cluster bits not found in %s.' % dir]</return>
+            </if>
+            <script>bits = STAFResult[0]</script>
+            <call function="'untarLocal'">
+                {'machine': machine, 'tarFile': dir + bits}
+            </call>
+            <script>
+                clusterDirectory = STAXResult[1].split(' ')[-1]
+            </script-->
+            <call function="'genPreInstallTemplate'">
+                {'machine': machine}
+            </call>
+            <script>template = STAXResult</script>
+            <process name="'Create template file' + machine">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % template</parms>
+                <stdout>'/tmp/config.txt'</stdout>  
+            </process>
+            <process name="'cluster pre-install - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp/zcs'</workdir>
+                <parms>' -l -c "ulimit -f 100; /bin/cat /tmp/config.txt | /bin/env perl ./install.pl --cluster %s"' % active</parms> 
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/> 
+            </process>
+            <log>'cluster Install RC=%s, STAXResult=%s' % ( RC, STAXResult)</log>
+            <script>
+                if RC != STAFRC.Ok:
+                   clSetupError=1
+            </script>
+            <!-- ################ delete postfix dir to avoid postfix misconfigs SEE BUG ...-->
+            <stafcmd name="'Delete target dir'">
+                <location>machine</location>
+                <service>'FS'</service>
+                <request>'delete entry %s recurse confirm' % '/opt/zimbra/postfix'</request>
+            </stafcmd>
+            <log>'clusterPreInstall(%s, %s) result [%s].' % (machine, outputFile, STAXResult)</log>
+            <return>[0, '-l -c "/bin/cat /tmp/config.txt | /bin/env perl %sinstall.pl"' % clusterDirectory]</return> 
+        </sequence>
+    </function>
+
+    <function name="isClusterNode" scope="local">
+        <function-prolog>
+            This function returns true if machine is in cluster
+              ASSUMES document exists with fqdn hostnames
+        </function-prolog>
+        <function-list-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                found = -1
+                hosts = document.getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                    host = hosts.item(i)
+                    if host.getAttributes().getNamedItem('name').getNodeValue() == machine:
+                       if host.getParentNode().getTagName() == 'cluster':
+                           found = STAFRC.Ok
+                           break
+            </script>
+            <return>(found == STAFRC.Ok)</return>
+        </sequence>
+    </function>
+
+    <function name="isStandbyNode" scope="local">
+        <function-prolog>
+            This function returns true if machine is a standby node
+              ASSUMES document exists with fqdn hostnames
+        </function-prolog>
+        <function-list-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                isStandby = (1==0)
+                hosts = document.getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                    host = hosts.item(i)
+                    attrs = host.getAttributes()
+                    if attrs.getNamedItem('name').getNodeValue() == machine:
+                       if attrs.getNamedItem('type'):
+                           isStandby = (attrs.getNamedItem('type').getNodeValue() == 'standby')
+                           break
+            </script>
+            <return>isStandby</return>
+        </sequence>
+    </function>
+
+    <function name="clusterPostInstall" scope="local">
+        <function-prolog>
+            This function runs cluster postinstall on one active node
+        </function-prolog>
+        <function-map-args>
+        <function-required-arg name="machines">
+            Target machines
+        </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>
+                theMachine = None
+                clusterDirectory = '/opt/zimbra/.uninstall/bin'
+            </script>
+            <iterate var="machine" in="machines">
+                <sequence>
+                    <call function="'isClusterNode'">machine</call>
+                    <if expr="not STAXResult">
+                        <sequence>
+                            <continue/>
+                        </sequence>
+                    </if>
+                    <call function="'isStandbyNode'">machine</call>
+                    <if expr="not STAXResult">
+                        <sequence>
+                            <script>
+                                theMachine = machine
+                            </script>
+                            <break/>
+                        </sequence>
+                    </if>
+                </sequence>
+            </iterate>
+            <if expr="theMachine == None">
+                <return>[STAFRC.Ok, 'no clustered machines in configuration']</return>
+            </if>
+            <!-- configure cluster -->
+            <call function="'genClusterConfigTemplate'">
+                {'mode': 'auto'}
+            </call>
+            <script>template = STAXResult</script>
+            <process name="'Create template file' + machine">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % template</parms>
+                <stdout>'/tmp/config.txt'</stdout>  
+            </process>
+            <process name="'cluster config - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>clusterDirectory</workdir>
+                <parms>' -l -c "ulimit -f 100; /bin/cat /tmp/config.txt | /bin/env perl %s/configure-cluster.pl"' % clusterDirectory</parms> 
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>
+            </process>
+            <log>'cluster Config RC=%s' % RC</log>
+            <if expr="RC != STAFRC.Ok">
+                <return>[RC, 'configure-cluster failed']</return>
+            </if>
+            <!-- stop zimbra, unmount SAN-->
+            <paralleliterate var="machine" in="machines">
+                <sequence>
+                    <call function="'isStandbyNode'">machine</call>
+                    <script>isStandby = STAXResult</script>
+                    <if expr="not isStandby">
+                        <sequence>
+                            <process name="'Shutdown ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/su'</command>
+                                <workdir>'/var/tmp'</workdir>
+                                <parms>'zimbra -c "/opt/zimbra/bin/zmcontrol stop"'</parms>  
+                                <stdout mode="'append'">outputFile[0]</stdout>
+                                <stderr mode="'stdout'"/>
+                            </process>
+                            <process name="'Clear zimbra processes ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/bash'</command>
+                                <workdir>'/var/tmp'</workdir>
+                                <parms>'-l -c "ps -elf | grep zimbra"'</parms>  
+                                <stdout mode="'append'">outputFile[0]</stdout>
+                                <stderr mode="'stdout'"/>
+                            </process>
+                            <process name="'Clear zimbra processes ' + machine">
+                                <location>machine</location>
+                                <command>'/bin/bash'</command>
+                                <workdir>'/var/tmp'</workdir>
+                                <parms>'-l -c "ps -elf | grep zimbra | awk \'^{print \$4}\' | xargs kill -9"'</parms>  
+                                <stdout mode="'append'">outputFile[0]</stdout>
+                                <stderr mode="'stdout'"/>
+                            </process>
+                            <call function="'mountSAN'">[machine, 'unmount']</call>
+                        </sequence>
+                    </if>
+                </sequence>
+            </paralleliterate>
+            <return>[0, ' -l -c "/bin/cat /tmp/config.txt | /bin/env perl %s/configure-cluster.pl"' % clusterDirectory]</return> 
+        </sequence>
+    </function>
+    
+    <function name="getClusterName" scope="local">
+        <function-prolog>
+            This function 
+        </function-prolog>
+        <function-list-args>
+            <function-required-arg name="machine">
+                Machine for which we need to retrieve the cluster name
+            </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                clusters = document.getElementsByTagName("cluster")
+                if (clusters.getLength() != 0) and clusters.item(0).hasAttributes():
+                    cluster = clusters.item(0)
+                    name = cluster.getAttributes().getNamedItem('name').getNodeValue()
+                else:
+                    name = "zimbra-cluster"
+            </script>
+            <return>name</return>
+        </sequence>
+    </function>
+
+    <function name="mountSAN" scope="local">
+        <function-prolog>
+            This function mounts SAN volume(s)
+        </function-prolog>
+        <function-list-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        <function-optional-arg name="operation" default="'mount'">
+            mount/unmount
+        </function-optional-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                activeHost = machine
+                clusters = document.getElementsByTagName("cluster")
+                if (clusters.getLength() == 1) and clusters.item(0).hasAttributes():
+                    cluster = clusters.item(0)
+                    type = cluster.getAttributes().getNamedItem('type')
+                    if type is not None:
+                        type = type.getNodeValue()
+                    else:
+                        type = "RCS"
+                else:
+                    type = None
+                hosts = clusters.item(0).getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                    host = hosts.item(i)
+                    attrs = host.getAttributes()
+                    if attrs.getNamedItem('type') and (attrs.getNamedItem('type').getNodeValue() == 'active'):
+                        activeHost = host.getAttributes().getNamedItem('name').getNodeValue()
+                        volumes = host.getElementsByTagName("volume")
+                        if activeHost == machine:
+                            break
+                mounts = []
+                #set a default anyway
+                if not volumes:
+                    mounts = [['', '/devlabel/mail1-store']]
+                else:
+                    for i in range(volumes.getLength()):
+                        vol = volumes.item(i)
+                        if vol.hasAttribute('label'):
+                           device = 'LABEL=' + vol.getAttribute('label')
+                        else:
+                           device = '/devlabel/' + vol.getAttribute('devlabel')
+                        if vol.getAttribute('name') == 'zimbra':
+                           mounts.insert(0, ['', device])
+                        else:
+                           mounts.append([vol.getAttribute('name'), device])
+                        #toks = [vol.getAttributes().getNamedItem('name').getNodeValue(),
+                        #        vol.getAttributes().getNamedItem('label').getNodeValue()]
+                        #if toks[0] == 'zimbra':
+                        #    mounts.insert(0, ['', toks[1]])
+                        #else:
+                        #    mounts.append(toks)
+                if operation == 'mount':
+                    op = '-m'
+                else:
+                    op = '-u'
+                    mounts.reverse()
+            </script>
+            <if expr="type != 'RCS'">
+                <sequence>
+                    <log>'mountSAN - unsupported cluster type %s.'%type</log>
+                    <return>[STAFRC.InvalidValue, 'unsupported cluster type %s.'%type]</return>
+                </sequence>
+            </if>
+            <call function="'isClusterNode'">machine</call>
+            <if expr="STAXResult">
+                <sequence>
+                    <call function="'getZimbraHostname'">activeHost</call>
+                    <script>cName = STAXResult</script>
+                    <if expr="operation == 'mount'">
+                        <sequence>
+                            <iterate var="vol" in="mounts">
+                                <sequence>
+                                    <process name="'Mkdir - ' + machine">
+                                        <location>machine</location>
+                                        <command>'/bin/bash'</command> 
+                                        <!--workdir>'/opt/cluster/bin'</workdir-->
+                                        <parms>' -l -c "mkdir -p /opt/zimbra-cluster/mountpoints/%s/%s"' % (cName, vol[0])</parms> 
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                    </process>
+                                    <process name="'Mount - ' + machine">
+                                        <location>machine</location>
+                                        <command>'/bin/bash'</command> 
+                                        <!--workdir>'/opt/cluster/bin'</workdir-->
+                                        <parms>' -l -c "mount -v %s /opt/zimbra-cluster/mountpoints/%s/%s"' % (vol[1], cName, vol[0])</parms> 
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                    </process>
+                                    <log message="1" level="'debug'">'mount -v %s /opt/zimbra-cluster/mountpoints/%s/%s"' % (vol[1], cName, vol[0])</log>
+                                </sequence>
+                            </iterate>
+                        </sequence>
+                        <else>
+                            <iterate var="vol" in="mounts">
+                                <sequence>
+                                    <process name="'Mount - ' + machine">
+                                        <location>machine</location>
+                                        <command>'/bin/bash'</command> 
+                                        <!--workdir>'/opt/cluster/bin'</workdir-->
+                                        <parms>' -l -c "umount /opt/zimbra-cluster/mountpoints/%s/%s"' % (cName, vol[0])</parms> 
+                                        <stdout mode="'append'">outputFile[0]</stdout>
+                                        <stderr mode="'stdout'"/>
+                                    </process>
+                                    <log message="1" level="'debug'">'umount /opt/zimbra-cluster/mountpoints/%s/%s"' % (cName, vol[0])</log>
+                                </sequence>
+                            </iterate>
+                        </else>
+                    </if>
+                    <!--script>
+                        if sanVolumes == 1:
+                            cmd = 'iscsi-mount-onevol'
+                        else:
+                            cmd = 'iscsi-mount'
+                    </script>
+                    <process name="'Mount SAN - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/opt/cluster/bin'</workdir>
+                        <parms>' -l -c "/bin/env perl %s %s %s"' % (cmd, op, cName)</parms> 
+                        <stdout mode="'append'">outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                    <log message="1" level="'debug'">'mount /bin/env perl %s %s %s' % (cmd, op, cName)</log-->
+                </sequence>
+            </if>
+        </sequence>
+    </function>
+    
+    <function name="getSANDevices" scope="local">
+        <function-prolog>
+            This function retrieves local device(s) used for SAN
+        </function-prolog>
+        <function-list-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>
+                #activeHost = None #machine
+                clusters = document.getElementsByTagName("cluster")
+                hosts = clusters.item(0).getElementsByTagName("host")
+                for i in range(hosts.getLength()):
+                    host = hosts.item(i)
+#                    if host.getAttributes().getNamedItem('name').getNodeValue() != machine:
+#                        continue
+                    attrs = host.getAttributes()
+                    volumes = host.getElementsByTagName("volume")
+                    if attrs.getNamedItem('type') and (attrs.getNamedItem('type').getNodeValue() == 'active'):
+                        break
+                devices = []
+                #set a default anyway
+                if not volumes:
+                    devices = ['zimbra', 'LABEL=mail1_zimbra']
+                else:
+                    for i in range(volumes.getLength()):
+                        vol = volumes.item(i)
+                        if vol.hasAttribute('label'):
+                           device = 'LABEL=' + vol.getAttribute('label')
+                        else:
+                           device = '/devlabel/' + vol.getAttribute('devlabel')
+                        if vol.getAttribute('name') == 'zimbra':
+                           devices.insert(0, ['zimbra', device])
+                        else:
+                           devices.append([vol.getAttribute('name'), device])
+            </script>
+            <log>'devices=%s.'%devices</log>
+            <return>[STAFRC.Ok, devices]</return>
+        </sequence>
+    </function>
+    
+    <function name="clearSANOld" scope="local">
+        <function-prolog>
+            This function deletes SAN content
+        </function-prolog>
+        <function-list-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <process name="'Get devlabels - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-l -c "ls --format=single-column /devlabel/*"'</parms> 
+                <stdout>'/tmp/devlabels.txt'</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+	        </process>
+            <if expr="RC != STAFRC.Ok">
+                <return>[RC, 'cannot clean SAN: %s.' % STAXResult]</return>
+            </if>
+            <script>
+                volumes = STAXResult[0][1].splitlines()
+                mpt = 'tmp-mountpoint'
+            </script>
+            <!--for l in `ls /devlabel/mail*`; do e2fsck -y $l; done
+                fsck -fy LABEL=mail3-store
+                find $MP -name ".*" -exec rm -rf {} \;-->
+            <process name="'Create mountpoint - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-l -c "mkdir -p %s"' % mpt</parms> 
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>    
+	        </process>
+            <iterate var="volume" in="volumes">
+                <sequence>
+                    <process name="'Delete - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'-l -c "fsck -fy %s 2&gt;&amp;1"' % (volume)</parms> 
+                        <stdout mode="'append'">outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                    <process name="'Delete - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/var/tmp'</workdir>
+                        <!--parms>'-l -c "mount %s %s 2&gt;&amp;1; rm -rf %s/* 2&gt;&amp;1; rm -rf %s/.* 2&gt;&amp;1; umount %s 2&gt;&amp;1"' % (volume, mpt, mpt, mpt, volume)</parms--> 
+                        <parms>'-l -c "mount %s %s 2&gt;&amp;1; rm -rf %s/* 2&gt;&amp;1; find %s -name \\\".*\\\" -exec rm -rf ^{} \\\\; 2&gt;&amp;1; umount %s 2&gt;&amp;1"' % (volume, mpt, mpt, mpt, volume)</parms>
+                        <stdout mode="'append'">outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                </sequence>
+            </iterate>
+            <process name="'Delete mountpoint - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-l -c "rmdir %s"' % mpt</parms> 
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>
+            </process>
+            <log>'mpt=%s, volumes=%s.'% (mpt, volumes)</log> 
+            <return>[0, 'clean SAN completed']</return>
+        </sequence>
+    </function>
+    
+    <function name="clearSAN" scope="local">
+        <function-prolog>
+            This function deletes SAN content
+        </function-prolog>
+        <function-list-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <call function="'getSANDevices'">machine</call>
+            <if expr="STAXResult[0] != STAFRC.Ok">
+                <return>STAXResult</return>
+            </if>
+            <script>
+                devices = STAXResult[1]
+                devices.reverse()
+                mpt = 'tmp-mountpoint'
+            </script>
+            <process name="'Create mountpoint - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-l -c "mkdir -p %s"' % mpt</parms> 
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>    
+            </process>
+            <iterate var="dev" in="devices">
+                <sequence>
+                    <process name="'Delete - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'-l -c "fsck -fy %s 2&gt;&amp;1"' % (dev[1])</parms> 
+                        <stdout mode="'append'">outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                    <process name="'Delete - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>'-l -c "mount %s %s 2&gt;&amp;1; rm -rf %s/* 2&gt;&amp;1; find %s -name \\\".*\\\" -exec rm -rf ^{} \\\\; 2&gt;&amp;1; umount %s 2&gt;&amp;1"' % (dev[1], mpt, mpt, mpt, mpt)</parms>
+                        <stdout mode="'append'">outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                    <log>'CLEANUP -l -c "mount %s %s 2&gt;&amp;1; rm -rf %s/* 2&gt;&amp;1; find %s -name \\\".*\\\" -exec rm -rf ^{} \\\\; 2&gt;&amp;1; umount %s 2&gt;&amp;1"' % (dev[1], mpt, mpt, mpt, mpt)</log>
+                </sequence>
+            </iterate>
+            <process name="'Delete mountpoint - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command> 
+                <workdir>'/var/tmp'</workdir>
+                <parms>'-l -c "rmdir %s"' % mpt</parms> 
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>
+            </process>
+            <log>'mpt=%s, devices=%s.'% (mpt, devices)</log> 
+            <return>[0, 'clean SAN completed']</return>
+        </sequence>
+    </function>
+
+    <function name="uninstallClusterSoftware" scope="local">
+        <function-prolog>
+            This function ...
+        </function-prolog>
+        <function-list-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        </function-list-args>
+
+        <sequence>
+            <script>clusterPkgs = ['zimbra-cluster']</script>
+            <iterate var="pkg" in="clusterPkgs">
+                <sequence>
+                    <process name="'Remove cluster packages - ' + machine">
+                        <location>machine</location>
+                        <command>'/bin/bash'</command> 
+                        <workdir>'/var/tmp'</workdir>
+                        <parms>' -l -c "rpm -e --nodeps --noscripts %s"' % pkg</parms> 
+                        <stdout mode="'append'">outputFile[0]</stdout>
+                        <stderr mode="'stdout'"/>
+                        
+                    </process>
+                    <log>'rpm -e --nodeps --noscripts %s' % pkg</log> 
+                </sequence>
+            </iterate>
+            <return>[STAFRC.Ok, 'uninstall %s completed' % clusterPkgs]</return>
+        </sequence>
+    </function>
+
+    <function name="genPreInstallTemplateOld" scope="local">
+        <function-prolog>
+            This function is used to create install templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <!--call function="'getZimbraHostname'">machine</call-->
+            <script>
+                #zimbraHost = STAXResult
+                templ = "\"1000\n1001\n1002\n1000\n1001\nqaclus01.lab.zimbra.com\ndone\n"
+                #templ = "\"1000\n1001\n1002\n1000\n1001\n"
+                #templ += zimbraHost + "\n"
+                #templ += "done\n\n\""
+            </script>
+            <call function="'isStandbyNode'">machine</call>
+            <script>
+                if not STAXResult:
+                  templ += "qaclus01.lab.zimbra.com\n"
+                templ += "\""
+            </script>
+            <return>templ</return>
+        </sequence>
+    </function>
+
+    <function name="genPrefixTemplate" scope="local">
+        <function-prolog>
+            This function is used to create prefix template from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <!--call function="'getZimbraHostname'">machine</call-->
+            <call function="'isClusterNode'">machine</call>
+            <script>isInCluster = STAXResult</script>
+            <call function="'isStandbyNode'">machine</call>
+            <script>isStandby = STAXResult</script>
+            <call function="'getZimbraHostOption'">'beta-support', machine</call>
+            <script>betaSupport = STAXResult</script>
+            <call function="'getZimbraHostOption'">'platform-override', machine</call>
+            <script>
+                platformOverride = None
+                if STAXResult == 'yes':
+                   platformOverride = 'yes'
+            </script>
+            <!--script> 
+    from com.ibm.staf import STAFHandle 
+ 
+    # Create a STAF handle 
+    myHandle = STAFHandle("MySTAXJobHandle") 
+  </script-->
+            <script>
+                installTemplate  = "#!/bin/env ruby -Ku\n#\n"
+                installTemplate += "require 'pty'\n"
+                installTemplate += "require 'expect'\n\n"
+                installTemplate += "STDOUT.sync     = true\n"
+                installTemplate += "STDERR.sync     = true\n"
+                installTemplate += "$expect_verbose = true\n"
+                installTemplate += "versions        = []\n"
+                installTemplate += "exitCode        = 0\n"
+                installTemplate += "STDERR.sync     = true\n"
+                installTemplate += "Encoding.default_external = 'ISO-8859-1' if RUBY_VERSION !~ /1\\\.8\\\.\\\d+/\n"
+                installTemplate += "\n"
+                installTemplate += "PTY.spawn(\\\"./install.sh -s -x"
+                if isInCluster:
+                  installTemplate += " --cluster"
+                  if isStandby:
+                    installTemplate += " standby"
+                  else:
+                    installTemplate += " active"
+                if (betaSupport is not None) and (betaSupport.lower() != 'missing'):
+                  installTemplate += " --beta-support"
+                if platformOverride is not None:
+                  #installTemplate += " --platform-override"
+                  installTemplate += ""                  
+                installTemplate += "\\\") do |r_f,w_f,pid|\n"
+                installTemplate += "  w_f.sync = true\n"
+            </script>
+            <return>installTemplate</return>
+        </sequence>
+    </function>
+
+    <function name="genSuffixTemplate" scope="local">
+        <function-prolog>
+            This function is used to create pre install templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+            <function-required-arg name="prompt">
+                last printed message
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <!--call function="'getZimbraHostname'">machine</call-->
+            <call function="'isClusterNode'">machine</call>
+            <script>isInCluster = STAXResult</script>
+            <call function="'isStandbyNode'">machine</call>
+            <script>isStandby = STAXResult</script>
+            <!--script> 
+    from com.ibm.staf import STAFHandle 
+ 
+    # Create a STAF handle 
+    myHandle = STAFHandle("MySTAXJobHandle") 
+  </script-->
+            <script>
+                  installTemplate = "   begin\n"
+                  installTemplate += "    r_f.expect(%r/^\\\\s*" + prompt + "/) do |output|\n"
+                  installTemplate += "      if output == nil\n"
+                  installTemplate += "        exit(1)\n"
+                  installTemplate += "      else\n"
+                  installTemplate += "        exitCode = 0\n"
+                  installTemplate += "        w_f.puts \\\"\\\\n\\\"\n"
+                  installTemplate += "      end\n"
+                  installTemplate += "    end\n"
+                  installTemplate += "  rescue\n"
+                  installTemplate += "    exit(0)\n"
+                  installTemplate += "  end\n"
+                  installTemplate += "end\n"
+                  installTemplate += "exit(exitCode)\n"
+            </script>
+            <log>'suffix=%s.'%installTemplate</log>
+            <return>installTemplate</return>
+        </sequence>
+    </function>
+    
+    <function name="genPreInstallTemplate" scope="local">
+        <function-prolog>
+            This function is used to create pre install templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <call function="'getZimbraHostname'">machine</call>
+            <script>theClusterService = STAXResult</script>
+            <call function="'isClusterNode'">machine</call>
+            <script>isInCluster = STAXResult</script>
+            <call function="'isStandbyNode'">machine</call>
+            <script>isStandby = STAXResult</script>
+            <!--script> 
+    from com.ibm.staf import STAFHandle 
+ 
+    # Create a STAF handle 
+    myHandle = STAFHandle("MySTAXJobHandle") 
+  </script-->
+            <script>
+                from org.w3c.dom import Document
+                from org.w3c.dom import Element
+                from org.w3c.dom import Node
+                from org.w3c.dom import NodeList
+                from org.w3c.dom import NamedNodeMap
+
+                # parse the document
+                cluServices = []
+                hosts = document.getElementsByTagName("zimbrahost")
+                for i in range(hosts.getLength()):
+                    cluServices.append(hosts.item(i).getAttributes().getNamedItem('name').getNodeValue())
+            </script>
+            <call function="'genPrefixTemplate'">{'machine': machine}</call>
+            <script>
+                installTemplate = STAXResult
+                installTemplate += "  r_f.expect(%r/^Enter zimbra group ID:\\\\s+(\\\\[\\\\d+\\\\])?/) ^{ w_f.puts \\\"1000\\\\n\\\" }\n"
+                installTemplate += "  r_f.expect(%r/^Enter postfix group ID:\\\\s+\\\\[\\\\d+\\\\]/) ^{ w_f.puts \\\"1001\\\\n\\\" }\n"
+                installTemplate += "  r_f.expect(%r/^Enter postdrop group ID:\\\\s+\\\\[\\\\d+\\\\]/) ^{ w_f.puts \\\"1002\\\\n\\\" }\n"
+                installTemplate += "  r_f.expect(%r/^Enter zimbra user ID:\\\\s+(\\\\[\\\\d+\\\\])?/) ^{ w_f.puts \\\"1000\\\\n\\\" }\n"
+                installTemplate += "  r_f.expect(%r/^Enter postfix user ID:\\\\s+\\\\[\\\\d+\\\\]/) ^{ w_f.puts \\\"1001\\\\n\\\" }\n"
+                installTemplate += "  ['" + "', '".join(cluServices) + "', 'done'].each do |name|\n"
+                installTemplate += "    r_f.expect(%r/^Enter cluster service name \\\\(\\\"done\\\"\\\\) to finish:\\\\s+/) ^{ w_f.puts name}\n"
+                installTemplate += "  end\n"
+                #installTemplate += "  ['" + "', '".join(cluServices) + "'].each do |name|\n"
+                #installTemplate += "    r_f.expect(%r/^Enter the active cluster service name for this node: \\\\[\\\\S+\\\\]\\\\s+/) ^{ w_f.puts name}\n"
+                #installTemplate += "  end\n"
+            </script>
+            <if expr="isInCluster and not isStandby">
+                <sequence>
+                    <script>
+                        #installTemplate += "  ['" + "', '".join(cluServices) + "'].each do |name|\n"
+                        #installTemplate += "    r_f.expect(%r/^Enter the active cluster service name for this node: \\\\[\\\\S+\\\\]\\\\s+/) ^{ w_f.puts name}\n"
+                        #installTemplate += "  end\n"
+                        installTemplate += "    r_f.expect(%r/^Enter the active cluster service name for this node: \\\\[\\\\S+\\\\]\\\\s+/) ^{ w_f.puts \\\"" + theClusterService + "\\\" }\n"
+                        #installTemplate += "    r_f.expect(%r/^Enter cluster service name: \\\\[\\\\S+\\\\]\\\\s+/) ^{ w_f.puts \\\"" + theClusterService + "\\\"}\n"
+                    </script>
+                    <call function="'genSuffixTemplate'">
+                        {'machine' : machine,
+                         'prompt'  : 'install.sh --cluster active'}
+                    </call>
+                    <script>
+                        installTemplate += STAXResult
+                    </script>
+                </sequence>
+            </if>
+            <process name="'Create Install File - ' + machine">
+                <location>machine</location>
+                <command>'/bin/echo'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>'%s' % installTemplate</parms>
+                <stdout>'/tmp/zmInst.rb'</stdout>  
+            </process>
+            <return>installTemplate</return>
+        </sequence>
+    </function>
+
+    <function name="genPostInstallTemplate" scope="local">
+        <function-prolog>
+            This function is used to create postinstall templates from an xml file
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="machine">
+                Which host to generate install template for
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>templ = "\"1\nY\n\n\""</script>
+            <return>templ</return>
+        </sequence>
+    </function>
+
+    <function name="genClusterConfigTemplate" scope="local">
+        <function-prolog>
+            This function is used to create /etc/cluster/cluster.conf
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="mode">
+                auto=config file copied to all nodes
+                manual=config file saved locally, must be manually copied to all nodes
+            </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <script>
+                cluster = None
+                templ = '"\n'
+                clusters = document.getElementsByTagName("cluster")
+                if (clusters.getLength() != 0) and clusters.item(0).hasAttributes():
+                    cluster = clusters.item(0)
+                    templ += cluster.getAttributes().getNamedItem('name').getNodeValue() + '\n'
+                else:
+                    templ += 'zimbra-cluster\n'
+                    raise 'fatal'
+                #Choose fence device vendor:
+                fence = cluster.getElementsByTagName('fence').item(0)
+                if fence.getAttributes().getNamedItem('type').getNodeValue() != 'APC':
+                    raise 'fatal'
+                #templ += "1\nqa-apc.lab.zimbra.com\napc\napc\n"
+                #templ += "qa12.lab.zimbra.com\n2\nqa13.lab.zimbra.com\n3\ndone\n1\n1\n1\n/devlabel/mail1-store\n2\n\n\nY\n\n\n\""
+                templ += '1\n' + fence.getAttributes().getNamedItem('name').getNodeValue() + '\n'
+                options = fence.getElementsByTagName('option')
+                #fill in login details
+                user = None
+                password = None
+                for i in range(options.getLength()):
+                   option = options.item(i)
+                   if option.getAttributes().getNamedItem('name').getNodeValue() == 'user':
+                      user = option.getFirstChild().getNodeValue().strip()
+                   elif option.getAttributes().getNamedItem('name').getNodeValue() == 'password':
+                      password = option.getFirstChild().getNodeValue().strip()
+                templ += user + '\n' + password + '\n'
+                #fill in plug config
+                for i in range(options.getLength()):
+                   option = options.item(i)
+                   if option.getAttributes().getNamedItem('name').getNodeValue() == 'plug':
+                      templ += option.getElementsByTagName('machine').item(0).getFirstChild().getNodeValue().strip() + '\n'
+                      templ += option.getElementsByTagName('id').item(0).getFirstChild().getNodeValue().strip() + '\n'
+                templ += 'done\n'
+                #Choose a service:
+                # to fully implement this I need to convert to expect
+                # assume for now 1 and 1 as answers
+                actives = None
+                hosts = cluster.getElementsByTagName('host')
+                for i in range(hosts.getLength()):
+                   host = hosts.item(i)
+                   if host.getAttributes().getNamedItem('type').getNodeValue() == 'active':
+                      templ += str(i + 1) + '\n' + str(i + 1) + '\n'
+                      #Choose volume setup type:
+                      labels = {}
+                      volumes = host.getElementsByTagName('volume')
+                      for j in range(volumes.getLength()):
+                         vol = volumes.item(j)
+                         if vol.hasAttribute('label'):
+                            device = 'LABEL=' + vol.getAttribute('label')
+                         else:
+                            device = '/devlabel/' + vol.getAttribute('devlabel')
+                         labels[vol.getAttribute('name')] = device
+                         #labels[vol.getAttributes().getNamedItem('name').getNodeValue()] = vol.getAttributes().getNamedItem('label').getNodeValue()
+                      if len(labels) == 1:
+                         templ += '1\n'
+                         #Volume clus-vol:
+                         templ += labels['zimbra'] + '\n'
+                      else:
+                         templ += '2\n'
+                         #Does qaclus01.lab.zimbra.com include mailbox server? (Y/N) Y
+                         templ += 'Y\n'
+                         #Does qaclus01.lab.zimbra.com include logger? (Y/N) Y
+                         templ += 'Y\n'
+                         #Does qaclus01.lab.zimbra.com include LDAP? (Y/N) Y
+                         templ += 'Y\n'
+                         #Does qaclus01.lab.zimbra.com include MTA? (Y/N) Y
+                         templ += 'Y\n'
+                         #Volume clus-vol:
+                         templ += labels['zimbra'] + '\n'
+                         #Volume clus-conf:
+                         templ += 'Y\n' + labels['conf'] + '\n'
+                         #Volume clus-log:
+                         templ += 'Y\n' + labels['log'] + '\n'
+                         #Volume clus-redolog:
+                         templ += 'Y\n' + labels['redolog'] + '\n'
+                         #Volume clus-db-data:
+                         templ += 'Y\n' + labels['db/data'] + '\n'
+                         #Volume clus-store:
+                         templ += 'Y\n' + labels['store'] + '\n'
+                         #Volume clus-index:
+                         templ += 'Y\n' + labels['index'] + '\n'
+                         #Volume clus-backup:
+                         templ += 'Y\n' + labels['backup'] + '\n'
+                         #Volume clus-logger-db-data:
+                         templ += 'Y\n' + labels['logger/db/data'] + '\n'
+                         #Volume clus-ldap:
+                         k = 'data/ldap'
+                         if labels.has_key('openldap-data'):
+                            k = 'openldap-data'
+                         templ += 'Y\n' + labels[k] + '\n'
+                         #Volume clus-mta:
+                         templ += 'Y\n' + labels['data/postfix/spool'] + '\n'
+                #Choose a service:
+                templ += '2\n'
+                #Press Enter to view summary of the configuration.
+                templ += '\n'
+                #Enter filename
+                templ += '\n'
+                #Copy to all cluster nodes using scp? (Y/N) Y
+                if mode == 'auto':
+                   templ += 'Y\n'
+                else:
+                   templ += 'N\n'
+                #Press Enter to continue.
+                templ += '\n'
+                #Press Enter to continue.
+                templ += '\n"'
+            </script>
+            <return>templ</return>
+        </sequence>
+    </function>
+
+    <function name="disableCluster" scope="local">
+        <function-prolog>
+            This function is used to set proper access permission for
+            base build to succeed
+        </function-prolog>
+        <function-map-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        <function-required-arg name="cluster">
+            Cluster type RCS - redhat cluster suite
+                         VCS - veritas cluster suite(not supported yet)
+        </function-required-arg>
+        <function-optional-arg name="outputFile" default="'/tmp/install.out'">
+            Stdout file
+        </function-optional-arg>
+        </function-map-args>
+
+        <sequence>
+            <if expr="cluster != 'RCS'">
+                <sequence>
+                    <log>'Cluster suite not supported - %s'%cluster</log>
+                    <return>0</return>
+                </sequence>
+            </if>
+            <script>
+                serviceList = ['ccsd', 'cman', 'fenced', 'rgmanager']
+                error = 0
+            </script>
+            <iterate var="service" in="serviceList">
+                <sequence>
+                    <process name="'chkconfig - ' + machine">
+                        <location>machine</location>
+                        <command>'/sbin/chkconfig'</command>
+                        <parms>'--list %s'%service</parms>
+                        <!--stdout mode="'append'">outputFile</stdout>
+                        <stderr mode="'stdout'"/-->
+                    </process>
+                    <if expr="RC == STAFRC.Ok">
+                        <sequence>
+                            <process name="'Disable ' + service + ' - ' + machine">
+                                <location>machine</location>
+                                <command>'/sbin/chkconfig'</command>
+                                <parms>'--level 345 %s off'%service</parms>
+                                <stdout mode="'append'">outputFile</stdout>
+                                <stderr mode="'stdout'"/>
+                            </process>
+                            <if expr="RC != STAFRC.Ok">
+                                <script>error += 1</script>
+                            </if>
+                        </sequence>
+                    </if>
+                </sequence>
+            </iterate>
+            <return>error</return>            
+        </sequence>
+    </function>
+    
+    <function name="clustat" scope="local">
+        <function-prolog>
+            This function is used to get the cluster status
+        </function-prolog>
+        <function-map-args>
+        <function-required-arg name="machine">
+            Target machine
+        </function-required-arg>
+        <function-required-arg name="cluster">
+            Cluster type RCS - redhat cluster suite
+                         VCS - veritas cluster suite(not supported yet)
+        </function-required-arg>
+        <function-optional-arg name="outputFile" default="'cstat.xml'">
+            Stdout file
+        </function-optional-arg>
+        </function-map-args>
+
+        <sequence>
+            <if expr="cluster != 'RCS'">
+                <sequence>
+                    <log>'Unsupported cluster type - %s'%cluster</log>
+                    <return>[STAFRC.InvalidValue, 'Unsupported cluster type - %s'%cluster]</return>
+                </sequence>
+            </if>
+            <process name="'clustat - ' + machine">
+                <location>machine</location>
+                <command>'/usr/sbin/clustat'</command>
+                <parms>'-x'</parms>
+                <stdout>'/tmp/%s'%outputFile</stdout>
+                <stderr mode="'stdout'"/>
+                <returnstdout/>
+            </process>
+            <if expr="RC != STAFRC.Ok">
+                <if expr="STAXResult != None">
+                    <return>[RC, STAXResult[0][1]]</return>
+                    <else> 
+                        <return>[RC, STAFResult]</return>
+                    </else>
+                </if>
+            </if>
+            <script>
+                import re
+                import os
+                config = '/tmp/' + machine + "." + outputFile
+                f = open(config, 'w')
+                f.writelines(STAXResult[0][1])
+                f.close()
+            </script>
+            <call function="'parseXML'">'/tmp/%s.%s'%(machine, outputFile)</call>
+            <script>
+                res = {}
+                cdoc = STAXResult
+                nodes = cdoc.getElementsByTagName('nodes').item(0).getElementsByTagName('node')
+                for i in range(nodes.getLength()):
+                    res[nodes.item(i).getAttributes().getNamedItem('name').getNodeValue()] = None
+                groups = cdoc.getElementsByTagName('groups').item(0).getElementsByTagName('group')
+                for i in range(groups.getLength()):
+                    attrs = groups.item(i).getAttributes()
+                    service = attrs.getNamedItem('name').getNodeValue()
+                    if attrs.getNamedItem('owner').getNodeValue() != 'none':
+                      res[attrs.getNamedItem('owner').getNodeValue()] = service
+                    elif attrs.getNamedItem('last_owner').getNodeValue() != 'none':
+                      res[attrs.getNamedItem('last_owner').getNodeValue()] = service
+                    else:
+                      for k in res.keys():
+                        if res[k] is None:
+                          res[k] = service
+                          break
+            </script>
+            <log level="'debug'">'clustat %s.'%res</log>
+            <return>[STAFRC.Ok, res]</return>
+        </sequence>
+    </function>
+
+    <function name="enableDisableService" scope="local">
+        <function-prolog>
+            This function.....
+        </function-prolog>
+        <function-map-args>
+        <function-required-arg name="machine">
+            Target machines
+        </function-required-arg>
+        <function-required-arg name="cluster">
+            Cluster type RCS - redhat cluster suite
+                         VCS - veritas cluster suite(not supported yet)
+        </function-required-arg>
+        <function-required-arg name="action">
+            Action = enable/disable
+        </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <call function="'clustat'">{'machine':machine, 'cluster': cluster}</call>
+            <if expr="STAXResult[0] != STAFRC.Ok">
+                <return>STAXResult</return>
+            </if>
+            <script>
+                conf = STAXResult[1]
+                if action == 'enable':
+                   option = '-e'
+                   member = '-m ' + machine
+                else:
+                   option = '-d'
+                   member = ''
+            </script>
+            <if expr="conf[machine] is None">
+                <return>[STAFRC.Ok, 'Skip %s on standby node'%action]</return>
+            </if>
+            <process name="'Enable/Disable cluster service - ' + machine">
+                <location>machine</location>
+                <command>'/bin/bash'</command>
+                <parms>' -l -c "clusvcadm %s %s %s"' % (option, conf[machine], member)</parms>
+                <stdout mode="'append'">outputFile[0]</stdout>
+                <stderr mode="'stdout'"/>
+            </process>
+            <return>[RC, 'Failed to %s cluster, see logs for details'%action]</return>
+        </sequence>
+    </function>
+            
+    <function name="rhcs" scope="local">
+        <function-prolog>
+            This function.....
+        </function-prolog>
+        <function-map-args>
+        <!--function-required-arg name="machine">
+            Target machines
+        </function-required-arg-->
+        <function-required-arg name="action">
+            Action = start/stop
+        </function-required-arg>
+        </function-map-args>
+
+        <sequence>
+            <!--call function="'parseXML'">'/etc/cluster/cluster.conf'</call>
+            <script>
+                conf = STAXResult
+                machines = []
+                nodes = conf.getElementsByTagName('clusternode')
+                for i in range(nodes.getLength()):
+                   machines.append(nodes.item(i).getAttributes().getNamedItem('name').getNodeValue())
+                services = []
+                nodes = conf.getElementsByTagName('service')
+                for i in range(nodes.getLength()):
+                   cluServices.append(nodes.item(i).getAttributes().getNamedItem('name').getNodeValue())
+                rhServices = ['ccsd', 'cman', 'fenced', 'rgmanager']
+                if action == 'stop':
+                   rhServices.reverse()
+            </script-->
+            <script>
+                rhServices = ['ccsd', 'cman', 'fenced', 'rgmanager']
+                if action == 'stop':
+                   rhServices.reverse()
+                cluster ={}
+#                nodes = document.getElementsByTagName('cluster').item(0).getElementsByTagName('host')
+                clusters = document.getElementsByTagName('cluster')
+                if clusters.getLength() == 1:
+                    nodes = clusters.item(0).getElementsByTagName('host')
+                    for i in range(nodes.getLength()):
+                       node = nodes.item(i)
+                       machine = node.getAttributes().getNamedItem('name').getNodeValue()
+                       children = node.getElementsByTagName('zimbrahost')
+                       if children.getLength() != 0:
+                           cluster[machine] = children.item(0).getAttributes().getNamedItem('name').getNodeValue()
+                       else:
+                           cluster[machine] = None
+            </script>
+            <log>'cluster=%s.'% (cluster)</log>
+            <if expr="len(cluster.keys()) == 0">
+                <return>[0, 'skip, no cluster']</return>
+            </if>
+            <if expr="action == 'stop'">
+                <iterate var="service" in="cluster.values()">
+                    <if expr="service != None">
+                        <sequence>
+                            <process name="'Disable cluster nodes - ' + machine">
+                                <location>cluster.keys()[0]</location>
+                                <command>'/bin/bash'</command>
+                                <parms>' -l -c "clusvcadm -d %s"' % service</parms>
+                                <stdout mode="'append'">outputFile[0]</stdout>
+                                <stderr mode="'stdout'"/>
+                            </process>
+                        </sequence>
+                    </if>
+                </iterate>
+            </if>
+            <paralleliterate var="machine" in="cluster.keys()">
+                <sequence>
+                    <iterate var="service" in="rhServices[0:-1]">
+                        <sequence>
+                            <process name="'Service %s %s - %s' % (service, action, machine)">
+                                <location>machine</location>
+                                <command>'/bin/bash'</command> 
+                                <workdir>'/tmp'</workdir>
+                                <parms>' -l -c "service %s %s 2&gt;&amp;1 | tee -a %s"' % (service, action, outputFile[0])</parms> 
+                                <stdout mode="'append'">'/tmp/service.out'</stdout>
+                                <stderr mode="'stdout'"/>
+                                <returnstdout/>
+                            </process>
+                            <if expr="STAXResult[0][0] != STAFRC.Ok">
+                                <sequence>
+                                    <return>[STAXResult[0][0], '%s %s failed: %s' % (action, service, STAXResult[0][1])]</return>
+                                </sequence>
+                            </if>
+                        </sequence>
+                    </iterate>
+                </sequence>
+            </paralleliterate>
+            <if expr="action == 'stop'">
+                <paralleliterate var="machine" in="cluster.keys()">
+                    <sequence>
+                        <process name="'Service %s %s - %s' % (rhServices[-1], action, machine)">
+                            <location>machine</location>
+                            <command>'/bin/bash'</command> 
+                            <workdir>'/tmp'</workdir>
+                            <parms>' -l -c "service %s %s 2&gt;&amp;1 | tee -a %s"' % (rhServices[-1], action, outputFile[0])</parms> 
+                            <stdout mode="'append'">'/tmp/service.out'</stdout>
+                            <stderr mode="'stdout'"/>
+                            <returnstdout/>
+                        </process>
+                        <if expr="STAXResult[0][0] != STAFRC.Ok">
+                            <sequence>
+                                <return>[STAXresult[0][0], '%s %s failed: %s' % (action, rhServices[-1], STAXResult[0][1])]</return>
+                            </sequence>
+                        </if>
+                    </sequence>
+                </paralleliterate>
+                <else>
+                    <sequence>
+                        <!--start rgmanager sequentially -->
+                        <!-- clustat-->
+                        <script>
+                            actives = []
+                            standbys = []
+                            for key in cluster.keys():
+                                if cluster[key] is not None:
+                                    actives.append(key)
+                                else:
+                                    standbys.append(key)
+                        </script>
+                        <iterate var="machine" in="actives">
+                            <sequence>
+                                <process name="'Service %s %s - %s' % (rhServices[-1], 'start', machine)">
+                                    <location>machine</location>
+                                    <command>'/bin/bash'</command> 
+                                    <workdir>'/tmp'</workdir>
+                                    <parms>' -l -c "service %s %s 2&gt;&amp;1 | tee -a %s"' % (rhServices[-1], 'start', outputFile[0])</parms> 
+                                    <stdout mode="'append'">'/tmp/service.out'</stdout>
+                                    <stderr mode="'stdout'"/>
+                                    <returnstdout/>
+                                </process>
+                                <if expr="STAXResult[0][0] != STAFRC.Ok">
+                                    <sequence>
+                                        <return>[STAXresult[0][0], '%s %s failed: %s' % (action, rhServices[-1], STAXResult[0][1])]</return>
+                                    </sequence>
+                                </if>
+                                <!-- loop till clustat -m machine == started/failed-->
+                                <!-- or clustat -s service == started/failed-->
+                                <stafcmd name="'Delay'">
+                                    <location>'local'</location>
+                                    <service>'delay'</service>
+                                    <request>'delay 20000'</request>
+                                </stafcmd>
+                                <process name="'Service %s %s - %s' % (rhServices[-1], 'start', machine)">
+                                    <location>machine</location>
+                                    <command>'/bin/bash'</command> 
+                                    <workdir>'/tmp'</workdir>
+                                    <parms>' -l -c "service %s %s 2&gt;&amp;1 | tee -a %s"' % (rhServices[-1], 'start', outputFile[0])</parms> 
+                                    <stdout mode="'append'">'/tmp/service.out'</stdout>
+                                    <stderr mode="'stdout'"/>
+                                    <returnstdout/>
+                                </process>
+                                <script>
+                                    timerDuration = '20m'
+                                    result = failed
+                                </script>
+                                <timer duration="timerDuration">
+                                    <loop>
+                                        <sequence>
+                                            <process name="'clustat -s %s' % (cluster[machine])">
+                                                <location>machine</location>
+                                                <command>'/bin/bash'</command> 
+                                                <workdir>'/tmp'</workdir>
+                                                <parms>' -l -c "clustat -s %s' % (cluster[machine])</parms> 
+                                                <stdout>'/tmp/clustat.out'</stdout>
+                                                <stderr mode="'stdout'"/>
+                                                <returnstdout/>
+                                            </process>
+                                            <if expr="STAXResult[0][1].find('started') != -1">
+                                                <sequence>
+                                                    <script>result = passed</script>
+                                                    <break/>
+                                                </sequence>
+                                                <elseif expr="STAXResult[0][1].find('failed') != -1">
+                                                    <break/>
+                                                </elseif>
+                                                <elseif expr="STAXResult[0][1].find('disabled') != -1">
+                                                    <break/>
+                                                </elseif>
+                                            </if>
+                                            <script>result = failed</script>
+                                            <stafcmd name="'Delay'">
+                                                <location>'local'</location>
+                                                <service>'delay'</service>
+                                                <request>'delay 20000'</request>
+                                            </stafcmd>
+                                         </sequence>
+                                    </loop>
+                                </timer>
+                                <if expr="RC != 0">
+                                  <sequence>
+                                        <return>[RC, '%s %s failed: %s' % (action, rhServices[-1], STAXResult[0][1])]</return>
+                                    </sequence> 
+                                </if>
+                            </sequence>
+                        </iterate>
+                        <iterate var="machine" in="standbys">
+                            <sequence>
+                                <process name="'Service %s %s - %s' % (rhServices[-1], 'start', machine)">
+                                    <location>machine</location>
+                                    <command>'/bin/bash'</command> 
+                                    <workdir>'/tmp'</workdir>
+                                    <parms>' -l -c "service %s %s 2&gt;&amp;1 | tee -a %s"' % (rhServices[-1], 'start', outputFile[0])</parms> 
+                                    <stdout>'/tmp/service.out'</stdout>
+                                    <stderr mode="'stdout'"/>
+                                    <returnstdout/>
+                                </process>
+                                <if expr="STAXResult[0][0] != STAFRC.Ok">
+                                    <sequence>
+                                        <return>[STAXresult[0][0], '%s %s failed: %s' % (action, rhServices[-1], STAXResult[0][1])]</return>
+                                    </sequence>
+                                </if>
+                            </sequence>
+                        </iterate>
+
+                    </sequence>
+                </else>
+            </if>
+            <return>[0, 'rhcs %s completed' % action]</return>
+        </sequence>
+    </function>
+
+    <function name="cluster">
+        <function-prolog>
+            This function is used to manage the cluster
+        </function-prolog>
+        <function-map-args>
+            <function-required-arg name="action">
+                Available actions are start|stop|status
+            </function-required-arg>
+            <function-optional-arg name="machine" default="'qa12'">
+                Name of the target machine
+            </function-optional-arg>
+        </function-map-args>
+        <sequence>
+            <timer duration="stopTimeout">
+                <sequence>
+                    <process name="'rhcs'">
+                        <location>machine</location>
+                        <command mode="'shell'">'/bin/bash'</command> 
+                        <workdir>'/opt/cluster/bin'</workdir>
+                        <parms>' -c "./rhcs %s"' % action </parms> 
+                        <stdout>'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                        <returnstdout/>
+                    </process>
+                    <log>'cluster %s on %s, RC=%s, STAXResult=%s' % (action, machine, RC, STAXResult)</log>
+                    <return>passed</return>
+                </sequence>
+            </timer>
+            <log>'cluster %s on %s, RC=%s, STAXResult=%s' % (action, machine, RC, STAXResult)</log>
+            <return>failed</return>
+        </sequence>
+    </function>
+
+</stax>
+
+

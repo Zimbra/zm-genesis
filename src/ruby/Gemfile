@@ -1,0 +1,7 @@
+source "http://rubygems.org"
+
+gem "soap4r-ruby1.9"
+gem "log4r"
+gem "net-ldap"
+gem "json"
+gem "httpclient"

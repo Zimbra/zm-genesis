@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <host name="zqa-127.eng.vmware.com">
+            <package name="zimbra-ldap">
+                <!--option name="LDAPPASS">
+                    zimbra
+                </option>
+                <option name="LDAPADMINPASS">
+                    test123
+                </option>
+                <option name="LDAPPOSTPASS">
+                    test123
+                </option>
+                <option name="LDAPAMAVISPASS">
+                    test123
+                </option>
+                <option name="LDAPREPLPASS">
+                    test123
+                </option>
+                <option name="ldap_nginx_password">
+                    test123
+                </option-->
+            </package>
+            <option name="zimbraPrefTimeZoneName">
+                America/Chicago
+            </option>
+            <option name="beta-support">
+                <!-- missing/yes/no (yes=continue, no=stop) -->
+                yes
+            </option>
+		</host>
+		<!--host name="zqa-126.eng.vmware.com">
+            <package name="zimbra-ldap">
+                <option name="replica">
+                    yes
+                </option>
+            </package>
+            <option name="zimbraPrefTimeZoneName">
+                America/Chicago
+            </option>
+            <option name="beta-support">
+                yes
+            </option>
+        </host-->
+    </config>
+    <plugins>
+         <plugin name="runZmCommand">
+            <option name="plugs">postUpgrade</option>
+            <option name="host">zqa-120.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmcontrol</option>
+            <option name="parms">restart</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postUpgrade</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmcontrol</option>
+            <option name="parms">restart</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postUpgrade</option>
+            <option name="host">zqa-122.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmcontrol</option>
+            <option name="parms">restart</option>
+        </plugin>
+        <!--plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms zqa-122.eng.vmware.com zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-121.eng.vmware.com</option>
+            <option name="cmd">if [ -f /opt/zimbra/bin/zmlicense ]; then /opt/zimbra/bin/zmlicense</option>
+            <option name="parms">-a; fi</option>
+        </plugin-->
+    </plugins>
+</plan>

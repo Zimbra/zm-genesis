@@ -1,0 +1,60 @@
+# Domains
+DOMAIN	CREATE	domain00	testdomain.com
+DOMAIN	CREATE	domain01	testdomain1.com
+DOMAIN	CREATE	domain02	testdomain2.com
+
+# Accounts
+ACCOUNT	CREATE	account01	user01 test123 domain00
+ACCOUNT	CREATE	account02	user02 test123 domain00
+ACCOUNT	CREATE	account03	user03 test123 domain00
+ACCOUNT	CREATE	account04	user04 test123 domain00
+ACCOUNT	CREATE	account05	user05 test123 domain00
+ACCOUNT	CREATE	account06	user06 test123 domain00
+ACCOUNT	CREATE	account07	user07 test123 domain00
+ACCOUNT	CREATE	account08	user08 test123 domain00
+ACCOUNT	CREATE	account09	user09 test123 domain00
+ACCOUNT	CREATE	account10	user10 test123 domain00
+ACCOUNT	CREATE	account11	user11 test123 domain00
+ACCOUNT	CREATE	account12	user12 test123 domain00
+ACCOUNT	CREATE	account13	user13 test123 domain00
+ACCOUNT	CREATE	account14	user14 test123 domain00
+ACCOUNT	CREATE	account15	user15 test123 domain00
+
+ACCOUNT	CREATE	account21	user01 test123 domain01
+ACCOUNT	CREATE	account22	user02 test123 domain01
+ACCOUNT	CREATE	account23	user03 test123 domain01
+ACCOUNT	CREATE	account24	user04 test123 domain01
+ACCOUNT	CREATE	account25	user05 test123 domain01
+ACCOUNT	CREATE	account26	user06 test123 domain01
+ACCOUNT	CREATE	account27	user07 test123 domain01
+ACCOUNT	CREATE	account28	user08 test123 domain01
+ACCOUNT	CREATE	account29	user09 test123 domain01
+ACCOUNT	CREATE	account30	user10 test123 domain01
+ACCOUNT	CREATE	account31	user11 test123 domain01
+ACCOUNT	CREATE	account32	user12 test123 domain01
+ACCOUNT	CREATE	account33	user13 test123 domain01
+ACCOUNT	CREATE	account34	user14 test123 domain01
+ACCOUNT	CREATE	account35	user15 test123 domain01
+
+ACCOUNT	CREATE	account41	user01 test123 domain02
+ACCOUNT	CREATE	account42	user02 test123 domain02
+ACCOUNT	CREATE	account43	user03 test123 domain02
+ACCOUNT	CREATE	account44	user04 test123 domain02
+ACCOUNT	CREATE	account45	user05 test123 domain02
+ACCOUNT	CREATE	account46	user06 test123 domain02
+ACCOUNT	CREATE	account47	user07 test123 domain02
+ACCOUNT	CREATE	account48	user08 test123 domain02
+ACCOUNT	CREATE	account49	user09 test123 domain02
+ACCOUNT	CREATE	account50	user10 test123 domain02
+ACCOUNT	CREATE	account51	user11 test123 domain02
+ACCOUNT	CREATE	account52	user12 test123 domain02
+ACCOUNT	CREATE	account53	user13 test123 domain02
+ACCOUNT	CREATE	account54	user14 test123 domain02
+ACCOUNT	CREATE	account55	user15 test123 domain02
+
+# Emails
+# EMAIL	INJECT	email01		/tmp/matt_dir/msgs account01
+
+# Tags
+# TAG	CREATE	tag01		tagtext01 orange user01
+

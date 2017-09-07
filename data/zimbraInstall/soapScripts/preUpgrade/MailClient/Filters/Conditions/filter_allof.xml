@@ -1,0 +1,184 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<t:property name="account.name1" value="testFilterAllOf.1@${defaultdomain.name}"/>
+<t:property name="account.name2" value="testFilterAllOf.2@${defaultdomain.name}"/>
+<t:property name="filter1.name" value="filter1.AllOf.1"/>
+<t:property name="subject1" value="Subject 1"/>
+<t:property name="subject2" value="Subject 2"/>
+<t:property name="root"				value="${soapxml.root}/MailClient/Mail/lmtp/MimeBasic/"/>
+<t:property name="msg01.file"		value="${root}/lmtp_basic01.txt"/>
+<t:property name="msg02.file" value="${testMailRaw.root}/email01/msg01.txt"/>
+
+
+<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+
+<t:test_case testcaseid="Ping" type="always" >
+    <t:objective>basic system check</t:objective>
+
+    <t:test required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+         <t:response>
+             <t:select path="//admin:PingResponse"/>
+         </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+<t:test_case testcaseid="acct1_setup_filterAllOf_preUpgrade" type="always" >
+    <t:objective>create test account</t:objective>
+
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+	    <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${account.name1}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+	    <t:response>
+                <t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="test_account1.id"/>
+                <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct1.server"/>
+	    </t:response>
+    </t:test>
+
+    <t:test required="true">
+        <t:request>
+            <CreateAccountRequest xmlns="urn:zimbraAdmin">
+                <name>${account.name2}</name>
+                <password>${defaultpassword.value}</password>
+            </CreateAccountRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:CreateAccountResponse/admin:account" attr="id"  set="test_account2.id"/>
+            <t:select path='//admin:CreateAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="test_acct2.server"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+<t:property name="server.zimbraAccount" value="${test_acct1.server}"/>
+
+<t:test_case testcaseid="Filter_Allof_preUpgrade" type="always" >
+    <t:objective> Verify "all" conditions must be met to trigger the filter </t:objective>
+    <t:steps> 1. Create a rule with op="allof"
+	          2. Inject a message that will match all the conditions
+			  3. Inject a message that will match only two out of three conditions
+			  4. Verify that message that applies all the conditions get filtered
+			  5. Verify message that matches only two conditions will not get filtered.
+    </t:steps>
+
+    <t:test required="true">
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account.name1}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+
+        </t:response>
+    </t:test>
+
+   <t:test>
+        <t:request>
+    		<ModifyFilterRulesRequest xmlns="urn:zimbraMail">
+				<filterRules>
+					<filterRule name="${filter1.name}" active="1">
+						<filterTests condition="allof">
+							<headerTest header="Subject" stringComparison="contains" value="${subject1}" />
+							<headerTest header="from" stringComparison="contains" value="${account.name2}" />
+							<headerTest header="X-Spam-Score" stringComparison="contains" value="0" />
+						</filterTests>
+						<filterActions>
+							<actionFlag flagName="flagged" />
+							<actionStop />
+						</filterActions>
+					</filterRule>                                  
+				</filterRules>
+            </ModifyFilterRulesRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:ModifyFilterRulesResponse"/>
+        </t:response>
+    </t:test>
+
+	<t:test>
+		<t:request>
+			<GetFilterRulesRequest xmlns="urn:zimbraMail"/>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:GetFilterRulesResponse/mail:filterRules/mail:filterRule[@name='${filter1.name}']" />
+       </t:response>
+	</t:test>
+
+    <t:mailinjecttest >
+        <t:lmtpInjectRequest>
+            <filename>${msg01.file}</filename>
+			<to>${account.name1}</to>
+			<from>${nonZimbraUser.name}</from>
+			<server>${test_acct1.server}</server>
+            <modify>
+                <header a="X-Spam-Score">0</header>
+                <header a="From">${account.name2}</header>
+                <header a="Subject">${subject1}</header>
+            </modify>
+        </t:lmtpInjectRequest>
+    </t:mailinjecttest>
+
+    <t:mailinjecttest >
+        <t:lmtpInjectRequest>
+            <filename>${msg02.file}</filename>
+			<to>${account.name1}</to>
+			<from>${nonZimbraUser.name}</from>
+			<server>${test_acct1.server}</server>
+            <modify>
+                <header a="From">${account.name1}</header>
+                <header a="Subject">${subject2}</header>
+                <header a="X-Spam-Score">0</header>
+            </modify>
+        </t:lmtpInjectRequest>
+    </t:mailinjecttest>
+
+	<t:test id="searchRequest1">
+        <t:request>
+            <SearchRequest xmlns="urn:zimbraMail" types="message">
+                <query>subject:${subject1}</query>
+            </SearchRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:SearchResponse/mail:m" attr="f" match=".*f.*"/>
+        </t:response>
+    </t:test>
+
+	<t:test id="searchRequest2">
+        <t:request>
+            <SearchRequest xmlns="urn:zimbraMail" types="message">
+                <query>subject:${subject2}</query>
+            </SearchRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:SearchResponse/mail:m" attr="f" match=".*f.*" emptyset="1"/>
+        </t:response>
+    </t:test>
+
+</t:test_case>
+
+
+</t:tests>
+

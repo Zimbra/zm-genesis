@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plan>
+    <config>
+        <cluster name="qa-clu5">
+            <fence name="APC-zqa-Q18.eng.vmware.com" type="APC">
+                <option name="user">
+                    zqa
+                </option>
+                <option name="password">
+                    VMware123
+                </option>
+                <option name="plug">
+                    <id>8</id>
+                    <machine>zqa-142.eng.vmware.com</machine>
+                </option>
+                <option name="plug">
+                    <id>7</id>
+                    <machine>zqa-143.eng.vmware.com</machine>
+                </option>
+            </fence>
+            <host name="zqa-142.eng.vmware.com" type="active">
+                <zimbrahost name="zqa-144.eng.vmware.com"/>
+                <san>
+                    <volume name="zimbra" label="mail2_zimbra"/>
+                </san>
+                <package name="zimbra-ldap">
+                    <option name="LDAPPASS">
+                         zimbra
+                    </option>
+                    <option name="LDAPADMINPASS">
+                        test123
+                    </option>
+                    <option name="LDAPPOSTPASS">
+                        test123
+                    </option>
+                    <option name="LDAPAMAVISPASS">
+                        test123
+                    </option>
+                    <option name="LDAPREPLPASS">
+                        test123
+                    </option>
+                    <option name="ldap_nginx_password">
+                        test123
+                    </option>
+                </package>
+                <package name="zimbra-logger">
+                     <option name="enabled">
+                         Enabled
+                     </option>
+                </package>
+                <package name="zimbra-mta">
+                     <option name="MTAAUTHHOST">
+                         zqa-144.eng.vmware.com
+                     </option>
+                     <option name="testmta">
+                         test-mta
+                     </option>
+                </package>
+                <package name="zimbra-snmp">
+                     <option name="testsnmp">
+                         test-snmp
+                     </option>
+                </package>
+                <package name="zimbra-store">
+                     <option name="ADMINPASS">
+                         test123
+                     </option>
+                </package>
+                <package name="zimbra-spell">
+                     <option name="testspell">
+                         test-spell
+                     </option>
+                </package>
+                <package name="zimbra-apache">
+                     <option name="testapache">
+                         test-apache
+                     </option>
+                </package>
+                <package name="zimbra-archiving">
+                    <option name="RUNARCHIVING">
+                        yes
+                    </option>
+                </package>>
+                <package name="zimbra-convertd">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-memcached">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-cluster">
+                     <option name="testcluster">
+                         test-cluster
+                     </option>
+                </package>
+                <option name="ENABLEDEFAULTBACKUP">
+                    no
+                </option>
+                <option name="zimbraPrefTimeZoneName">
+                    America/Chicago
+                </option>
+                <!-- missing/yes/no (yes=continue, no=stop) -->
+                <option name="beta-support">
+                    yes
+                </option>
+            </host>
+            <host name="zqa-143.eng.vmware.com" type="standby">
+                <!--zimbrahost name="w1-zqac-009.eng.vmware.com"/-->
+                <package name="zimbra-ldap">
+                    <!--option name="replica">
+                        yes
+                    </option-->
+                    <option name="LDAPMASTER">
+                        zqa-144.eng.vmware.com
+                    </option>
+                    <option name="LDAPPASS">
+                         zimbra
+                    </option>
+                    <option name="LDAPADMINPASS">
+                        test123
+                    </option>
+                    <option name="LDAPPOSTPASS">
+                        test123
+                    </option>
+                    <option name="LDAPAMAVISPASS">
+                        test123
+                    </option>
+                    <option name="LDAPREPLPASS">
+                        test123
+                    </option>
+                    <option name="ldap_nginx_password">
+                        test123
+                    </option>
+                </package>
+                <package name="zimbra-logger">
+                    <option name="enabled">
+                        Disabled
+                    </option>
+                </package>
+                <package name="zimbra-mta">
+                </package>
+                <package name="zimbra-snmp">
+                     <option name="testsnmp">
+                         test-snmp
+                     </option>
+                </package>
+                <package name="zimbra-store">
+                     <!--option name="ADMINPASS">
+                         test123
+                     </option-->
+                </package>
+                <package name="zimbra-spell">
+                     <option name="testspell">
+                         test-spell
+                     </option>
+                </package>
+                <package name="zimbra-apache">
+                     <option name="testapache">
+                         test-apache
+                     </option>
+                </package>
+                <package name="zimbra-archiving">
+                    <option name="RUNARCHIVING">
+                        yes
+                    </option>
+                </package>
+                <package name="zimbra-convertd">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-memcached">
+                    <option name="blah">
+                        foo
+                    </option>
+                </package>
+                <package name="zimbra-cluster">
+                     <option name="testcluster">
+                         test-cluster
+                     </option>
+                </package>
+                <!-- missing/yes/no (yes=continue, no=stop) -->
+                <option name="beta-support">
+                    yes
+                </option>
+            </host>
+        </cluster>
+    </config>
+    <plugins>
+        <!--plugin name="certInstall">
+            <option name="plugs">postInstall</option>
+            <option name="host">localhost</option>
+        </plugin-->
+        <!--plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-142.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">ms zqa-144.eng.vmware.com zimbraHttpProxyURL \"http://proxy.vmware.com:3128\"</option>
+        </plugin-->
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall</option>
+            <option name="host">zqa-142.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmlicense</option>
+            <option name="parms">-a</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-142.eng.vmware.com</option>
+            <option name="cmd">/opt/zimbra/bin/zmprov</option>
+            <option name="parms">mcf zimbraMtaRelayHost zqa-smtp.eng.vmware.com</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-142.eng.vmware.com</option>
+            <option name="cmd">echo 'MAILTO=\"\"' &gt; /tmp/ct.qa;</option>
+            <option name="parms">crontab -l &gt;&gt; /tmp/ct.qa; crontab -r; crontab /tmp/ct.qa</option>
+        </plugin>
+        <plugin name="runZmCommand">
+            <option name="plugs">postInstall,postUpgrade</option>
+            <option name="host">zqa-143.eng.vmware.com</option>
+            <option name="cmd">echo 'MAILTO=\"\"' &gt; /tmp/ct.qa;</option>
+            <option name="parms">crontab -l &gt;&gt; /tmp/ct.qa; crontab -r; crontab /tmp/ct.qa</option>
+        </plugin>
+    </plugins>
+</plan>

@@ -1,0 +1,764 @@
+
+----------------------
+
+URL for posting to SOAP is:
+ 
+${uri}
+OR
+${soapservice.mode}://${server.zimbraAccount}:${soapservice.port}/${soapservice.path}
+${soapservice.mode}://${server.zimbraMail}:${soapservice.port}/${soapservice.path}
+${admin.mode}://${server.zimbraAdmin}:${admin.port}/${admin.path}
+ 
+-------------------------------
+ 
+urn:zimbraTestHarness  -- top-level namespace for global attributes/elements
+
+
+----------------------------
+
+<t:test_case objective="{objective}" type="{type}" [ areas="{areas}" bugids="{bugids}" supportedAfter="{version}" ]>
+	[ <t:steps>{steps}</t:steps> ]
+	
+	... {tests}
+	
+</t:test_case>
+
+
+Define a test case, which is a series of one or more test elements.
+
+	{objective} = The objective statement for the test case (text)
+	{type}		= The level of test case:
+					always: always run the test case
+					smoke: only run the test for when suite = smoke, functional
+					functional: only run the test for when suite = functional
+					negative: only run the test for when suite = functional
+					deprecated: never run the teset
+	{areas}		= Defines the test case as OSS or NETWORK.  NETWORK features include:
+					backup: backup feature tests
+					verity: convertd feature tests
+	{bugids}	= Associate the test case with a bug # (this attribute is deprecated after EDISON)
+	{steps}		= The steps associated with the test (text format)
+	{tests}		= One or more test elements
+	{version}	= The first release to support the feature.  For upgrade testing,
+				  if any version did not support the feature, then the test will
+				  be skipped.  For instance, if supportedAfter="5.0.1", a server
+				  that was upgraded from 4.5.9 to 5.0.2 will skip the test.  A
+				  server that was upgraded from 5.0.2 to 5.0.3 will execute the test.
+				  See also, .install_history.  Format is "X.Y.Z"
+	
+	
+	
+----------------------------
+
+<t:test_loop [ count="{count}" ]>
+
+	... {tests}
+	
+</t:test_loop>
+
+
+Define a series of tests to run in a loop.
+
+	{count}		= The number of iterations to execute (default = 1)
+	{tests}		= One or more test elements
+
+Properties are re-evaluated for each iteration.  For example, ${account.id} can be reused
+for each iteration.
+	
+	
+----------------------------
+
+<t:for [name="{expression}"] [start="{initializer}"] end="{limit}" [increment="{increment}"] [break="{looptest}"]>
+
+	... {tests}
+	
+</t:for>
+
+
+Define a series of tests to run in a for loop.
+
+	{expression}	= A variable name that the index will be saved to
+	{initializer}	= The starting index (default = 1)
+	{limit}			= The ending index
+	{increment}		= The incremental step (default = 1)
+	{looptest}		= A variable to evaluate (continue if looptest="0", "", or "UNSET"
+
+Properties are re-evaluated for each iteration.  For example, ${account.id} can be reused
+for each iteration.
+	
+	
+----------------------------
+
+<t:finally >
+
+	... {tests}
+	
+</t:finally>
+
+
+Define tests to run after the test XML script finishes.
+
+The <t:finally> element is useful when global settings or postfix are being 
+modified.  Since global changes may affect other test cases, use <t:finally> to
+undo the changes after the test completes.
+
+	{tests}		= One or more test elements
+
+Any properties within the list of {tests} (i.e. ${folder.id}) are expanded
+to their value at the time <t:finally> is first encountered, not at the end
+of execution.  This  way, the value of folder.id can be changed, without
+impact to an earlier <t:finally>.
+
+
+----------------------------
+
+<t:include filename="{file}" >
+</t:include>
+
+Read a file and execute the tests within that file.  The harness will recursively
+search ZimbraQA for the file
+
+	{file}		= The name of the file to include.  Do not specify the path to
+					the file.  The preferred nomenclature is use the .inc extension
+					for the file.
+	
+	
+----------------------------
+
+<t:test [ id="{i}" depends="{d}" required="{r}" >
+	<t:request>
+		[ <t:requestContext>
+		</t:requestContext> ]
+		{soap request}
+	</t:request>
+	<t:response>
+		... <t:select/>
+		[... <t:header/>]
+	</t:response>
+</t:test>
+
+or equivalently
+
+<t:soaptest>
+	<t:request>
+		[ <t:requestContext>
+		</t:requestContext> ]
+		{soap request}
+	</t:request>
+	<t:response>
+		... <t:select/>
+		[... <t:header/>]
+	</t:response>
+</t:soaptest>
+
+Execute a SOAP test step.
+
+	{i}		= Specify a unique ID identifier for the test step
+	{d}		= Comma separated list of step IDs that must be run before this step,
+				otherwise this test will be marked as failed
+	{r}		= true or false.  If true, then the XML script will end if this test fails.
+				If false, then the XML script will continue, even if this test case fails.
+
+
+Use the optional <t:requestContext/> to define the request context.  By default, the 
+request context uses the properties ${authToken} and ${sessionId} to build the context.
+See soap.txt for context definitions.
+
+The optional <t:header/> element has the same format as <t:select/>, but checks the
+elements in the header portion of the response.
+
+
+----------------------------
+
+<t:pstimporttest>
+	<pstfile> {file} </pstfile>
+	<account> {account} </account>
+	<password> {password} </password>
+	<server> {fqdn} </server>
+	[ <importdelay> {seconds} </importdelay> ]
+	[ <exchangeaccount> {exchange account} </exchangeaccount> ]
+	[ <wizardpath> {wizard path} </wizardpath> ]
+</t:pstimporttest>
+
+Import a PST file using the PST Import wizard.
+
+	{file}			= The path (from ZimbraQA) of the PST file to import
+	{account}		= The email address of the account
+	{password}		= The password of the account
+	{fqdn}			= The address of the Zimbra Server
+	{seconds}		= The number of seconds to wait for the PST file to finish importing (TODO)
+	{exchange account}	= The email address of the owner of the PST.  If not specified,
+							then the import wizard does not translate the old messages or
+							calendar appointments from the old address to the new address.
+	{wizard path}	= Path (from ZimbraQA) to a PST Import wizard executable.
+	
+The harness uses the following wizard executable locations, in order of preference:
+	1. {wizard path}, if specified
+	2. ${pstImportTool.path}, if specified
+	3. Download the file from the server
+
+
+----------------------------
+
+<t:migrationimporttest>
+	<account> {admin} </account>
+	<password> {password} </password>
+	<domain> {domain} </domain>
+	<profile> {profile} </profile>
+	[ <importdelay> {seconds} </importdelay> ]
+	[ <exchangeaccount> {exchange account} </exchangeaccount> ]
+	[ <wizardpath> {wizard path} </wizardpath> ]
+</t:migrationimporttest>
+
+Import from an exchange server.
+
+* TODO
+
+----------------------------
+
+----------------------------
+
+<t:groupwisemigrationtest>
+	<groupwiseaccount> {groupwise account} </groupwiseaccount>
+	<basedn> {base dn} </basedn>
+	[ <zimbraaccountserver> {zimbra account server} </zimbraaccountserver> ]
+	[ <zimbraaccountserverport> {zimbra account server port} </zimbraaccountserverport> ]
+	[ <zimbraaccountserverssl> {zimbra account server ssl} </zimbraaccountserverssl> ]
+	[ <zimbraaccountname> {zimbra account name} </zimbraaccountname> ]
+	[ <zimbraaccountpassword> {zimbra account password} </zimbraaccountpassword> ]
+	
+	[ <zimbradestinationdomain> {zimbra destination domain} </zimbradestinationdomain> ]
+	
+	[ <gwdomaindirectorypath> {gw domain directory path} </gwdomaindirectorypath> ]
+	[ <gwpostofficeinformation> {gw postoffice information} </gwpostofficeinformation> ]
+	[ <gwldapserveraddress> {gw ldap server address} </gwldapserveraddress> ]
+	[ <gwldapserverport> {gw ldap server port} </gwldapserverport> ]
+	[ <gwadminusername> {gw admin username} </gwadminusername> ]
+	[ <gwadminpassword> {gw admin password} </gwadminpassword> ]
+</t:groupwisemigrationtest>
+
+Import from a GroupWise server.
+
+	{groupwise account}			= The groupwise account to import
+	{base dn}					= The search base DN to find accounts to import
+	{zimbra account server}		= The Zimbra server (zimbraServer.name)
+	{zimbra account server port}= The Zimbra server admin port (admin.port)
+	{zimbra account server ssl}	= 1 (use SSL) or 0 (don't use SSL) (admin.mode == https)
+	{zimbra account name}		= The Zimbra admin user name (admin.user)
+	{zimbra account password}	= The Zimbra admin password (admin.password)
+	{zimbra destination domain}	= The Zimbra domain to import accounts into (defaultdomain.name)
+	{gw domain directory path}	= The local path to the GW domain directory (groupwise.domaindirectory.path)
+	{gw postoffice information}	= THe local path to the GW Postoffice information (groupwise.postofficeinformation.path)
+	{gw ldap server address}	= THe GW LDAP server address, FQDN or IP address (groupwise.ldapserver.address)
+	{gw ldap server port}		= The GW LDAP server port (groupwise.ldapserver.port)
+	{gw admin username}			= The GW admin user (groupwise.admin.user)
+	{gw admin password}			= The GW admin password (groupwise.admin.password)
+	
+One of {groupwise account} or {base dn} must be specified.  All other values are optional.
+
+The properties in parantheses (e.g. "(zimbraServer.name)") can be found in global.properties.
+
+
+----------------------------
+
+<t:resttest>
+	<t:restServletRequest method="{m}">
+		... (see below formats)
+	</t:restServletRequest>
+	<t:restServletResponse>
+		<t:select ... >
+		[ <t:header ... > ]
+		[ <t:content ... > ]
+	</t:restServletResponse>
+</t:resttest>
+
+Execute an HTTP POST or GET on the Zimbra REST interface.
+
+	{m}		= HTTP method, either "GET" or "POST"
+	{server} is either: ${restURL} or ${server.restServlet}
+
+
+<t:restServletRequest [ method="GET" ]>
+	<url> {url} </url>
+</t:estServletRequest>
+
+	{url} = hard coded URL path to use
+			
+<t:restServletRequest [ method="GET" ]>
+	[ <user> {user} </user> | <userid> {id} </userid> ]
+	<folder> {folder} </folder>
+	<recursive> {recursive} </recursive>
+	<fmt> {fmt} </fmt>
+	<id> {id} </id>
+	<part> {part} </part>
+	<query> {query} </query>
+	<types> {types} </types>
+	<start> {start} </start>
+	<end> {end} </end>
+	<sync> {sync} </sync>
+	<auth> {auth} </auth>
+	<view> {view} </view>
+	[ <guest> {guest} </guest> ]
+	[ <password> {password} </password> ]
+</t:restServletRequest>
+
+	Build the REST url from the specified values.  See rest.txt for more information.
+	
+	The URL will have the format such as:
+	
+	http://{server}/zimbra/user/[~][{username}]/[{folder}]?[{query-params}]fmt={ics, csv, etc}
+	
+<t:restServletRequest method="POST">
+	[ <user> {user} </user> | <userid> {id} </userid> ]
+	<folder> {folder} </folder>
+	<filename> {path} </filename>
+	[ <guest> {guest} </guest> ]
+	[ <password> {password} </password> ]
+</t:restServletRequest>
+
+	{path}	= Full path to a file to POST
+
+
+
+----------------------------
+
+<t:uploadservlettest>
+</t:uploadservlettest>
+
+* TODO
+
+
+----------------------------
+
+<t:contentservlettest>
+</t:contentservlettest>
+
+* TODO
+
+
+----------------------------
+
+<t:csvservlettest>
+</t:csvservlettest>
+
+* TODO
+
+
+----------------------------
+
+<t:mailinjecttest>
+	<t:lmtpInjectRequest>
+		<address> {address} </address>
+		<filename> {mime} </filename>
+		<domain> {domain} </domain>
+		<every> {every} </every>
+		<port> {port} </port>
+		<quiet> {quiet} </quiet>
+		<recipient> {recipient} </recipient>
+		<stopafter> {stopafter} </stopafter>
+		<sender> {sender} </sender>
+		<threads> {threads} </threads>
+		<trace> {trace} </trace>
+		<username> {username} </username>
+		<warmupthreshold> {warmupthreshold} </warmupthreshold>
+		<repeat> {repeat} </repeat>
+		[<modify a="attr">value</modify>]
+	</t:lmtpInjectRequest>
+	<t:lmtpInjectResponse>
+		<code>{LMTP response}</code>
+		<t:select ... />
+		[ <t:header ... /> ]
+		[ <t:ical ... /> ]
+	</t:lmtpInjectResponse>
+</t:mailinjecttest>
+
+Inject messages using LMTP.  See com.zimbra.cs.lmtpserver.utils.LmtpInject usage for
+more details.
+
+Use <modify/> to create or modify header values within the MIME file {mime}.
+
+
+----------------------------
+
+<t:smtpinjecttest>
+	<t:smtpInjectRequest>
+		<address> {fqdn} </address>
+		<filename> {path> </filename>
+		<message> {string} </message>
+		<recipient> {to} </recipient>
+		<sender> {from} </sender>
+		[ <tls> {t} </tls> ]
+		[ auth> {a} </auth> ]
+		[ <user> {u} </user> ]
+		[ <password> {p} </password> ]
+	</t:smtpInjectRequest>
+	<t:smtpInjectResponse>
+	</t:smtpInjectResponse>
+</t:smtpinjecttest>
+
+Use SMTP (through STAF) to inject messages from qa00 to the Zimbra server.
+
+STAF must be running on the local client and on qa00 for this test to execute.
+
+	{fqdn}		= Server FQDN or IP address
+	{path}		= Full path to the MIME message to inject
+	{string}	= A MIME string to inject (TBD)
+	{to}		= Destination email address to send message
+	{from}		= Origination email address
+	{t}			= TRUE, if TLS should be used (-t)
+	{a}			= TRUE, if authentication should be used (-A)
+	{u}			= If using auth, the name used to authenticate (-u {u})
+	{p}			= If using auth, the password used to authenticate (-p {p})
+
+
+----------------------------
+
+<t:qtpSingleTest>
+</t:qtpSingleTest>
+
+* TODO
+
+
+
+----------------------------
+
+<t:system command="{command}" parms="{parameters}" stdout="{prop1}" stderr="{prop2}"/>
+
+Executes a system command on the target server under test.
+
+
+	{command}	= The command to execute, such as chmod or cat
+	{parameters} = Any command line arguments to the command, such as "777 /tmp/file.txt"
+	{prop1}		= The stdout will be saved to this property
+	{prop2}		= The stderr will be saved to this property
+	
+For example:
+
+	<t:system command="cat" parms="/opt/zimbra/.install_history" stdout=".install_history"/>
+
+
+
+
+----------------------------
+
+<t:select  [ path="{xpath}" ]  [ attr="{attribute}" ]  [ set="{variable}" ]
+		[ match="{value}" ] [ query="{element}" ] [ emptyset="1" ]>
+		
+		... {selects}
+</t:select>
+
+Parse a response to (A) set a variable or (B) verify a value.
+
+A. When setting a variable, use the path, attr, and set attributes to find a value
+in the response and set it to {variable}.
+
+B. When verifying a value, use path, attr, and match to find a element or attribute
+value and match against a known value.  If a match is not found, then the test
+is marked as failed.
+
+	{xpath}		= attribute is is an xpath expression to match an element. test fails if path isn't found
+	{attribute}	= attribute means match/set operate on the name attribute instead of element's value
+	{variable}	= name of property to set the attribute value or element text to
+	{value}		= a regex to match on. test fails if regex doesn't match
+	{element}	= name of property to set the xpath query result to
+	emptyset	= If "1", then the result is negated.  That is, if a match
+					is found and emptyset = "1", then the test is marked as
+					failed.  If a match is not found and emptyset = "1", then
+					the test is marked as passed.
+	{selects}	= Sub-selects can be specified which will act only on
+					the elements matched in the super-select.
+
+For example,
+
+         <t:select path="//mail:CreateFolderResponse">
+         	<t:select path="mail:folder" attr="id" set="folder.id"/>
+         	<t:select path="mail:folder">
+         		<t:select attr="l" match="10" emptyset="1"/>
+         	</t:select>
+         </t:select>
+         <t:select path="//mail:CreateFolderResponse/mail:folder" attr="name" match="^USER_ROOT$"/>
+
+Each test type can implement <t:select/> in its specific manner.  See ContactsServletTest
+as an example.
+
+* TODO: Define the different <t:select/> interfaces per test class
+		
+----------------------------
+
+<t:property name="{propname}" value="{propvalue}">
+</t:property>
+
+Set a variable.
+
+	{propname}		= The variable name for later reference as ${propname}
+	{propvalue}		= The value stored in the variable
+
+Built in variables:
+
+	${COUNTER}			= An incremental counter, which starts at 1 for each XML script
+	${LOOPINDEX}		= The current loop index (see test_loop)
+	${LOCALHOST}		= LC.zimbra_server_hostname.value()
+	${TIME}				= System.currentTimeMillis()
+	${GENTIME}			= "yyyyMMddHHmmss'Z'"
+	${GENDATESTAMP}		= MM/dd/yyyy
+	${CURRDATE}			= yyyyMMdd
+	${CURRTIME}			= HHmmss
+	${CURRDAY}			= EE
+	${CURRMON}			= MM
+	${ICALTIME}			= yyyyMMdd'T'HHmmss
+	${XZIMBRARECEIVED}	= EEE, d MMM yyyy HH:mm:ss Z
+	${NETWORK}			= Host IP Address, with D address set to "0" (for postfix conf)
+
+Time based variables can apply the following notation to the value:
+
+	${FORMAT([+/-][d+][dhms])[${TIME}]}
+	
+	For example, if T=1106136000000 (Jan 19, 2005, noon), the following will evaluate to
+	"20050118T130000":  ${ICALTIME(-1d)(+1h)[${T}]}
+	
+	If no time offsets are specified, then the local time is used.  For example, ${ICALTIME}
+	defaults to the current local time.
+
+		
+----------------------------
+
+<t:regex input="{string}" pattern="{regex}" group="{number}" match="{regex}" set="{prop}">
+</t:regex>
+
+Apply regex to a string.
+
+	{input}			= The input string to apply the regex to
+	{regex}			= The regex to apply
+	{group}			= The regex group (used with match and set)
+	{match}			= A regex to match against the regex match and group number
+	{set}			= A property to set based on the regex match and group number
+
+		
+----------------------------
+
+<t:delay sec="{duration}" | msec="{duration}">
+</t:delay>
+
+Pause for a specified duration.  Specify at least one of sec or msec, but not both.
+
+	${duration}			= The amount of time to pause
+
+	
+----------------------------
+
+<t:preauth account="{account-identifier}" by="{by-value}" timestamp="{timestamp}" 
+	expires="{expires}" key="{key}" set="{variable}"/>
+
+Generate a preauth digest value used to preauth authentication (see preauth.txt)
+
+
+ {account-identifier}   depends on the value of the "by" attr. If "by" is not
+                        specified, it is the name (i.e., john.doe@domain.com).
+
+ {by-value}             name|id|foreignPrincipal, same as AuthRequest. defaults
+                        to name.
+
+ {timestamp}            current time, in milliseconds, i.e. ${TIME}.
+ 						The timestamp must be within 5 minutes of the server's
+ 						time for the preauth to work.
+
+ {expires}              expiration time of the authtoken, in milliseconds. 
+                        set to 0 to use the default expiration time for the
+                        account. Can be used to sync the auth token expiration
+                        time with the external system's notion of expiration
+                        (like a Kerberos TGT lifetime, for example).
+
+ {key}					the domain's zimbraPreAuthKey value.  Use CreateDomainRequest
+ 						or ModifyDomainRequest to set the value of zimbraPreAuthKey
+ 						in the domain.  (There is no SOAP request to instruct the
+ 						domain to generate a key, only zmprov has that capability.
+ 						Instead, hard code the zimbraPreAuthKey using one of
+ 						these two requests.)
+
+ {variable}				the computed pre-auth value is set to this property name
+ 	
+----------------------------
+
+<t:echo>
+	{xml content}
+</t:echo>
+
+Print the xml element to the log (Logger.INFO level)
+
+
+----------------------------
+
+<t:exit>
+</t:exit>
+
+Exit the script immediately.
+
+
+----------------------------
+
+<t:namespace prefix="{prefix}" uri="{uri}">
+</t:namespace>
+
+* TODO:  Define a namespace.
+
+
+----------------------------
+----------------------------
+----------------------------
+
+General format is:
+
+<t:tests xmlns:t="urn:zimbraTestHarness">
+ 
+ <!-- in order to reference namespaces in the xpath expressions, they need to either be
+      pre-defined, or defined with the namespace command.
+      
+      The following are pre-defined:
+      
+      acct   -> urn:zimbraAccount
+      mail   -> urn:zimbraMail
+      admin  -> urn:zimbraAdmin
+      zimbra -> urn:zimbra
+      soap   -> http://www.w3.org/2003/05/soap-envelope
+      soap12 -> http://www.w3.org/2003/05/soap-envelope
+	  soap11 -> http://schemas.xmlsoap.org/soap/envelope/
+      
+-->
+      
+ <t:namespace prefix="foo" uri="http://foo.com/"/>
+ 
+ 
+ <!-- properties are normally defined at the top.
+     there are some special properties:
+     
+     uri          the uri of the server to connect to
+
+     authToken    the auth token to use in requests   
+
+     sessionId    the session id to use in requests
+
+     target		  the target account to use in requests (i.e. <account by="name">u@d.com</account>)
+
+     .install_history
+     			  when set to the contents of /opt/zimbra/.install_history,
+     			  the harness scrubs the contents for release values (i.e. X.Y.Z).
+     			  <t:test_case supportedAfter="A.B.C" .../> can then be used
+     			  to skip the test case, if any server version did not
+     			  support the feature (useful for upgrade testing)
+     
+     TIME         evaluates to System.currentTimeMillis()
+
+     COUNTER      starts at 1, and increments everytime it is referenced
+
+     GENTIME      evaluates to current time, in generalized time format (YYYYMMDDhhmmssZ)
+     
+     GENTIME([+-]?\d+[dhms]?) 
+     
+                  evaluates to current time +/- the specified number of days/hours/minutes/seconds,
+                  in generalized time format (YYYYMMDDhhmmssZ). Defaults to +/days.
+                  
+                  For example: ${GENTIME(-7d)} will expand to the current time minus 7 days. 
+
+     properties get expanded in attrs and element values by referencing them
+     as ${propname}.
+     
+     
+ -->
+ 
+ <t:property name="..." value="..."/>
+
+ <!-- one or more t:test elements 
+      id       attribute is used to name this test, so others that depend on it can refer to it.
+      required attribute is used to indicate that the test harness should stop if this test fails
+      depends  attribute is used to indicate this test should only be run if the others listed passed
+      dump     attribute is used to dump out the SOAP request/response
+ -->
+  
+ <t:test id="auth" [required="true|false"] [depends="a,b,c"] [dump="true|false"]/>
+  <t:request>
+    <!-- the body of the request goes here (i.e,. the child of the soap:body) -->
+  </t:request>
+  <t:response>
+    <!-- one or more select elements. 
+       path     attribute is is an xpath expression to match an element. test fails if path isn't found
+       attr     attribute means match/set operate on the name attribute instead of element's value
+       match    a regex to match on. test fails if regex doesn't match
+       set      name of property to set 
+    -->
+       
+	<t:select path="..."  [attr="..."] [match="..."] [set="..."] >
+	   <!-- additional selects can be nested, their pathes are relative to
+	        the outer select's element -->
+	<t:select/>
+  </t:response>
+ </t:test>
+
+ <!-- more test elements -->
+
+</t:tests>
+
+
+EXAMPLE
+
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+ <t:property name="user" value="user1@example.zimbra.com"/>
+ <t:property name="password" value="zimbra"/>
+ <t:property name="tag.name" value="zimbra"/>
+ <t:property name="tag.newname" value="test"/>
+
+ <t:property name="uri" value="http://localhost:7070/service/soap/"/>
+
+ <t:test id="auth" required="true">
+  <t:request>
+   <acct:AuthRequest xmlns:acct="urn:zimbraAccount">
+     <account by="name">${user}</account>
+     <password>${password}</password>
+   </acct:AuthRequest>
+  </t:request>
+  <t:response>
+    <!-- this select makes sure there is a lifetime element in the response -->
+	<t:select path="//acct:AuthResponse/lifetime"  match="^\d+$"/>
+    <!-- this select makes sure there is an authToken element in the response, and saves
+         its value in the authToken property -->
+	<t:select path="//acct:AuthResponse/authToken" set="authToken"/>
+  </t:response>
+ </t:test>
+
+<t:test>
+ <t:request>
+   <acct:CreateTagRequest xmlns:acct="urn:zimbraAccount">
+     <tag name="${tag.name}"/>
+   </acct:CreateTagRequest>
+ </t:request>
+  <t:response>
+    <!-- select the tag element in the response, then grab set the tag.id property -->
+	<t:select path="//acct:CreateTagResponse/tag">
+	  <t:select attr="id" set="tag.id"/>
+	</t:select>
+ </t:response>
+</t:test>
+
+<t:test>
+ <t:request>
+   <acct:RenameTagRequest xmlns:acct="urn:zimbraAccount">
+     <tag id="${tag.id}" name="${tag.newname}"/>
+   </acct:RenameTagRequest>
+ </t:request>
+  <t:response>
+	<t:select path="//acct:RenameTagResponse"/>
+ </t:response>
+</t:test>
+
+<t:test>
+ <t:request>
+   <acct:DeleteTagRequest xmlns:acct="urn:zimbraAccount">
+     <tag id="${tag.id}"/>
+   </acct:DeleteTagRequest>
+ </t:request>
+  <t:response>
+	<t:select path="//acct:DeleteTagResponse"/>
+ </t:response>
+</t:test>
+
+</t:tests>

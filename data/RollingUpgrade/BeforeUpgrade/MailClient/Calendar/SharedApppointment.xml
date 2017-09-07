@@ -1,0 +1,185 @@
+<t:tests xmlns:t="urn:zimbraTestHarness">
+
+<!-- Shared variables between Pre and Post upgrade scripts -->
+
+<t:property name="account1.name" value="rollingupgrade01@${defaultdomain.name}"/>
+<t:property name="account2.name" value="rollingupgrade02@${defaultdomain.name}"/>
+<t:property name="account3.name" value="rollingupgrade03@${defaultdomain.name}"/>
+<t:property name="appointment1.subject" value="Subject of meeting is rolling upgrade"/>
+<t:property name="appointment1.location" value="Meeting Room 1"/>
+<t:property name="appointment1.content" value="Content of the message"/>
+
+
+<!-- End shared variables -->
+
+<t:property name="Time1" value="${ICALTIME(+30m)}"/>
+<t:property name="Time2" value="${ICALTIME(+1h)}"/>
+
+<t:test_case testcaseid="Briefcase_Folder_Setup" type="always" >
+    <t:objective>basic system check</t:objective>
+
+	<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>	
+    <t:test id="ping" required="true">
+        <t:request>
+            <PingRequest xmlns="urn:zimbraAdmin"/>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:PingResponse"/>
+        </t:response>
+    </t:test>
+	
+	<t:property name="server.zimbraAdmin" value="${zimbraServer.name}"/>
+	
+    <t:test required="true" >
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAdmin">
+                <name>${admin.user}</name>
+                <password>${admin.password}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//admin:AuthResponse/admin:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+    
+    <t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${account1.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account1.id"/>
+			<t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account1.server"/>
+		</t:response>
+	</t:test>
+
+ 
+    <t:test>
+		<t:request>
+			<GetAccountRequest xmlns="urn:zimbraAdmin">
+				<account by="name">${account2.name}</account>
+			</GetAccountRequest>
+		</t:request>
+		<t:response>
+			<t:select path="//admin:GetAccountResponse/admin:account" attr="id"  set="account2.id"/>
+			<t:select path='//admin:GetAccountResponse/admin:account/admin:a[@n="zimbraMailHost"]' set="account2.server"/>
+		</t:response>
+	</t:test>
+
+ </t:test_case>  
+ 
+ 
+<t:test_case testcaseid="Appointment_01" type="smoke" >
+    <t:objective>account1 create an appointment with account2 and account2 accept the appointment </t:objective>	
+
+ 	<t:steps>
+	    1. Login to account1
+	    2. Create a an appointment
+	    3. Login to account2
+	    4. Search for the appointment
+	    5. Send accept reply	    
+    </t:steps>
+	<t:property name="server.zimbraAccount" value="${account1.server}"/>
+
+    <t:test>
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account1.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+    
+    <t:test >
+        <t:request>
+            <CreateAppointmentRequest xmlns="urn:zimbraMail">
+                <m>
+                    <inv method="REQUEST" type="event" fb="B" transp="O" allDay="0" name="${appointment1.subject}" loc="${appointment1.location}">
+                        <at role="OPT" ptst="NE" rsvp="1" a="${account2.name}"/>
+                        <s d="${Time1}"/>  
+                        <e d="${Time2}"/>  
+                        <or a="${account1.name}"/>
+                    </inv>
+                    <e a="${account2.name}" t="t"/>
+                    <mp content-type="text/plain">
+                        <content>${appointment1.content}</content>
+                    </mp>
+                    <su>${appointment1.subject}</su>
+                </m>
+            </CreateAppointmentRequest>
+        </t:request>
+        <t:response>
+            <t:select path = "//mail:CreateAppointmentResponse" attr="invId" set="appointment1.id"/>
+        </t:response>
+    </t:test>
+    
+    <t:delay msec="2000"/>
+    
+    <t:property name="server.zimbraAccount" value="${account2.server}"/>
+
+    <t:test>
+        <t:request>
+            <AuthRequest xmlns="urn:zimbraAccount">
+                <account by="name">${account2.name}</account>
+                <password>${defaultpassword.value}</password>
+            </AuthRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//acct:AuthResponse/acct:authToken" set="authToken"/>
+        </t:response>
+    </t:test>
+    
+     <t:test required="true">
+        <t:request>
+			<SearchRequest xmlns="urn:zimbraMail" types="message">
+				<query>subject:(${appointment1.subject})</query>
+			</SearchRequest>
+        </t:request>
+        <t:response>      
+            <t:select path="//mail:SearchResponse">
+            	<t:select path="//mail:m" attr="id" set="message1.id"/>
+            </t:select>
+        </t:response>
+    </t:test>
+
+    <t:test >
+        <t:request>
+            <GetMsgRequest xmlns="urn:zimbraMail">
+                <m id="${message1.id}" />
+            </GetMsgRequest>
+        </t:request>
+        <t:response>
+             <t:select path="//mail:GetMsgResponse/mail:m/mail:inv/mail:comp" attr="compNum" set="account2.compNum"/>
+             <t:select path="//mail:GetMsgResponse/mail:m/mail:inv/mail:comp" attr="apptId" set="account2.message1.apptId" />
+            
+        </t:response>
+    </t:test>
+	
+	<t:property name="verb.response" value="ACCEPT"/>
+	<t:property name="verb.expected" value="AC"/>
+	
+	<t:test>
+        <t:request>
+			<SendInviteReplyRequest xmlns="urn:zimbraMail" verb="${verb.response}" id="${message1.id}" compNum="${account2.compNum}" updateOrganizer="TRUE">
+				<m rt="r">
+					<e t="t" a="${account1.name}"/>
+					<su>${verb.response}: ${appointment1.subject}</su>
+					<mp ct="text/plain">
+						<content>${verb.response}</content>
+					</mp>
+				</m>
+			</SendInviteReplyRequest>
+        </t:request>
+        <t:response>
+            <t:select path="//mail:SendInviteReplyResponse"/>
+        </t:response>
+    </t:test>    
+    
+</t:test_case>
+
+    
+</t:tests>

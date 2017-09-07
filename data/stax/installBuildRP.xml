@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE stax SYSTEM "stax.dtd">
+<stax>
+    <defaultcall function="install"/>
+    <function name="copyrubyiso" scope="local">
+        <function-prolog> Copy iso script </function-prolog>
+        
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa23'"> Name of the machine that hosts virtual system </function-optional-arg>
+        </function-map-args>
+        <sequence>
+            <log message="1">'Copy ruby program script to host system'</log>
+            <stafcmd name="'Create Directory'">
+                <location>machine</location>
+                <service>'fs'</service>
+                <request>'CREATE DIRECTORY /opt/qa/genesis'</request>
+            </stafcmd>
+            <stafcmd name="'Copy Testware'">
+                <location>'tms'</location>
+                <service>'fs'</service>
+                <request>'COPY FILE /opt/qa/main/genesis/installiso.rb TOFILE /opt/qa/genesis/installiso.rb TOMACHINE %s' % (machine)</request>
+            </stafcmd>
+        </sequence>
+    </function>
+    
+    <function name="waitalive" scope="local">
+        <function-prolog> Use ping to determine when the system is back online </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="machine" default="'tms'"> Name of the machine that hosts virtual system </function-optional-arg>
+            <function-optional-arg name="tmachine" default="'qa29.lab.zimbra.com'"> Name of the target machine that hosts virtual system </function-optional-arg>
+        </function-map-args>
+        <sequence>
+            <timer duration="'30m'">
+                <loop>
+                    <sequence>
+                        <process name="'Ping'">
+                            <location>machine</location>
+                            <command>'/bin/env'</command>
+                            <parms>'ping -n -w 10 %s' %(tmachine)</parms>
+                            <workdir>'/tmp'</workdir>
+                        </process>
+                        <log message="1">'ping ping %s %s' % (RC, tmachine)</log>
+                        <if expr="RC == 0">
+                            <break/>
+                        </if>
+                        <stafcmd name="'Sleep 30 seconds'">
+                            <location>"tms"</location>
+                            <service>'DELAY'</service>
+                            <request>'DELAY 30000'</request>
+                        </stafcmd>
+                    </sequence>
+                </loop>
+            </timer>
+            <stafcmd name="'Sleep two minutes'">
+                <location>"tms"</location>
+                <service>'DELAY'</service>
+                <request>'DELAY 120000'</request>
+            </stafcmd>
+        </sequence>
+    </function>
+    
+    <function name="installimage" scope="local">
+        <function-prolog> Install Image </function-prolog>
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa23'"> Name of the machine that hosts virtual system </function-optional-arg>
+            <function-optional-arg name="tmachine" default="'qa28.lab.zimbra.com'"> Name of the target machine that hosts virtual system </function-optional-arg>
+            <function-optional-arg name="iso" default="'/data/image/qa28/zcs.iso'"> Name of the image </function-optional-arg>
+        </function-map-args>
+        <sequence>
+            <log message="1">'Install Operating System on %s for %s' % (machine, tmachine)</log>
+            <process name="'Install Image'">
+                <location>machine</location>
+                <command>'/bin/env'</command>
+                <workdir>'/opt/qa/genesis'</workdir>
+                <parms>'ruby installiso.rb -s /data/vmware/%s -i %s' %(tmachine, iso)</parms>
+                <stdout>'/tmp/install%s.out'% (tmachine)</stdout>
+                <stderr mode="'stdout'"/>
+            </process>
+        </sequence>
+    </function>
+    
+    <function name="hooktoqa00" scope="local">
+        <function-prolog>Hook up to qa00</function-prolog>
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa23'"> Name of the machine that hosts virtual system </function-optional-arg>
+            <function-optional-arg name="tmachine" default="'qa28'"> Name of the virtual system </function-optional-arg>
+            <function-optional-arg name="dhcpip" default="'10.10.131.160'">Initial IP adderss after install</function-optional-arg>
+        </function-map-args>
+        <sequence>
+            <process name="'Remove Known SSH Host'">
+                <location>machine</location>
+                <command>'/bin/rm'</command>
+                <workdir>'/root/.ssh'</workdir>
+                <parms>'known_hosts'</parms>
+            </process>
+            <log message="1">'Copy expect script to host system'</log>
+            <stafcmd name="'Create Directory'">
+                <location>machine</location>
+                <service>'fs'</service>
+                <request>'CREATE DIRECTORY /opt/qa/tools'</request>
+            </stafcmd>
+            <stafcmd name="'Copy Testware'">
+                <location>'tms'</location>
+                <service>'fs'</service>
+                <request>'COPY FILE /opt/qa/tools/rpathboot.expect TOFILE /opt/qa/tools/rpathboot.expect TOMACHINE %s' % (machine)</request>
+            </stafcmd>
+            <log message="1">'Bootstrap %s' % tmachine</log>
+            <process name="'Run Expect'">
+                <location>machine</location>
+                <command>'/bin/env'</command>
+                <workdir>'/opt/qa/tools'</workdir>
+                <parms>"expect rpathboot.expect %s changeme %s" % (dhcpip, tmachine)</parms>
+                <stdout mode="'append'">'/tmp/install%s.out'% (tmachine)</stdout>
+                <stderr mode="'stdout'"/>
+            </process>
+            <stafcmd name="'Sleep 30 seconds'">
+                <location>"tms"</location>
+                <service>'DELAY'</service>
+                <request>'DELAY 30000'</request>
+            </stafcmd>
+            <timer duration="'15m'">
+                <loop>
+                    <sequence>
+                        <stafcmd name="'Ping'">
+                            <location>tmachine</location>
+                            <service>'PING'</service>
+                            <request>'PING'</request>
+                        </stafcmd>
+                        <if expr="RC == STAFRC.Ok">
+                            <break/>
+                        </if>
+                        <stafcmd name="'Sleep 5 seconds'">
+                            <location>"tms"</location>
+                            <service>'DELAY'</service>
+                            <request>'DELAY 5000'</request>
+                        </stafcmd>
+                        <stafcmd name="'Purge Cache'">
+                            <location>"tms"</location>
+                            <service>'misc'</service>
+                            <request>'purge endpointcache tcp://%s' % tmachine</request>
+                        </stafcmd>
+                    </sequence>
+                </loop>
+            </timer>
+        </sequence>
+    </function>
+    
+    <function name="mzmsetup" scope="local">
+        <function-prolog>Do zmseutp function</function-prolog>
+        <function-map-args>
+            <function-optional-arg name="tmachine" default="'qa28'"> Name of the virtual system </function-optional-arg>
+            <function-optional-arg name="configuration" default="'/opt/qa/main/zimbraInstall/data/zimbraInstall/scriptInput/current/configSingleNodeTemplate.xml'">
+               Install configuration
+            </function-optional-arg>            
+            <function-optional-arg name="zmsetupConfiguration" default="'zmsetupConfig.txt'">
+               Install configuration
+            </function-optional-arg>         
+        </function-map-args>
+        <sequence>
+            <import machine="'tms'" file="'/usr/local/staf/services/lib/installUtils.xml'"/>
+            <import machine="'tms'" file="'/usr/local/staf/services/lib/configUtils.xml'"/>     
+                  
+            <script>outputFile=STAXGlobal(['/tmp/install.out'])</script> 
+            <script>maxSize=STAXGlobal([300000])</script>
+            <script>
+      			  gMachines=STAXGlobal({'qa00':   'tms.lab.zimbra.com',
+                                        'build' : 'build.lab.zimbra.com'})
+   			</script> 
+            <script>STAXMessageLog=0</script>
+            <script>failed = "FAILED"</script>
+            <script>passed = "PASSED"</script>
+            <call function="'getLicense'">
+                {'machine': tmachine,
+                 'outputFile': outputFile[0]}
+            </call>
+            <process name="'Cleanup global file'">
+                <location>tmachine</location>
+                <command>'/bin/rm'</command>
+                <workdir>'/tmp'</workdir>
+                <parms>outputFile</parms>                 
+            </process>
+            <script>machines=[tmachine]</script>
+            <call function="'getFqdnHostname'">machines[0]</call>
+            <script>fqdn = STAXResult</script>
+            <script>
+                import re
+                import os
+                f = open(configuration)
+                lines = f.readlines()
+                f.close()
+                needNewConfig = 0
+                for i in range(len(lines)):
+                   if lines[i].find('localhost') != -1:
+                      needNewConfig = 1
+                      lines[i] = lines[i].replace('localhost', fqdn)
+                if needNewConfig:
+                   toks = configuration.split(os.sep)
+                   configuration = '/tmp/' + toks[len(toks) - 1] + '.' + fqdn
+                   f = open(configuration, 'w')
+                   f.writelines(lines)
+                   f.close()
+            </script>
+            <call function="'genZmsetupTemplate'"> {'file' : configuration, 'machine' : fqdn} </call>
+            <script>template = STAXResult</script>          
+            <call function="'runZmsetup'"> {'machine' : tmachine, 'config' : template } </call>   
+      
+        </sequence>
+    </function>
+    
+    <function name="install" scope="local">
+        
+        <function-prolog> This function is used to fetch build from Zimbra server on a virtual host </function-prolog>
+        
+        <function-map-args>
+            <function-optional-arg name="machine" default="'qa23'"> Name of the machine that hosts virtual system </function-optional-arg>
+            <function-optional-arg name="tmachine" default="'qa28'"> Name of the virtual system </function-optional-arg>
+            <function-optional-arg name="dhcpip" default="'10.10.131.160'">Initial IP adderss after install</function-optional-arg>
+            <function-optional-arg name="fileName" default="'/data/image/qa28/zcs.iso'"> Name of the file </function-optional-arg>
+            <function-optional-arg name="needNotify" default="'1'"> Is notification required? 1= yes others = no </function-optional-arg>
+            <function-optional-arg name="notificationAlias" default="'qa-automation@zimbra.com'"> This is email notification alias </function-optional-arg>
+            <function-optional-arg name="pjobID" default="'-1'"> JobID to signal job termination </function-optional-arg>
+            <function-optional-arg name="branch" default="'main'">
+                branch name
+            </function-optional-arg>
+            <function-optional-arg name="tms" default="'tms.lab.zimbra.com'">Location of TMS server </function-optional-arg>
+            <function-optional-arg name="tmsStax" default="'tms-stax.lab.zimbra.com'">Location of STAX server </function-optional-arg>
+        </function-map-args>
+        
+        <sequence>
+            <log message="1">'Setup System Configuration'</log>
+            <script>tdmachine="%s.lab.zimbra.com" % tmachine</script>
+            <call function="'copyrubyiso'"> {'machine' :machine}</call>
+            <call function="'installimage'"> {'machine' :machine, 'iso': fileName, 'tmachine' : tdmachine} </call>
+            <call function="'waitalive'"> {'machine' :machine, 'tmachine' : dhcpip} </call>
+            <log message="1">'Reboot System'</log>
+            <call function="'hooktoqa00'"> {'machine' : machine, 'tmachine' : tmachine, 'dhcpip': dhcpip}</call>
+            <log message="1">'Do zmsetup'</log>
+            <script>origDir = "/opt/qa/%s/zimbraInstall" % branch</script>
+	        <stafcmd>
+	             <location>'tms'</location>
+	             <service>'fs'</service>
+	             <request>'query entry %s'%origDir</request>
+	        </stafcmd>
+            <if expr="RC != 0">
+	         	<script>origDir = "/opt/qa/zimbraInstall"</script>
+	         </if>
+            <script>configuration="%s/data/zimbraInstall/scriptInput/current/configSingleNodeTemplate.xml" % origDir</script>
+            <call function="'mzmsetup'"> { 'tmachine' : tmachine, 'configuration' : configuration}</call>
+           
+            <script>passFail = [[0,''],[0,'']]</script>
+            <import machine="'tms'" file="'/usr/local/staf/services/lib/installUtils.xml'"/>
+            <call function="'zimbraStatus'">
+                {'machine' : tmachine,
+                 'file'    : '/tmp/stat.txt'}
+            </call>
+            <script>
+                if STAXResult[0] == 0:
+                   serverStat = 'PASSED'
+                else:
+                   serverStat = 'FAILED'
+                serverStatDetail = STAXResult[1]
+                passFail[0][1] += serverStatDetail
+            </script>
+             <if expr="pjobID !='-1'">
+                <sequence>
+                    <log>'Notify termination of job %s' % pjobID</log>
+                    <process name="'End Job'">
+                        <location>tms</location>
+                        <command>'/bin/env'</command>         
+                        <workdir>'/opt/qa/tools'</workdir>     
+                        <parms>'ruby /opt/qa/tools/endJob.rb %s' % pjobID</parms>         
+                        <stdout mode="'append'">'/tmp/install.out'</stdout>
+                        <stderr mode="'stdout'"/>
+                    </process>
+                </sequence>
+            </if>
+            <if expr="needNotify == '1'">
+                <timer duration="'5m'">
+                    <stafcmd name="'Send Completion Email'">
+                        <location>tmsStax</location>
+                        <service>'EMAIL'</service>
+                        <request>'SEND TO %s FROM qa-tms@zimbra.com TEXTATTACHMENT /var/log/zimbra.log TEXTATTACHMENT /opt/zimbra/log/zimbra.log TEXTATTACHMENT /tmp/install.out NOHEADER ATTACHMENTMACHINE %s message "Installation Completed\n%s\n" SUBJECT "%s build installation completed: %s"'% (notificationAlias, tmachine, serverStatDetail, tmachine, serverStat)</request>
+                    </stafcmd>
+                </timer> 
+            </if>
+        </sequence>
+    </function>
+</stax>
