@@ -50,8 +50,7 @@ current.setup = [
 #
 current.action = [
   v(cb("set ldap_url") do
-    url = mLdapUrl.split(/\s+/).last.gsub(/-\d+/, '-foo')
-    ZMLocalconfig.new('-e', "ldap_url=#{url}").run
+    ZMLocalconfig.new('-e', "ldap_url=ldap://test.me:389").run
   end) do |mcaller, data|
    mcaller.pass = data[0] == 0
   end,
