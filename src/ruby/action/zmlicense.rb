@@ -39,7 +39,7 @@ module Action # :nodoc
     #
 
     def initialize(*arguments)
-      super(File.join(ZIMBRAPATH,'bin','zmlicense'), USER_ROOT, *arguments)
+      super(File.join(ZIMBRAPATH,'bin','zmlicense'), ZIMBRAUSER, *arguments)
     end
   end
   
