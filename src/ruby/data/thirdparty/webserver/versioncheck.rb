@@ -58,12 +58,12 @@ current.action = [
                      end
     next([0, OSL::LegalApproved['jetty']]) if !storeInstalled
     mObject = RunCommand.new(File.join(Command::ZIMBRAPATH,'bin','zmjava'), Command::ZIMBRAUSER,
-                             '-jar', File.join(Command::ZIMBRAPATH, 'mailboxd', 'start.jar'),
+                             '-jar', File.join(Command::ZIMBRAPATH, 'common', 'jetty_home', 'start.jar'),
                              "-DSTART=#{File.join(Command::ZIMBRAPATH, 'mailboxd')}/etc/start.config", '--module=webapp',
                              '--version')
     mResult = mObject.run
   end) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1][/\b(\d+(\.\d+){2}\S+).*server/, 1] == OSL::LegalApproved['jetty']
+    mcaller.pass = data[0] == 0 && data[1][/\b(\d+(\.\d+){2}\S+)/, 1] == OSL::LegalApproved['jetty']
     if(not mcaller.pass)
       class << mcaller
         attr :badones, true
