@@ -64,7 +64,7 @@ module Action # :nodoc
         if(@su)
           puts   "#{@su} '#{@programName} #{processed_arg.join(' ')}'" if $DEBUG
           # There is an issue on Ubuntu16 where a service is stopped it is not 
-          # releasing STDOUT or STDERR correctly. So as a workaround to that
+          # releasing stdout or stderr file handle correctly. So as a workaround to that
           # output is redirected to a temp file and then temp file read for a response
           @response =  `#{@su} '#{@programName} #{processed_arg.join(' ')}' >/tmp/output 2>>/tmp/output`
           @exitstatus =  $?.exitstatus
