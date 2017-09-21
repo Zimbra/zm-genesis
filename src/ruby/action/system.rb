@@ -40,6 +40,7 @@ module Action # :nodoc
       @response = nil
       @exitstatus = 0
       @su = nil
+      @tempfile = `mktemp /tmp/output.XXXX`.chomp
       if(not (RUBY_PLATFORM =~ /win32/)) 
         if (RUBY_PLATFORM =~ /darwin/)
            @su = "/bin/su - #{@context} -l -c "
@@ -62,13 +63,22 @@ module Action # :nodoc
       }        
       begin
         if(@su)
-          puts   "#{@su} '#{@programName} #{processed_arg.join(' ')}' 2>&1" if $DEBUG 
-          @response =  `#{@su} '#{@programName} #{processed_arg.join(' ')}' 2>&1` 
+          puts   "#{@su} '#{@programName} #{processed_arg.join(' ')}'" if $DEBUG
+          # There is an issue on Ubuntu16 where a service is stopped it is not 
+          # releasing stdout or stderr file handle correctly. So as a workaround to that
+          # output is redirected to a temp file and then temp file read for a response
+          @response =  `#{@su} '#{@programName} #{processed_arg.join(' ')}' >#{@tempfile} 2>>#{@tempfile}`
+          @exitstatus =  $?.exitstatus
+          if !File.zero?(@tempfile)
+            @response = `cat #{@tempfile}`
+            puts "response-->#{@response}" if $DEBUG
+          end
+           `rm -f #{@tempfile}`
         else
           @response =  `#{@programName} #{processed_arg.join(' ')} 2>&1` 
+          @exitstatus =  $?.exitstatus
         end
         @response = @encoding.nil? ? @response : @response.force_encoding(@encoding)
-        @exitstatus =  $?.exitstatus
       rescue => e
         @response = e.to_s + e.backtrace.join("\n")
         @exitstatus = 1
