@@ -48,7 +48,7 @@ current.setup = [
 current.action = [  
   v(cb("Zimbra User Permission Check") do
     mObject = Action::RunCommand.new('find','root', Command::ZIMBRAPATH, 
-    " -user zimbra -perm +002 -type f  #{printOption}").run 
+    " -user zimbra -perm /+002 -type f  #{printOption}").run 
     [ 
      '/opt/zimbra/\.bash_history',
      '.*?catalina.out',
