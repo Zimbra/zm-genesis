@@ -29,10 +29,9 @@ Once you have genesis.tar file under /opt/qa directory, you will
    * rvm --default use 2.0.0
 
 2. Install basic linux packages man, psutil, tzdata, psmisc, ruby-dev, gcc. 
-3. SNMP package since they scan admin mailbox for certain notification mails. 
-4. Tests expect default timezone to be PDT. There are lot of IMAP tests which has the expected results mentioned in PDT format. So configure default time zone using "dpkg-reconfigure tzdata"
-5. Disable setting in /root/.profile which prevents users on the machine writing to your current terminal device by commenting line msg n.
-6. ZCS installation needs to have a default domain which is same has hostname. This is because lot of tests are using zmhostname command to configure domains for test accounts. This will be fixed soon to 
-7. Admin password needs to be 'test123'.
-8. Create symlink as ln -s /usr/bin/env /bin/env 
+3. Tests expect default timezone to be PDT. There are lot of IMAP tests which has the expected results mentioned in PDT format. So configure default time zone using "dpkg-reconfigure tzdata"
+4. Disable setting in /root/.profile which prevents users on the machine writing to your current terminal device by commenting line msg n.
+5. ZCS installation needs to have a default domain which is same has hostname. This is because lot of tests are using zmhostname command to configure domains for test accounts. This will be fixed soon to 
+6. Admin password needs to be 'test123'.
+7. Create symlink as ln -s /usr/bin/env /bin/env 
 
