@@ -44,7 +44,7 @@ Here is how you can run a single testcase
 
 Here is how a complete test plan can be run:
 
-`ruby runtest.rb —plan conf/genesis/smokeoss.rb --log <logpath>`
+`ruby runtest.rb —plan conf/genesis/smokeoss.txt --log <logpath>`
 
 With --log option, genesis logs can be redirected custom log location. Once the test run is complete report.txt file is created which has the summary of testrun along with the list of failed testcases.
 
