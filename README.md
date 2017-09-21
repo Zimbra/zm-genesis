@@ -35,3 +35,16 @@ Once you have genesis.tar file under /opt/qa directory, you will
 6. Admin password needs to be 'test123'.
 7. Create symlink as ln -s /usr/bin/env /bin/env 
 
+
+__Sample examples to run Genesis tests:__
+
+Here is how you can run a single testcase
+
+`ruby runtest.rb --testcase <testcasepath>`
+
+Here is how a complete test plan can be run:
+
+`ruby runtest.rb —plan conf/genesis/smokeoss.rb --log <logpath>`
+
+With --log option, genesis logs can be redirected custom log location. Once the test run is complete report.txt file is created which has the summary of testrun along with the list of failed testcases.
+
