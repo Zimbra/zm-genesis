@@ -5,6 +5,13 @@
 2. Do chmod +x STAF3426-setup-linux-amd64.bin
 3. Now execute the binary
 4. Use the default settings while doing the installation. 
+5. Add following lines in STAF.cfg.
+   # Set default local trust
+   trust level 5 default
+   trust level 5 machine tcp://10.0.1.* #Update IP address according to your setup
+   trust level 5 machine tcp://10.0.1.* #Update IP address according to your setup
+   trust machine local://local level 5
+
 5. Go to /usr/local/staf directory and run STAFEnv.sh, this will setup your environment for running STAF.
 6. Now run startSTAFProc.sh, this will start STAF process on the server.
 7. Once the above steps are successful, try following command to make sure STAF is working fine:
