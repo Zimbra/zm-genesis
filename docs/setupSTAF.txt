@@ -1,0 +1,24 @@
+
+**Steps to install and configure STAF for genesis execution:**
+
+1. Download the STAF binary from here http://prdownloads.sourceforge.net/staf/STAF3426-setup-linux-amd64.bin
+2. Do chmod +x STAF3426-setup-linux-amd64.bin
+3. Now execute the binary
+4. Use the default settings while doing the installation. 
+5. Go to /usr/local/staf directory and run STAFEnv.sh, this will setup your environment for running STAF.
+6. Now run startSTAFProc.sh, this will start STAF process on the server.
+7. Once the above steps are successful, try following command to make sure STAF is working fine:
+   root@genesis:/usr/local/staf# bin/staf local ping ping 
+   Response
+   --------
+   PONG
+   
+   Here, PONG response indicates that STAF is working fine. 
+8. Now if you want to execute Genesis harness remotely, you need to have STAF configured on target machine also.
+   Follow the same steps to configure genesis on target machine and then run following command to make sure that STAF is able to communicate successfully with target machine:
+   
+   root@genesis:/usr/local/staf# bin/staf <target machine> ping ping 
+   Response
+   --------
+   PONG
+
