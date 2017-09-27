@@ -28,4 +28,27 @@
    Response
    --------
    PONG
+   
+**Note that before running the testplan using genesis you might need to do following settings**
+
+1. touch new file /etc/ld.so.conf.d/staf.conf and add "/usr/local/staf/lib"to it and then run ldconfig
+2. Also, there seems to be some issue with versioning of libcrypto.so
+   root@genesis:/# find / -name "libcrypto.so.*"
+   /lib/x86_64-linux-gnu/libcrypto.so.1.0.0
+   /usr/local/staf/lib/libcrypto.so.1.0.0
+   rename  /usr/local/staf/lib/libcrypto.so.1.0.0 to  /usr/local/staf/lib/libcrypto.so.1.1.1
+   
+ ***Please note that this is just a temporary workaround till permanent solution is found.
+ 
+   
+   
+
+
+   
+ 
+   
+ 
+   
+   
+
 
