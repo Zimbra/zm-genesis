@@ -37,13 +37,7 @@ module Action # :nodoc
       super()
       self.timeOut = 600
       @zmcontrolpro = File.join(ZIMBRAPATH,'bin','zmcontrol')
-      host = Model::TARGETHOST
-      host = arguments.pop if arguments.last.instance_of?(Model::Host)
-      if(host.to_s == Model::TARGETHOST.to_s)
-        @runner = System.new(File.join('','usr','bin','perl'), ZIMBRAUSER, @zmcontrolpro, *arguments)
-      else 
-        @runner = StafSystem.new(host, File.join('','usr','bin','perl'), ZIMBRAUSER, @zmcontrolpro, *arguments)
-      end 
+      @runner =  RunCommand.new(File.join(ZIMBRAPATH,'bin', 'zmcontrol'), ZIMBRAUSER, *arguments)
     end 
         
     def run
@@ -88,5 +82,3 @@ if $0 == __FILE__
     end
   end
 end
-
-
