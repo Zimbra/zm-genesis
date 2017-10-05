@@ -55,15 +55,17 @@ current.action = [
   end,
 
   v(ZMProv.new('gc', cName, 'zimbraIdentityMaxNumEntries')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraIdentityMaxNumEntries:\s+#{maxIdentities}\s+/
+    puts "Data: #{data[1]}"
+    puts "MaxIdentities: #{maxIdentities}"
+    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraIdentityMaxNumEntries:\s+#{maxIdentities}\s*$/
   end,
-	
+  
   v(ZMProv.new('ca', address.name, Model::DEFAULTPASSWORD, 'zimbraCOSId', mId)) do |mcaller, data| 
     mcaller.pass = data[0] == 0
   end,
  
   v(ZMProv.new('ga', address.name, 'zimbraIdentityMaxNumEntries')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraIdentityMaxNumEntries:\s+#{maxIdentities}\s+/
+    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraIdentityMaxNumEntries:\s+#{maxIdentities}\s*$/ 
   end,
 
   (1..maxIdentities - 1).to_a.map do |x|
