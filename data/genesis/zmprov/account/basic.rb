@@ -179,22 +179,22 @@ current.action = [
     mcaller.pass = data[0] == 0 && data[1] =~ /^[\da-f\-]{36}$/
   end,
   v(ZMProv.new('gsig', testAccount)) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraSignatureName:\s+testsignature1\s/ &&
+    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraSignatureName:\s+testsignature1\s*$/ &&
                    data[1] =~ /zimbraSignatureId:\s+#{sigId1}\s/
   end,
-  v(ZMProv.new('ga', testAccount, 'zimbraPrefDefaultSignatureId')) do	|mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraPrefDefaultSignatureId:\s+#{sigId1}\s/
+  v(ZMProv.new('ga', testAccount, 'zimbraPrefDefaultSignatureId')) do |mcaller, data|
+    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraPrefDefaultSignatureId:\s+#{sigId1}\s*$/
   end,
   v(ZMProv.new('csig', testAccount, 'testsignature2')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1] =~ /^[\da-f\-]{36}$/
   end,
   v(ZMProv.new('ga', testAccount, 'zimbraPrefDefaultSignatureId')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraPrefDefaultSignatureId:\s+#{sigId1}\s/
+    mcaller.pass = data[0] == 0 && data[1] =~ /zimbraPrefDefaultSignatureId:\s+#{sigId1}\s*$/
   end,
   v(ZMProv.new('dsig', testAccount, 'testsignature1')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].empty?
   end,
-  v(ZMProv.new('ga', testAccount, 'zimbraPrefDefaultSignatureId')) do	|mcaller, data|
+  v(ZMProv.new('ga', testAccount, 'zimbraPrefDefaultSignatureId')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !data[1].include?('zimbraPrefDefaultSignatureId')
   end,
   # create data source

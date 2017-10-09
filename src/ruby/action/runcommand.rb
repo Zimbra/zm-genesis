@@ -15,8 +15,8 @@ end
 require 'model/testbed'
 require 'action/command' 
 require 'action/system'
-require 'action/stafsystem' 
- 
+require 'action/stafsystem'
+
 module Action # :nodoc 
   #
   # Perform zmbackup action.  This will invoke some zmbackup with some argument
@@ -31,11 +31,16 @@ module Action # :nodoc
       super()
       host = Model::CLIENTHOST
       host = arguments.pop if arguments.last.instance_of?(Model::Host)
-      if(host.to_s == Model::TARGETHOST.to_s)
+      #If the genesis.conf not found then genesis will be executed locally
+      if(!File.exist?(File.join(Model::GENESISPATH,'conf','genesis.conf')))
         @runner = System.new(*arguments)
-      else 
+      elsif((host.to_s != Model::CLIENTHOST.to_s) && (host.to_s != Model::TARGETHOST.to_s))
+        #If the there is a command that needs to be executed on a specifed host
         @runner = StafSystem.new(host.to_s, *arguments)
-      end  
+      else
+        #else genesis will be executed on the target host
+        @runner = StafSystem.new(Model::TARGETHOST.to_s, *arguments)
+      end
     end
     
     def run
@@ -178,6 +183,3 @@ if $0 == __FILE__
     end
   end
 end
-
-
- 

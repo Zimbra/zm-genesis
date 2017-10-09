@@ -80,11 +80,13 @@ module Action # :nodoc
         end
       end
 
+      #$DEBUG=1
       commandLine = @su + "'#{@programName} #{processed_arg.join(' ')}'\""+
         " WAIT RETURNSTDOUT RETURNSTDERR"
       puts commandLine if $DEBUG
       f = IO.popen(commandLine)
       result = f.read
+      puts "Response = #{result}" if $DEBUG
       f.close_read
       begin
         resultA = parseData(result)
@@ -92,9 +94,23 @@ module Action # :nodoc
         resultA = [nil, nil]
       end
       @exitstatus = getReturnCode(result).to_i
+      puts "ResultA = #{resultA}" if $DEBUG
       #@response = result
-      @response = getReturnData(resultA[0])
-      [@exitstatus, @response, getReturnData(resultA[1])]
+      #If STDOUT is not empty, then collect the response from STDOUT
+      if getReturnData(resultA[0])!= "" 
+         puts "STDOUT not empty" if $DEBUG
+         @response = getReturnData(resultA[0])
+      else # IF STDOUT is empty then collect the response from STDERR
+         if getReturnData(resultA[1]).strip() == '}'
+            @response = ""
+            puts "STDERR is empty" if $DEBUG
+         else
+            @response = getReturnData(resultA[1])
+            puts "STDERR not empty" if $DEBUG
+         end
+      end
+      puts "Final response: #{@response}\n\n\n\n" if $DEBUG
+      [@exitstatus, @response, getReturnData(resultA[1]).strip()]
     end
 
     def parseData(data)

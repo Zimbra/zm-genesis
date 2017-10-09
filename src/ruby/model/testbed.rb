@@ -30,10 +30,28 @@ module Model # :nodoc
   POP = 110
   POPSSL = 995
   PTMS = ENV['tms'] || 'zqa-tms.eng.vmware.com'
-
-  
   DEFAULTPASSWORD = 'test123'
+  GENESISPATH = '/opt/qa/genesis'
+  puts "Setting up testbed for Genesis execution"
+  #Check if the configuration file is present for remote execution
+  begin
+    require 'parseconfig' #gem install parseconfig
+    config = ParseConfig.new(File.join(GENESISPATH,'conf','genesis.conf'))
+    tName = config['TARGETHOST']
+    lName = config['CLIENTHOST']
+    domain = config['DOMAIN']
+    architecture = config['ARCHITECTURE'].to_i
+    puts "gensis.conf found!" 
+    puts "Using remote configuration to execute genesis..."
+    puts "Source machine: #{lName}"
+    puts "Target machine: #{tName}"
+    HOSTINFORMATION = {'target_machine' => tName, 'name' => lName,  'domain' => domain, 'architecture' => architecture}
+  rescue Errno::EACCES => e
+    puts "genesis.conf not found."
+  end
+
   unless defined?(HOSTINFORMATION)
+    puts "Using local configuration to execute genesis..."
     begin
       require 'xmlrpc/client'
       require 'yaml'
@@ -64,7 +82,6 @@ module Model # :nodoc
       lHost, lDomain = hostArray
       result =  {'target_machine' => lName, 'name' => lHost,  'domain' => lDomain, 'architecture' => 1}
       server = XMLRPC::Client.new2("http://%s/xmlrpc/api"%PTMS)
-     
       callresult = YAML.load(server.call("machine.Gethostinformation", lHost, lDomain))
       result = callresult  if callresult.has_key?('name')
       HOSTINFORMATION = result
@@ -96,7 +113,5 @@ module Model # :nodoc
   YAHOOACCOUNTS = [ yahooAccount = Model::YahooImapUser.new("zimbraone@ymail.com", "test123") ]
   yahooAccount.host =  Model::Host.new('imap', 'mail.yahoo.com', false)
   DATAPATH = File.join('/opt', 'qa', 'genesis', 'data', 'TestMailRaw')
-
-
 end
 
