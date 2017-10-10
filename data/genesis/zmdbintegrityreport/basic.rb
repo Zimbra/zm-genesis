@@ -37,6 +37,7 @@ include Action
 #
 # Global variable declaration
 #
+adminAccount = 'admin@' + Model::TARGETHOST.to_s
 current = Model::TestCase.instance()
 current.description = "Test zmdbintegrityreport"
 time = Time.now
@@ -76,7 +77,7 @@ current.action = [
   #Wait a bit for system to finish
   WaitQueue.new,
   
-  v(ZMSoap.new('-z', '-m', Model::TARGETHOST.to_s, 'SearchRequest/query=in:inbox ../limit=1')) do |mcaller, data|
+  v(ZMSoap.new('-z', '-m', adminAccount, 'SearchRequest/query=in:inbox ../limit=1')) do |mcaller, data|
     eTime = Time.at(data[1][/\sd="(\d+)"\s/, 1].to_i/1000)
     mcaller.pass = data[0] == 0 &&
                    (hasErrors && data[1].include?('Database Integrity check report') && [-1,0].include?(time <=> eTime) ||
