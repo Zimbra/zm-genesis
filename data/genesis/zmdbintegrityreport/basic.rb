@@ -37,17 +37,12 @@ include Action
 #
 # Global variable declaration
 #
+adminAccount = 'admin@' + Model::TARGETHOST.to_s
 current = Model::TestCase.instance()
 current.description = "Test zmdbintegrityreport"
 time = Time.now
 datestring = time.strftime("%Y-%m-%d")
 searchsubject = "Daily mail report for "+datestring
-expected = ["Usage: /opt/zimbra/libexec/zmdbintegrityreport [-m] [-o] [-r] [-v] [-h]",
-                "-m emails report to admin account, otherwise report is presented on stdout",
-                "-o attempt auto optimization of tables", #Bug 103083
-                "-r attempt auto repair of tables",
-                "-v verbose output",
-                "-h help"]
 hasErrors = false
 #
 # Setup
@@ -62,16 +57,16 @@ current.setup = [
 current.action = [
 
   v(ZMDbintegrityreport.new('--help')) do |mcaller,data|
-    mcaller.pass = data[0] == 1 && data[1].split(/\n+/).sort == expected.sort
+    mcaller.pass = data[0] == 1 && data[1].include?('Usage')
   end,
   
   v(ZMDbintegrityreport.new('-v')) do |mcaller,data|
-	  mcaller.pass = (data[0] == 0 && (data[1].include?("No errors found") || data[1].include?("Database errors found")))
+    mcaller.pass = (data[0] == 0 && (data[1].include?("No errors found") || data[1].include?("Database errors found")))
   end,
   
   v(ZMDbintegrityreport.new('-r')) do |mcaller,data|
     hasErrors = !data[1].empty?
-	  mcaller.pass = data[0] == 0
+    mcaller.pass = data[0] == 0
   end,
   
   #Bug 50095 zmdbintegrityreport -m does not send mail to admin
@@ -82,7 +77,7 @@ current.action = [
   #Wait a bit for system to finish
   WaitQueue.new,
   
-  v(ZMSoap.new('-z', '-m', 'admin@`zmhostname`', 'SearchRequest/query=in:inbox ../limit=1')) do |mcaller, data|
+  v(ZMSoap.new('-z', '-m', adminAccount, 'SearchRequest/query=in:inbox ../limit=1')) do |mcaller, data|
     eTime = Time.at(data[1][/\sd="(\d+)"\s/, 1].to_i/1000)
     mcaller.pass = data[0] == 0 &&
                    (hasErrors && data[1].include?('Database Integrity check report') && [-1,0].include?(time <=> eTime) ||
@@ -103,4 +98,3 @@ if($0 == __FILE__)
   require 'engine/simple'
   testCase = Model::TestCase.instance
   Engine::Simple.new(Model::TestCase.instance).run
-end

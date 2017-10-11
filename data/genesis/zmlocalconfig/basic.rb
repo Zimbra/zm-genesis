@@ -100,7 +100,7 @@ current.action = [
     mcaller.pass = data[0] == 0 && data[1] =~ /#{File.join(Command::ZIMBRAPATH, 'data', 'tmp')}/
   end,
 
-  v(ZMProv.new('ms', '`zmhostname`', 'zimbraserviceEnabled', 'convertd')) do |mcaller, data|
+  v(ZMProv.new('ms', Model::TARGETHOST.to_s, 'zimbraserviceEnabled', 'convertd')) do |mcaller, data|
     mcaller.pass = data[0] != 0 && data[1].include?('error: cannot replace multi-valued attr value unless -r is specified')
   end,
 ]
