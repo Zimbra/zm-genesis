@@ -27,15 +27,10 @@ testAccount = Model::TARGETHOST.cUser(name, Model::DEFAULTPASSWORD+'no')
 adminAccount = Model::TARGETHOST.cUser('admin', Model::DEFAULTPASSWORD)
 Net::IMAP.add_authenticator('X-ZIMBRA', XZimbraAuthenticator)
 
-if Model::TARGETHOST.proxy
-  imapPort = 7143
-else
-  imapPort = Model::IMAP
-end
-mimap = Net::IMAP.new(Model::TARGETHOST, imapPort, false)
-mimap2 = Net::IMAP.new(Model::TARGETHOST, imapPort, false)
-mimap3 = Net::IMAP.new(Model::TARGETHOST, imapPort, false)
-mimap4 = Net::IMAP.new(Model::TARGETHOST, imapPort, false)
+mimap = Net::IMAP.new(Model::TARGETHOST, *Model::TARGETHOST.imap)
+mimap2 = Net::IMAP.new(Model::TARGETHOST, *Model::TARGETHOST.imap)
+mimap3 = Net::IMAP.new(Model::TARGETHOST, *Model::TARGETHOST.imap)
+mimap4 = Net::IMAP.new(Model::TARGETHOST, *Model::TARGETHOST.imap)
 
 message = <<EOF.gsub(/\n/, "\r\n")
 Subject: hello
