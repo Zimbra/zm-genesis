@@ -53,7 +53,7 @@ current.action = [
       IDVerify.new(mimap, 'before login', '("x-vIa" "testclient" "nAmE" "FF" "vErSiOn" "10.13")'),
       p(mimap.method('login'),testAccount.name,testAccount.password),
       ## TODO - use log checker
-      v(RunCommand.new('tail', 'root', '-n15', File.join(Command::ZIMBRAPATH, 'log', 'mailbox.log'))) do | mcaller, data |
+      v(RunCommandOnMailbox.new('tail', 'root', '-n15', File.join(Command::ZIMBRAPATH, 'log', 'mailbox.log'))) do | mcaller, data |
         mcaller.pass = data[1].include?('via=testclient;ua=FF/10.13')
       end
     ]
@@ -64,14 +64,11 @@ current.action = [
       IDVerify.new(mimap, 'before login', '("x-vIa" "testclient" "nAmE" "FF" "vErSiOn" "10.13")'),
       p(mimap.method('login'),testAccount.name,testAccount.password),
       ## TODO - use log checker
-      v(RunCommand.new('tail', 'root', '-n15', File.join(Command::ZIMBRAPATH, 'log', 'mailbox.log'))) do | mcaller, data |
+      v(RunCommandOnMailbox.new('tail', 'root', '-n15', File.join(Command::ZIMBRAPATH, 'log', 'mailbox.log'))) do | mcaller, data |
         mcaller.pass = data[1].match(/via=FF\/10\.13,.+nginx.+ua=Zimbra/)
       end
     ]
   end,
-  
-
-  
   IDVerify.new(mimap, 'after login'),
   p(mimap.method('select'),"INBOX"),  
   IDVerify.new(mimap, 'after select'),
