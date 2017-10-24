@@ -50,7 +50,8 @@ current.action = [
   CreateAccount.new(testAccount.name,testAccount.password),
   
   # set the default IMAP error counter
-  ZMLocalconfig.new('-e pop3_max_consecutive_error=5'),
+  RunCommandOnMailbox.new('zmlocalconfig -e pop3_max_consecutive_error=5'),
+  #ZMLocalconfig.new('-e pop3_max_consecutive_error=5'),
   ZMMailboxdctl.new("restart"),
   ZMMailboxdctl.waitForMailboxd(),
   
