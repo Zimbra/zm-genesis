@@ -55,7 +55,7 @@ current.action = [
   #Normal operation
   proxy(mimap.method('create'),"blurdybloop"), 
   RenameVerify.new(mimap, "blurdybloop","Trash/bar"),   
-  v(RunCommand.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, '-X -e "select id,group_id,comment from zimbra.mailbox;"')) do |mcaller, data|
+  v(RunCommandOnMailbox.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, '-X -e "select id,group_id,comment from zimbra.mailbox;"')) do |mcaller, data|
     mcaller.pass = true 
     xmlData = REXML::Document.new(data[1])
     xmlData.elements['resultset'].elements.each do |node|
@@ -70,7 +70,7 @@ current.action = [
   v(cb("Duplicate Check") do 
     executeString = ['-e "select count(*) cnt, parent_id, name from mboxgroup', mgroupid, 
       '.mail_item where type=1 and mailbox_id=',mid, ' group by name, parent_id having cnt>1;"'].join('')
-    response = RunCommand.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, executeString).run  
+    response = RunCommandOnMailbox.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, executeString).run  
   end) do |mcaller, data|
     mcaller.pass = !data[1].include?("name")
   end 
