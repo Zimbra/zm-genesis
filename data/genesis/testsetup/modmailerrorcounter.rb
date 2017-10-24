@@ -42,8 +42,8 @@ current.action = [
   # change number of consecutive errors allowed in IMAP and POP3 to infinity
   # for testing purpose only
   # see bug #67663 and bug #51171
-  ZMLocalconfig.new('-e imap_max_consecutive_error=0'),
-  ZMLocalconfig.new('-e pop3_max_consecutive_error=0'),
+  RunCommandOnMailbox.new('zmlocalconfig -e imap_max_consecutive_error=0'),
+  RunCommandOnMailbox.new('zmlocalconfig -e pop3_max_consecutive_error=0'),
   ZMMailboxdctl.new("restart"),
   cb("wait") {sleep(5)},
      
