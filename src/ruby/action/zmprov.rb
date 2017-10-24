@@ -39,9 +39,9 @@ module Action # :nodoc
   class CreateAccount < Action::ZMProv
     def initialize(*arguments)
       #check to see if zimbraMailHost is supplied
-      unless(arguments.any? {|x| x == 'zimbraMailHost'})
-          arguments = arguments + ['zimbraMailHost', Model::TARGETHOST.to_s]
-      end
+      #unless(arguments.any? {|x| x == 'zimbraMailHost'})
+      #    arguments = arguments + ['zimbraMailHost', Model::TARGETHOST.to_s]
+      #end
       super('ca', *arguments)
     end
   end
