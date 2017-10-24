@@ -49,8 +49,10 @@ current.setup = [
 current.action = [  
   CreateAccount.new(testAccount.name,testAccount.password),
   
+  
   # set the default IMAP error counter
-  ZMLocalconfig.new('-e imap_max_consecutive_error=5'),
+  RunCommandOnMailbox.new('zmlocalconfig -e imap_max_consecutive_error=0'),
+  #ZMLocalconfig.new('-e imap_max_consecutive_error=5'),
   ZMMailboxdctl.new("restart"),
   #cb("wait") {sleep(15)},
   ZMMailboxdctl.waitForMailboxd(),
