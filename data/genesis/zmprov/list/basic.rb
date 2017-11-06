@@ -32,15 +32,12 @@ testAccountThree = Model::TARGETHOST.cUser(name+'3', Model::DEFAULTPASSWORD)
 testAccountFour = Model::TARGETHOST.cUser(name+'4', Model::DEFAULTPASSWORD)
 testAccountFive = Model::TARGETHOST.cUser(name+'5', Model::DEFAULTPASSWORD)  
 include Action
-
- 
 #
 # Setup
 #
 current.setup = [
    
 ]
-
 #
 # Execution
 #
@@ -52,21 +49,7 @@ current.action = [
   end,
   
   v(ZMProv.new('help', 'list')) do |mcaller, data|
-    usage = [Regexp.escape('addDistributionListAlias(adla) {list@domain|id} {alias@domain}'),
-             Regexp.escape('addDistributionListMember(adlm) {list@domain|id} {member@domain}+'),
-             Regexp.escape('createDistributionList(cdl) {list@domain}'),
-             Regexp.escape('createDynamicDistributionList(cddl) {list@domain}'),
-             Regexp.escape('deleteDistributionList(ddl) {list@domain|id}'),
-             Regexp.escape('getAllDistributionLists(gadl) [-v] [{domain}]'),
-             Regexp.escape('getDistributionList(gdl) {list@domain|id} [attr1 [attr2...]]'),
-             Regexp.escape('getDistributionListMembership(gdlm) {name@domain|id}'),
-             Regexp.escape('modifyDistributionList(mdl) {list@domain|id} attr1 value1 [attr2 value2...]'),
-             Regexp.escape('removeDistributionListAlias(rdla) {list@domain|id} {alias@domain}'),
-             Regexp.escape('removeDistributionListMember(rdlm) {list@domain|id} {member@domain}'),
-             Regexp.escape('renameDistributionList(rdl) {list@domain|id} {newName@domain}')
-            ]
-    mcaller.pass = data[0] == 0 &&
-                   data[1].split(/\n/).select {|w| w !~ /(#{usage.join('|')}|^$)/}.empty?
+    mcaller.pass = data[0] == 0 && data[1].include?("addDistributionListAlias")
   end,
   #Create Distribution List
   v(ZMProv.new('cdl',testAccount)) do |mcaller, data|	
