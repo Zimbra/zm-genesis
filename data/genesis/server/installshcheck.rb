@@ -29,13 +29,6 @@ current.description = "Install script check"
 
 include Action 
 
-def checkIPv4Validity(ip, valid)
-  v(RunCommand.new('source', 'root', File.join(Command::ZIMBRAPATH,'.uninstall','util','utilfunc.sh'),
-                   '; verifyIPv4', ip)) do |mcaller, data|
-    mcaller.pass = data[0] == (valid ? 0: 1)
-  end
-end
-
 usage = [Regexp.escape('./install.sh [-r <dir> -l <file> -a <file> -u -s -c type -x -h] [defaultsfile]'),
          Regexp.escape('-c|--cluster type       Cluster install type active|standby.'),
          Regexp.escape('-h|--help               Usage'),
@@ -69,23 +62,6 @@ current.action = [
     mcaller.pass = data[1] =~ /script.*\s+text/
   end,
   
-  ['0.0.0.0', '1.0.0.0.0',
-   '1.0.0', '2.0', '3',
-   '256.0.0.0', '260.0.0.0', '300.0.0.0',
-   '10.256.0.0', '10.271.0.0', '10.412.0.0',
-   '10.137.256.0', '10.137.534.0',
-   '10.137.244.656'
-  ].map do |x|
-     checkIPv4Validity(x, false)
-  end,
-  
-  ['1.0.0.0', '254.0.0.0', '255.0.0.0',
-   '10.23.0.0', '10.254.0.0', '10.255.0.0',
-   '10.137.45.0', '10.137.255.0',
-   '10.137.244.67', '10.137.244.254', '10.137.244.255'
-  ].map do |x|
-     checkIPv4Validity(x, true)
-  end,
     
   ['h', '-help'].map do |x|
     v(RunCommand.new('cd', 'root', File.join(Command::ZIMBRAPATH,'libexec','installer'),';./install.sh', '-' + x)) do |mcaller,data|
