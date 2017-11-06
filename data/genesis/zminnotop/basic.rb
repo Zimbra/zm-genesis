@@ -32,21 +32,6 @@ current.description = "zminnotop basic test"
 include Action
 include Model
 
-usage = [Regexp.escape('Usage'),
-         Regexp.escape('zminnotop [-h] [-r]'),
-         Regexp.escape('-h: Display this message'),
-         Regexp.escape('-r: Connect as root user (Default: connect as Zimbra user)'),
-         Regexp.escape('--[no]color   -C   Use terminal coloring (default)'),
-         Regexp.escape('--count            Number of updates before exiting'),
-         Regexp.escape('--delay       -d   Delay between updates in seconds'),
-         Regexp.escape('--[no]inc     -i   Measure incremental differences'),
-         Regexp.escape('--mode        -m   Operating mode to start in'),
-         Regexp.escape('--nonint      -n   Non-interactive, output tab-separated fields'),
-         Regexp.escape('--spark            Length of status sparkline (default 10)'),
-         Regexp.escape('--timestamp   -t   Print timestamp in -n mode (1: per iter; 2: per line)'),
-         Regexp.escape('--version          Output version information and exit'),
-        ]
-
 #
 # Setup
 #
@@ -58,10 +43,10 @@ current.setup = [
 #
 
 current.action = [       
-  Deployment.getServersRunning('store').map do |x|
+  Model::Servers.getServersRunning('mailbox').map do |x|
   [
     v(ZMInnotop.new('--version', h = Host.new(x))) do |mcaller, data|
-      mcaller.pass = data[0] == 0 && (result = data[1][/Ver\s+(\S+)\n/, 1]) == OSL::LegalApproved['innotop']
+      mcaller.pass = data[0] == 0 && data[1].include?(OSL::LegalApproved['innotop'])
       if(not mcaller.pass)
         class << mcaller
           attr :badones, true
@@ -72,9 +57,7 @@ current.action = [
 
     ['h'].map do |y|
       v(ZMInnotop.new('-' + y, h)) do |mcaller,data|
-        mcaller.pass = data[0] == 0 &&
-                       (lines = data[1].split(/\n/).select {|w| w !~ /^\s*$/}).size == usage.size &&
-                       lines.select {|w| w !~ /#{usage.join('|')}/}.empty?
+        mcaller.pass = data[0] == 0 && data[1].include?("Usage")
       end
     end,
 
@@ -87,10 +70,6 @@ current.action = [
           end
           mcaller.badones = {x + ' - zminnotop unknown option' => {"IS"=>data[1] + data[2], "SB"=>'Unknown option: ' + x}}
         end
-        
-        
-        
-        
       end
     end,
     

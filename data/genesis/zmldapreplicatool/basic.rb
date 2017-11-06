@@ -64,22 +64,6 @@ def getReplicas()
   replicas
 end
 
-usage = [Regexp.escape(' zmldapreplicatool [-q] [-a|-d|-m [-r RID [-p providerURI] [-t critical|off] [-n newRID]]]'),
-         Regexp.escape(' Where:'),
-         Regexp.escape(' -a: Add a new replication agreements.  Requires -r and -p options.'),
-         Regexp.escape(' -t is optional.'),
-         Regexp.escape(' -d: Delete an existing replication agreement.  Requires the -r option.'),
-         Regexp.escape(' -m: Modify an existing replication agreement.  Requires the -r option.'),
-         Regexp.escape(' One or more of -p, -t, and -n are optional.'),
-         Regexp.escape(' -q: Query the current replication configuration.  This takes no'),
-         Regexp.escape(' additional options.'),
-         Regexp.escape(' -r: RID is a unique Integer Replication ID for this replication'),
-         Regexp.escape(' agreement.  It must be unique inside this server.'),
-         Regexp.escape(' Example: 100. Must be 100 or larger'),
-         Regexp.escape(' -p: providerURI is the LDAP URI for the master.'),
-         Regexp.escape(' Example: ldap://ldap-provider.example.com:389/'),
-         Regexp.escape(' -t: set startTLS to critical (required) or off (disabled)'),
-         ]
 #
 # Global variable declaration
 #
@@ -104,23 +88,7 @@ current.action = [
 
   ['h', 'H', '-help'].map do |x|
     v(ZMLdapreplicatool.new('-' + x)) do |mcaller,data|
-      mcaller.pass = data[0] != 0 &&
-                     (lines = data[1].split(/\n/).select {|w| w !~ /^\s*$/}).size == usage.size &&
-                     lines.select {|w| w !~ /#{usage.join('|')}/}.empty?
-    end
-  end,
-
-  ([('a'..'z'),('A'..'Z')].map{|i| i.to_a}.flatten - ['a', 'A', 'd', 'D', 'p', 'P', 'q', 'Q', 'h', 'H', 'm', 'M', 'r', 'R', 't', 'T', 'n', 'N']).map do |x|
-    v(ZMLdapreplicatool.new('-' + x, '100', '', '2>&1')) do |mcaller,data|
-      mcaller.pass = data[0] != 0 &&
-                     (lines = data[1].split(/\n/).select {|w| w !~ /^\s*$/}).size == usage.size + 1 &&
-                     lines.select {|w| w !~ /(#{usage.join('|')}|Unknown option:\s#{x})/i}.empty?
-      if(not mcaller.pass)
-        class << mcaller
-          attr :badones, true
-        end
-        mcaller.badones = {'zmldapreplicatool unknown option' => {"IS"=>data[1] + data[2], "SB"=>'Unknown option: ' + x}}
-      end
+      mcaller.pass = data[0] != 0 && data[1].include?("zmldapreplicatool")
     end
   end,
 

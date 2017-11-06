@@ -60,28 +60,7 @@ current.action = [
   end,
   
   v(ZMProv.new('help', 'misc')) do |mcaller, data|
-    usage = [Regexp.escape('countObjects(cto) {userAccount|account|alias|dl|domain|cos|server|calresource|' +
-                           'accountOnUCService|cosOnUCService|domainOnUCService|internalUserAccount|' +
-                           'internalArchivingAccount} [-d {domain|id}] [-u {UCService|id}]'),
-             Regexp.escape('-- NOTE: countObjects can only be used with "zmprov -l/--ldap"'),
-             Regexp.escape('createBulkAccounts(cabulk) {domain} {namemask} {number of accounts to create}'),
-             Regexp.escape('describe(desc) [[-v] [-ni] [{entry-type}]] | [-a {attribute-name}]'),
-             Regexp.escape('exit(quit)'),
-             Regexp.escape('flushCache(fc) [-a] {acl|locale|skin|uistrings|license|all|account|' +
-                           'config|globalgrant|cos|domain|galgroup|group|mime|server|alwaysOnCluster|zimlet|<extension-cache-type>} ' +
-                           '[name1|id1 [name2|id2...]]'),
-             Regexp.escape('generateDomainPreAuth(gdpa) {domain|id} {name|id|foreignPrincipal} {by} {timestamp|0} {expires|0}'),
-             Regexp.escape('generateDomainPreAuthKey(gdpak) [-f] {domain|id}'),
-             Regexp.escape('getAuthTokenInfo(gati) {auth-token}'),
-             Regexp.escape('getSpnegoDomain(gsd)'),
-             Regexp.escape('help(?) commands'),
-             Regexp.escape('reloadMemcachedClientConfig(rmcc) all | mailbox-server [...]'),
-             Regexp.escape('getMemcachedClientConfig(gmcc) all | mailbox-server [...]'),
-             Regexp.escape('syncGal(syg) {domain} [{token}]'),
-             Regexp.escape('updatePresenceSessionId(upsid) {UC service name or id} {app-username} {app-password}'),
-            ]
-    mcaller.pass = data[0] == 0 &&
-                   data[1].split(/\n/).select {|w| w !~ /(#{usage.join('|')}|^$)/}.empty?
+       mcaller.pass = data[0] == 0 && data[1].include?("countObjects")
   end,
 
   #MaiboxInfo

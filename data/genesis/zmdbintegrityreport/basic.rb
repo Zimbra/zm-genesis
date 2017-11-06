@@ -98,3 +98,4 @@ if($0 == __FILE__)
   require 'engine/simple'
   testCase = Model::TestCase.instance
   Engine::Simple.new(Model::TestCase.instance).run
+end
