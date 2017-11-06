@@ -29,7 +29,7 @@ current.description = "Zmprov flush cache test"
 include Action
 
 adminAccount = Model::TARGETHOST.cUser('admin', Model::DEFAULTPASSWORD)
-zMailUrl = ZMProv.new('gs', '`zmhostname`', 'zimbraMailURL').run[1][/zimbraMailURL:\s*(\S+)/, 1]
+zMailUrl = ZMProv.new('gs', Model::TARGETHOST, 'zimbraMailURL').run[1][/zimbraMailURL:\s*(\S+)/, 1]
 allTypes = ZMProv.new('fc').run[1][/\{([^}<]*)/, 1].split('|').delete_if {|w| w =~ /</}
 
 #
