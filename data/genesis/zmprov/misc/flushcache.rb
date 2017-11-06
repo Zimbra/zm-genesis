@@ -20,25 +20,18 @@ require "action/verify"
 require "action/block"
 require "action/zmamavisd"
 
-
 #
 # Global variable declaration
 #
 current = Model::TestCase.instance()
 current.description = "Zmprov flush cache test"
 
-
 include Action
 
 adminAccount = Model::TARGETHOST.cUser('admin', Model::DEFAULTPASSWORD)
 zMailUrl = ZMProv.new('gs', '`zmhostname`', 'zimbraMailURL').run[1][/zimbraMailURL:\s*(\S+)/, 1]
 allTypes = ZMProv.new('fc').run[1][/\{([^}<]*)/, 1].split('|').delete_if {|w| w =~ /</}
-usage = [Regexp.escape('usage:  flushCache(fc) [-a] ' +
-                       '{acl|locale|skin|uistrings|license|all|account|config|globalgrant|cos|domain|galgroup|' +
-                       'group|mime|server|alwaysOnCluster|zimlet|<extension-cache-type>} ' +
-                       '[name1|id1 [name2|id2...]]'),
-         Regexp.escape('For general help, type : zmprov --help')
-        ]
+
 #
 # Setup
 #
@@ -53,15 +46,13 @@ current.action = [
 
   ['fc', 'FC', 'flushCache', 'flushcache'].map do |x|
     v(ZMProv.new(x)) do |mcaller, data|
-      mcaller.pass = data[0] != 0 &&
-                     data[1].split(/\n/).select {|w| w !~ /(#{usage.join('|')}|^$)/}.empty?
+      mcaller.pass = data[0] != 0 && data[1].include?("flushCache(fc)")
     end 
   end,
   
   ['fcx', 'xfc', 'fooflushCache', 'flushcacheblah'].map do |x|
     v(ZMProv.new(x)) do |mcaller, data|
-      mcaller.pass = data[0] != 0 && 
-                     data[1].strip.split(/\n/).first =~ /#{Regexp.escape('zmprov [args] [cmd] [cmd-args ...]')}/
+      mcaller.pass = data[0] != 0 && data[1].include?("zmprov is used for provisioning. Try:")
     end 
   end,
   
@@ -72,8 +63,7 @@ current.action = [
   end,
   
   v(ZMProv.new('fc', '-a')) do |mcaller, data|
-    mcaller.pass = data[0] != 0 &&
-                   data[1].split(/\n/).select {|w| w !~ /(#{usage.join('|')}|^$)/}.empty?
+      mcaller.pass = data[0] != 0 && data[1].include?("flushCache(fc)")
   end,
     
   #flushCache Flushing LDAP cache
@@ -83,7 +73,6 @@ current.action = [
 
   # Test case for Bug 67836
   ZMProv.new('ms', Model::TARGETHOST, 'zimbraMailURL', "\"#{zMailUrl}s\""),
-  
   ZMMailboxdctl.new('restart'),
   ZMMailboxdctl.waitForMailboxd(),
   
