@@ -45,12 +45,11 @@ accountOne = Model::TARGETHOST.cUser(name + '2' + timeNow, Model::DEFAULTPASSWOR
 accountTwo = Model::TARGETHOST.cUser(name + '3' + timeNow, Model::DEFAULTPASSWORD)
 providerBackup = ZMProv.new('gcf', 'zimbraUCProviderEnabled').run[1][/zimbraUCProviderEnabled:\s+(\S+)$/, 1]
 (ucAttrs = ZMProv.new('desc', "ucService").run[1].split(/\n/).select {|w| w =~ /^zimbraUC/}).delete('zimbraUCProvider')
- 
+
 #
 # Setup
 #
 current.setup = [
-   
 ]
 
 #
@@ -66,15 +65,7 @@ current.action = [
   end,
   
   v(ZMProv.new('help', 'ucservice')) do |mcaller, data|
-    usage = [Regexp.escape('createUCService(cucs) {name} [attr1 value1 [attr2 value2...]]'),
-             Regexp.escape('deleteUCService(ducs) {name|id}'),
-             Regexp.escape('getAllUCServices(gaucs) [-v]'),
-             Regexp.escape('getUCService(gucs) [-e] {name|id} [attr1 [attr2...]]'),
-             Regexp.escape('modifyUCService(mucs) {name|id} [attr1 value1 [attr2 value2...]]'),
-             Regexp.escape('renameUCService(rucs) {name|id} {newName}')
-            ]
-    mcaller.pass = data[0] == 0 &&
-                   data[1].split(/\n/).select {|w| w !~ /(#{usage.join('|')}|^$)/}.empty?
+      mcaller.pass = data[0] == 0 && data[1].include?("createUCService(cucs)")
   end,
   
   # delete provider enabled 
