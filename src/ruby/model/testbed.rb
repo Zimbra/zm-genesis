@@ -113,5 +113,6 @@ module Model # :nodoc
   YAHOOACCOUNTS = [ yahooAccount = Model::YahooImapUser.new("zimbraone@ymail.com", "test123") ]
   yahooAccount.host =  Model::Host.new('imap', 'mail.yahoo.com', false)
   DATAPATH = File.join('/opt', 'qa', 'genesis', 'data', 'TestMailRaw')
+  DOMAIN = Domain.new(HOSTINFORMATION['domain'])
 end
 
