@@ -451,12 +451,17 @@ def run_loop(path, report, actionfilter = nil, testcasefilter = nil)
       else
         next if  (not File.exist?(x))
         next if (testcasefilter && (not testcasefilter.include?(x)))
-        report.testcase += 1
-        llogger = CLogger.new(x)
-        puts "Executing testcase #{x}"
-        report = processor(x, report, llogger, actionfilter)
+        load x
+        xTest = Model::TestCase.instance
+        if xTest.skip != true
+           puts "Executing testcase: #{x}"
+           report.testcase += 1
+           llogger = CLogger.new(x)
+           report = processor(x, report, llogger, actionfilter)
+        else
+           puts "Skipping testcase: #{x}"
+        end
       end
-   
     rescue
       puts $!
     end

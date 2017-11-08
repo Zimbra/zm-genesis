@@ -28,6 +28,7 @@ require "action/verify"
 #
 current = Model::TestCase.instance()
 current.description = "IMAP GSSAPI"
+current.skip = true #Skip this testcase till kerberos system is set up
 
 name = 'imap'+File.basename(__FILE__,'.rb')+Time.now.to_i.to_s
 testAccount = Model::TARGETHOST.cUser(name, Model::DEFAULTPASSWORD)

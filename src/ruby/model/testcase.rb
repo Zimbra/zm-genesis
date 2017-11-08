@@ -18,9 +18,8 @@ require "action/filedelta"
   
     private_class_method :new
     @@current = nil
-    attr_reader :setup, :action, :description, :teardown, :verify, :monitor
-    attr_writer :setup, :action, :description, :teardown, :verify, :monitor
-    
+    attr_reader :setup, :action, :description, :teardown, :verify, :monitor, :skip
+    attr_writer :setup, :action, :description, :teardown, :verify, :monitor, :skip    
     def TestCase.instance
       unless @@current
         @@current = new
@@ -30,7 +29,7 @@ require "action/filedelta"
     end
     
     def initialize
-      @setup = @action = @description = @teardown = @verify = @monitor = nil
+      @setup = @action = @description = @teardown = @verify = @monitor = @skip = nil
     end
     
     def defaultSetup

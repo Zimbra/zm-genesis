@@ -51,7 +51,7 @@ current.setup = [
 current.action = [
 
   v(SALearn.new('-h')) do |mcaller, data|
-    mcaller.pass = (data[0] == 64) && data[1].include?('Usage')
+    mcaller.pass = (data[0] == 64) && data[1].include?('SpamAssassin')
   end,
 
   v(SALearn.new('--dbpath', '/opt/zimbra/data/amavisd/.spamassassin', '--siteconfigpath', '/opt/zimbra/conf/spamassassin', '--force-expire', '--sync'))  do |mcaller, data|
