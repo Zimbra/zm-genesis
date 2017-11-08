@@ -43,13 +43,12 @@ datestring = time.strftime("%Y-%m-%d")
 searchsubject = "Daily mail report for "+datestring
 name = File.expand_path(__FILE__).sub(/.*?(data\/)(genesis\/)?(zm)?/, 'zm').sub('.rb', '').gsub(/\/|\(|\)/, '')
 testAccount = Model::TARGETHOST.cUser(name + time.to_i.to_s, Model::DEFAULTPASSWORD)
+adminAccount = 'admin@' + Model::DOMAIN.to_s
 
 #
 # Setup
 #
 current.setup = [
-
-
 ]
 #
 # Execution
@@ -75,7 +74,7 @@ current.action = [
   #Wait a bit for system to send mail 
   WaitQueue.new,    
 
-  v(ZMSoap.new('-z', '-m', 'admin@`zmhostname`', 'SearchRequest/query=in:inbox')) do |mcaller, data|
+  v(ZMSoap.new('-z', '-m', adminAccount, 'SearchRequest/query=in:inbox')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?('SearchResponse') &&
                    data[1].include?(searchsubject)
   end,
@@ -103,9 +102,7 @@ current.action = [
 #
 
 current.teardown = [
-
 ]
-
 
 if($0 == __FILE__)
   require 'engine/simple'
