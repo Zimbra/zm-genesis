@@ -24,14 +24,12 @@ require "action/block"
 require "action/zmprov" 
 require "action/verify"
 require "#{mypath}/install/configparser"
-
 #
 # Global variable declaration
 #
 current = Model::TestCase.instance()
 current.description = "Zmprov account mail transport test"
 
- 
 include Action
 
 name = File.expand_path(__FILE__).sub(/.*?(data\/)(genesis\/)?(zm)?/, 'zm').sub('.rb', '').gsub(/\/|\(|\)/, '')
@@ -40,13 +38,10 @@ mDomain = ZMProv.new('gcf', 'zimbraDefaultDomainName').run[1].split.last
 accountOne = Model::User.new("#{name + '1' + timeNow}@#{mDomain}", Model::DEFAULTPASSWORD)
 accountTwo = Model::User.new("#{name + '2' + timeNow}@#{mDomain}", Model::DEFAULTPASSWORD)
 accountThree = Model::User.new("#{name + '3' + timeNow}@#{mDomain}", Model::DEFAULTPASSWORD)
-(mCfg = ConfigParser.new).run
- 
 #
 # Setup
 #
 current.setup = [
-   
 ]
 
 #
@@ -63,11 +58,11 @@ current.action = [
     mcaller.pass = data[0] == 0 &&
                    !(transport = data[1][/zimbraMailTransport:\s*(\S+)/, 1]).nil? &&
                    !(host = data[1][/zimbraMailHost:\s*(\S+)/, 1]).nil? &&
-                   mCfg.getServersRunning('store').include?(host) &&
+                   Model::Servers.getServersRunning("mailbox").first.include?(host) &&
                    transport == "lmtp:#{host}:7025"
   end,
   
-  v(ZMProv.new('ca', accountTwo.name, accountTwo.password, 'zimbraMailTransport', "lmtp:#{mCfg.getServersRunning('store').first}:7025")) do |mcaller, data|  
+  v(ZMProv.new('ca', accountTwo.name, accountTwo.password, 'zimbraMailTransport', "lmtp:#{Model::Servers.getServersRunning("mailbox").first}:7025")) do |mcaller, data|  
     mcaller.pass = data[0] == 0 && data[1] =~ /^[\da-f\-]{36}$/
   end,
   
@@ -75,12 +70,12 @@ current.action = [
     mcaller.pass = data[0] == 0 &&
                    data[1][/zimbraMailHost:\s*(\S+)/, 1].nil? &&
                    !(transport = data[1][/zimbraMailTransport:\s*(\S+)/, 1]).nil? &&
-                   transport =~ /lmtp:(#{mCfg.getServersRunning('store').join('|')}):7025/
+                   transport =~ /lmtp:(#{Model::Servers.getServersRunning("mailbox").first}):7025/
   end,
   
   v(ZMProv.new('ca', accountThree.name, accountThree.password,
-               'zimbraMailTransport', "lmtp:#{mCfg.getServersRunning('store').first}:7025",
-               'zimbraMailHost', mCfg.getServersRunning('store').first)) do |mcaller, data|  
+               'zimbraMailTransport', "lmtp:#{Model::Servers.getServersRunning("mailbox").first}:7025",
+               'zimbraMailHost', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data|  
     mcaller.pass = data[0] != 0 &&
                    data[1] =~ /invalid request: setting both zimbraMailHost and zimbraMailTransport in the same request is not allowed/
   end,
@@ -105,7 +100,8 @@ case (a)
 =end
   v(ZMProv.new('ma', accountOne.name, 'zimbraMailHost', 'foo.com')) do |mcaller, data|  
     mcaller.pass = data[0] != 0 &&
-                   data[1] =~ /invalid request: specified zimbraMailHost does not correspond to a valid server service hostname: foo.com/
+                   (data[1].include?("ERROR: account.NO_SUCH_SERVER (no such server: foo.com)") \
+                    or data[2].include?("ERROR: account.NO_SUCH_SERVER (no such server: foo.com"))
   end,
   
   ZMProv.new('cs', 'test.com'),
@@ -140,7 +136,7 @@ case (a)
     zmprov ma zimbraMailHost mbs2 zimbraMailTransport smtp:relay2 -> error
 (never allowed)
 =end
-  v(ZMProv.new('ma', accountTwo.name, 'zimbraMailHost', mCfg.getServersRunning('store').first)) do |mcaller, data|  
+  v(ZMProv.new('ma', accountTwo.name, 'zimbraMailHost', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data|  
     mcaller.pass = data[0] == 0 && data[1] =~ /^$/
   end,
   
@@ -150,18 +146,18 @@ case (a)
 
   v(ZMProv.new('ga', accountTwo.name, 'zimbraMailHost', 'zimbraMailTransport')) do |mcaller, data|  
     mcaller.pass = data[0] == 0 &&
-                   data[1][/zimbraMailHost:\s*(\S+)/, 1] == mCfg.getServersRunning('store').first &&
+                   data[1][/zimbraMailHost:\s*(\S+)/, 1] == Model::Servers.getServersRunning("mailbox").first &&
                    data[1][/zimbraMailTransport:\s*(\S+)/, 1] == 'smtp:relay.com'
   end,
   
-  v(ZMProv.new('ma', accountTwo.name, 'zimbraMailHost', mCfg.getServersRunning('store').first)) do |mcaller, data|  
+  v(ZMProv.new('ma', accountTwo.name, 'zimbraMailHost', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data|  
     mcaller.pass = data[0] != 0 &&
-                   data[1] =~ /invalid request: current value of zimbraMailHost does not match zimbraMailTransport, computed mail transport from current zimbraMailHost=lmtp:#{mCfg.getServersRunning('store').first}:7025, current zimbraMailTransport=smtp:relay.com/
+                   data[1] =~ /invalid request: current value of zimbraMailHost does not match zimbraMailTransport, computed mail transport from current zimbraMailHost=lmtp:#{Model::Servers.getServersRunning("mailbox").first}:7025, current zimbraMailTransport=smtp:relay.com/
   end,
 
   v(ZMProv.new('ma', accountTwo.name, 
                'zimbraMailTransport', 'smtp:relay.com',
-               'zimbraMailHost', mCfg.getServersRunning('store').first)) do |mcaller, data|  
+               'zimbraMailHost', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data|  
     mcaller.pass = data[0] != 0 &&
                    data[1] =~ /invalid request: setting both zimbraMailHost and zimbraMailTransport in the same request is not allowed/
   end,
