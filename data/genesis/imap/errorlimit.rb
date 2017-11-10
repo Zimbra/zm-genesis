@@ -51,7 +51,7 @@ current.action = [
   
   
   # set the default IMAP error counter
-  RunCommandOnMailbox.new('zmlocalconfig -e imap_max_consecutive_error=0'),
+  RunCommandOnMailbox.new('zmlocalconfig -e imap_max_consecutive_error=5'),
   #ZMLocalconfig.new('-e imap_max_consecutive_error=5'),
   ZMMailboxdctl.new("restart"),
   #cb("wait") {sleep(15)},
@@ -97,7 +97,7 @@ current.action = [
   end,
   
   # reset counter for unlimited for other tests
-  ZMLocalconfig.new('-e imap_max_consecutive_error=0'),
+  RunCommandOnMailbox.new('zmlocalconfig -e imap_max_consecutive_error=0'),
   ZMMailboxdctl.new("restart"),
   #cb("wait") {sleep(15)},
   ZMMailboxdctl.waitForMailboxd(),
