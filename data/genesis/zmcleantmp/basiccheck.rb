@@ -24,8 +24,8 @@ require "action/block"
 require "action/runcommand" 
 require "action/verify"
 require "action/buildparser"
-require "#{mypath}/install/configparser"
-require "#{mypath}/cluster/rhcs/cluster"
+#require "#{mypath}/install/configparser"
+#require "#{mypath}/cluster/rhcs/cluster"
 require 'rexml/document'
 include REXML
 
