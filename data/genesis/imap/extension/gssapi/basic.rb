@@ -28,7 +28,6 @@ require "action/verify"
 #
 current = Model::TestCase.instance()
 current.description = "IMAP GSSAPI"
-current.skip = true #Skip this testcase till kerberos system is set up
 
 name = 'imap'+File.basename(__FILE__,'.rb')+Time.now.to_i.to_s
 testAccount = Model::TARGETHOST.cUser(name, Model::DEFAULTPASSWORD)
@@ -52,13 +51,15 @@ current.setup = [
 # doesn't work for proxy yet
 # see http://www.zimbra.com/docs/ne/latest/administration_guide/ZimbraProxy.07.7.html
 #
-current.action = [  
-                  CreateAccount.new('test001@testme.com', 'whatever'),
-                  RunCommandOn.new('zqa-098.eng.vmware.com', 'kinit', 'root', '-k', 'test001@ZIMBRAQA.COM'), #this is kerberos system
-                  v(RunCommandOn.new('zqa-098.eng.vmware.com', 'gsasl', 'root', 
-                                     "--connect=%s"%Model::TARGETHOST, '-a', 'test001@testme.com', '-d')) do |mcaller, data|
-                    mcaller.pass = data[1].include?('OK LOGOUT completed')
-                  end
+current.action = [
+                  # Todo - Setup kerberos system
+  
+                  #CreateAccount.new('test001@testme.com', 'whatever'),
+                  #RunCommandOn.new('zqa-098.eng.vmware.com', 'kinit', 'root', '-k', 'test001@ZIMBRAQA.COM'), #this is kerberos system
+                  #v(RunCommandOn.new('zqa-098.eng.vmware.com', 'gsasl', 'root', 
+                  #                   "--connect=%s"%Model::TARGETHOST, '-a', 'test001@testme.com', '-d')) do |mcaller, data|
+                  #  mcaller.pass = data[1].include?('OK LOGOUT completed')
+                  #end
   
 ]
 
