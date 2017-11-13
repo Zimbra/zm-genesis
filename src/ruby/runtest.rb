@@ -47,10 +47,9 @@ class Summary
     @fail_action = 0
     @fail_testcases = Hash.new
     @known_failures = Hash.new
-    File.foreach('/opt/qa/genesis/conf/genesis/knownfailures.txt').with_index do |line, line_num|
+    File.foreach(File.join(Model::GENESISPATH,'conf','genesis', 'knownfailures.txt')).with_index do |line, line_num|
       known_failures[line.split("\n")[0]]=line_num
     end
-
     start
   end
 
@@ -97,8 +96,6 @@ class Summary
     "New Failed Actions: #{(fail_testcases.keys - known_failures.keys).count}\n"<<
     "\n-------------------\nNew Test Failures:\n-------------------\n"<<
     (fail_testcases.keys - known_failures.keys).sort.join("\n")<<
-    #"\n-------------------\nKnown Test Failures:\n-------------------\n" <<
-    #known_failures.keys.sort.join("\n")<<
     "\n-------------------\nFailed Test Cases:\n-------------------\n" <<
     fail_testcases.keys.sort.join("\n")
   end
@@ -451,16 +448,10 @@ def run_loop(path, report, actionfilter = nil, testcasefilter = nil)
       else
         next if  (not File.exist?(x))
         next if (testcasefilter && (not testcasefilter.include?(x)))
-        load x
-        xTest = Model::TestCase.instance
-        if xTest.skip != true
-           puts "Executing testcase: #{x}"
-           report.testcase += 1
-           llogger = CLogger.new(x)
-           report = processor(x, report, llogger, actionfilter)
-        else
-           puts "Skipping testcase: #{x}"
-        end
+        puts "Executing testcase: #{x}"
+        report.testcase += 1
+        llogger = CLogger.new(x)
+        report = processor(x, report, llogger, actionfilter)
       end
     rescue
       puts $!
@@ -545,7 +536,8 @@ def getOptions
     ['--plan',GetoptLong::REQUIRED_ARGUMENT],
     ['--log',GetoptLong::REQUIRED_ARGUMENT],
     ['--testcase',GetoptLong::REQUIRED_ARGUMENT],
-    ['--test', GetoptLong::NO_ARGUMENT]
+    ['--test', GetoptLong::NO_ARGUMENT],
+    ['--skip', GetoptLong::REQUIRED_ARGUMENT]
   ]
 end
 
@@ -577,8 +569,28 @@ GetoptLong.new(*getOptions).each do | opt, arg|
         File.join(File.dirname(__FILE__), x.strip)
       end
     end
+    @skiplist = []
+    begin
+       @skiplist = open(File.join('conf','genesis', 'skiptestcases.txt')) do |io|
+         io.readlines.select {|x| !x.nil? && x =~ /\S+/ && x[0..0] != '#' }.map do |x|
+            File.join(File.dirname(__FILE__), x.strip)
+         end
+       end
+    rescue Errno::ENOENT => e
+       puts "skiptestcases.txt not found."
+    end
+    @testList = @testList - @skiplist
   when '--testcase' then
     @testList = [arg]
+  when '--skip' then 
+     arg.split(',').each do |file|
+        if File.exist?(file)
+           @skiplist.push(file)
+        else
+           puts "File not found: #{file}" 
+        end
+     end
+     @testList = @testList - @skiplist
   when '--log' then
     @logdest = arg
   when '--test' then
@@ -613,7 +625,11 @@ if(@testList)
     mfile.puts report.publishSummay
   end
   #update testRail
+  puts "Execution completed..."
   report.updateTestRail
+  if !@skiplist.empty?
+     puts "Skipped testcases:"
+     @skiplist.each { |x| puts x }
+  end
 end
 exit #required or Test::Unit will run, lame
-
