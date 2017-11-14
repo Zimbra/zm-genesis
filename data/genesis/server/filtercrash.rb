@@ -139,7 +139,7 @@ current.action = [
   v(cb("Send an email") {
     SendMail.new(testAccount.name,message).run
     Kernel.sleep(20)
-    response = Action::RunCommand.new('grep','root', '-i fatal /opt/zimbra/log/mailbox.log').run
+    response = Action::RunCommandOnMailbox.new('grep','root', '-i fatal /opt/zimbra/log/mailbox.log').run
     Kernel.sleep(20)
     response
   }) do |mcaller, data|
