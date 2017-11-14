@@ -36,7 +36,7 @@ include Action
 #
 current = Model::TestCase.instance()
 current.description = "Test zmfixcalendtime"
-
+mailbox = Model::Servers.getServersRunning("mailbox").first.to_s
 #
 # Setup
 #
@@ -57,11 +57,11 @@ current.action = [
     mcaller.pass = (data[0] == 0)
   end,
 
-  v(ZMFixcalendtime.new('-a',"admin@#{Model::TARGETHOST}", '-s',Model::TARGETHOST.to_s)) do |mcaller, data|
+  v(ZMFixcalendtime.new('-a',"admin@#{Model::TARGETHOST}", '-s', mailbox)) do |mcaller, data|
     mcaller.pass = (data[0] == 0)
   end,
 
-  v(ZMFixcalendtime.new('-a',"admin@#{Model::TARGETHOST}", '-s',Model::TARGETHOST.to_s),'--sync') do |mcaller, data|
+  v(ZMFixcalendtime.new('-a',"admin@#{Model::TARGETHOST}", '-s', mailbox),'--sync') do |mcaller, data|
     mcaller.pass = (data[0] == 0)
   end,
 
@@ -73,7 +73,7 @@ current.action = [
 #    mcaller.pass = (data[0] == 1)&& data[1].include?('Error occurred:')
 #  end,
 
-  v(ZMFixcalendtime.new('-a',"admin@#{Model::TARGETHOST}",'-s','test.wrongdomain.com')) do |mcaller, data|
+  v(ZMFixcalendtime.new('-a',"admin@#{mailbox}",'-s','test.wrongdomain.com')) do |mcaller, data|
     mcaller.pass = (data[0] == 1) && (data[1].include?('Error occurred: Unknown host:') || data[1].include?('Error occurred: connect timed out') || data[1].include?('Error occurred: Connection refused'))
   end,
 
