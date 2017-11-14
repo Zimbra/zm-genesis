@@ -59,13 +59,13 @@ current.action = [
   
   v(cb("Checking zmmailboxdmgr Process using zmjavawatch") do
       host = Model::TARGETHOST
-      mObject = RunCommand.new('fuser /opt/zimbra/libexec/zmmailboxdmgr', 'root')
+      mObject = RunCommandOnMailbox.new('fuser /opt/zimbra/libexec/zmmailboxdmgr', 'root')
       data = mObject.run
       if data[0] == 0
         process_name = "/opt/zimbra/libexec/zmmailboxdmgr"
         oResult = data[1]
         pid = oResult.split(/\s+/)[-1].chomp.split(/\D+/).first rescue 1 #grab last of pid
-        rObject = RunCommand.new(File.join(Command::ZIMBRAPATH,'libexec','zmjavawatch'), Command::ZIMBRAUSER,"--pid=#{pid}", '-count 1')
+        rObject = RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'libexec','zmjavawatch'), Command::ZIMBRAUSER,"--pid=#{pid}", '-count 1')
         rResult = rObject.run
         [rResult[0],rResult[1],pid] 
       else
