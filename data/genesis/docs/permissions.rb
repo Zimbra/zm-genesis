@@ -49,8 +49,6 @@ file = ""
 # Setup
 #
 current.setup = [
-
-
 ]
 #
 # Execution
@@ -67,22 +65,12 @@ current.action = [
 
   v(RunCommand.new('ls', 'root', '-1', '/opt/zimbra/docs')) do |mcaller, data|
     if BuildParser.instance.baseBuildId =~ /NETWORK/i       
-      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 89 && files.include?("hsm-soap-admin.txt")
+      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 90 && files.include?("hsm-soap-admin.txt")
     else
-      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 80 && !files.include?("hsm-soap-admin.txt")
+      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 78 && !files.include?("hsm-soap-admin.txt")
     end
   end,
 
-  v(cb("Docs Ownership and Permission Check Directory") do
-    mObject = Action::RunCommand.new('find','root', "/opt/zimbra/docs",
-                                     "-user zimbra",
-                                     "-group zimbra",
-                                     "-type d",
-                                     "! -perm 755",
-                                     printOption).run
-  end) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && !data[1].include?('/opt/zimbra/docs')
-  end,
   v(cb("Docs Ownership and Permission Check Files") do
     mObject = Action::RunCommand.new('find','root', "/opt/zimbra/docs",
                                      "-user zimbra",
