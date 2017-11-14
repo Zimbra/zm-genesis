@@ -31,7 +31,7 @@ current = Model::TestCase.instance()
 current.description = "Test zmgsautil"
 
 name = File.expand_path(__FILE__).sub(/.*?(data\/)(genesis\/)?(zm)?/, 'zm').sub('.rb', '').gsub(/\/|\(|\)/, '') + Time.now.to_i.to_s
-
+mailbox = Model::Servers.getServersRunning("mailbox").first.to_s
 #
 # Setup
 #
@@ -57,7 +57,7 @@ current.action = [
   end,
 
   v(ZMGsautil.new('createAccount', '-a', 'galsync@zimbra.com', '-n', 'zimbra',
-                  '--domain', "domain.#{name}.com", '-s', Model::TARGETHOST.to_s, '-t', 'zimbra', 'p', '1d')) do |mcaller, data|
+                  '--domain', "domain.#{name}.com", '-s', mailbox, '-t', 'zimbra', 'p', '1d')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?("Error: no such domain: domain.#{name}.com") 
   end,
   
@@ -67,13 +67,13 @@ current.action = [
   
   v(ZMGsautil.new('createAccount', '-a', 'galsync@domain.%s.com'%name, '-n', 'zimbra',
                   '--domain', "domain.#{name}.com",
-                  '-s', Model::TARGETHOST.to_s, '-t', 'zimbra', 'p', '1d')) do |mcaller, data|
+                  '-s', mailbox, '-t', 'zimbra', 'p', '1d')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1] =~ /^galsync@domain\.#{name}\.com\s+[\da-f\-]{36}$/
   end,
   
   v(ZMGsautil.new('createAccount', '-a', 'galsync1@domain.%s.com'%name, '-n', 'zimbra',
                   '--domain', "domain.#{name}.com",
-                  '-s', Model::TARGETHOST.to_s, '-t', 'zimbra', 'p', '1d')) do |mcaller, data|
+                  '-s', mailbox, '-t', 'zimbra', 'p', '1d')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?("Error: email address already exists: galsync@domain.%s.com"%name) 
   end,
 =begin
