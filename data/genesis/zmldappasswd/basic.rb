@@ -32,7 +32,7 @@ current.description = "Zmldappasswd Basic test"
 include Action
 
 
-newPasswd = "test123"
+newPasswd = "zimbra"
 
 #
 # Setup
@@ -47,22 +47,7 @@ current.setup = [
 current.action = [
 
   v(ZMLdapPasswd.new('-h')) do |mcaller, data|
-    usage = ['Usage: /opt/zimbra/bin/zmldappasswd [-h] [-r] [-p] [[-c]-l] newpassword',
-             "\t-h: display this help message",
-             "\t-a: change ldap_amavis_password",
-             "\t-b: change ldap_bes_searcher_password",
-             "\t-l: change ldap_replication_password",
-             "\t-c: Update ldap_replication_password on replica. Requires -l",
-             "\t-n: change ldap_nginx_password",
-             "\t-p: change ldap_postfix_password",
-             "\t-r: change ldap_root_passwd",
-             "\tOnly one of a, l, n, p, or r may be specified",
-             "\tWithout options zimbra_ldap_password is changed",
-             "\tOption -c requires -l and must be run on a replica after",
-             "\tchanging the password on the master (using -l by itself)."
-             ].collect {|w| Regexp.escape(w)}
-    mcaller.pass = data[0] != 0 &&
-                   data[1].split(/\n/).delete_if{|w| w =~ /^\s*$/}.select {|w| w !~ /#{usage.join('|')}/}.empty?
+    mcaller.pass = data[0] != 0 && data[1].include?("Usage")
   end,
   
   v(ZMLdapPasswd.new('-b', 'zmbes-searcher')) do |mcaller, data|
