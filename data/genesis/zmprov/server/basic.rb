@@ -72,7 +72,7 @@ current.action = [
 	end, 	   
   
   #Delete Server that is not empty. Bug #32709
-  v(ZMProv.new('ds',Utils::zimbraHostname)) do |mcaller, data| 
+  v(ZMProv.new('ds', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data| 
    mcaller.pass = data[0] == 2 && data[1].include?('ERROR: service.INVALID_REQUEST')  
   end,     
    
