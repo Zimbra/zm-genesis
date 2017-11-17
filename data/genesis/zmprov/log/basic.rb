@@ -136,7 +136,7 @@ current.action = [
   end,
   
   #Get All Account Logger
-  v(ZMProv.new('gaal', Model::TARGETHOST)) do |mcaller, data|
+  v(ZMProv.new('gaal')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(testAccount.name) && data[1].include?("zimbra.soap=debug") && data[1].include?(testAccountTwo.name) && data[1].include?("zimbra.account=info")
   end,  
   
@@ -157,7 +157,7 @@ current.action = [
   end,
   
   #Get All Account Logger
-  v(ZMProv.new('gaal', Model::TARGETHOST)) do |mcaller, data|
+  v(ZMProv.new('gaal')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !data[1].include?(testAccount.name) && !data[1].include?("zimbra.soap=debug") && !data[1].include?(testAccountTwo.name) && !data[1].include?("zimbra.account=info")
   end,
   
@@ -189,7 +189,7 @@ current.action = [
   end,
   
   #Get All Account Logger
-  v(ZMProv.new('gaal', Model::TARGETHOST)) do |mcaller, data|
+  v(ZMProv.new('gaal')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(testAccount.name) && ["zimbra.soap=debug","zimbra.account=info"].all? do |x|
     data[1].include?(x)
     end && data[1].include?(testAccountTwo.name) && ["zimbra.doc=debug","zimbra.dav=warn"].all? do |x|
@@ -221,7 +221,7 @@ current.action = [
   end,
   
   #Get All Account Logger
-  v(ZMProv.new('gaal', Model::TARGETHOST)) do |mcaller, data|
+  v(ZMProv.new('gaal')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !data[1].include?(testAccount.name) && ["zimbra.soap=debug","zimbra.account=info"].all? do |x|
     !data[1].include?(x)
     end && !data[1].include?(testAccountTwo.name) && ["zimbra.doc=debug","zimbra.dav=warn"].all? do |x|
