@@ -55,8 +55,6 @@ current.action = [
   end,
 
   v(ZMProv.new('gc', cName, 'zimbraIdentityMaxNumEntries')) do |mcaller, data|
-    puts "Data: #{data[1]}"
-    puts "MaxIdentities: #{maxIdentities}"
     mcaller.pass = data[0] == 0 && data[1] =~ /zimbraIdentityMaxNumEntries:\s+#{maxIdentities}\s*$/
   end,
   
