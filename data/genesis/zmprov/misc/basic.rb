@@ -69,7 +69,7 @@ current.action = [
   end,
 
   #Get Quota Usage
-  v(ZMProv.new('gqu')) do |mcaller, data|
+  v(ZMProv.new('gqu', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(adminAccount.name)
   end,
 
