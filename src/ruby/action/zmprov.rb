@@ -25,7 +25,7 @@ module Action # :nodoc
   # Perform zmprov action.  This will invoke some zmprov with some argument
   # from http server
   #
-  class ZMProv < Action::RunCommand
+  class ZMProv < Action::RunCommandOnMailbox
 
     #
     #  Create a zmprov object.
