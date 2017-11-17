@@ -551,6 +551,8 @@ end
 
 #ARGV << "-h" if (ARGV.length == 0)
 @logdest = File.dirname(__FILE__)
+@skiplist = []
+
 GetoptLong.new(*getOptions).each do | opt, arg|
   case opt
   when '-h' then
@@ -569,7 +571,6 @@ GetoptLong.new(*getOptions).each do | opt, arg|
         File.join(File.dirname(__FILE__), x.strip)
       end
     end
-    @skiplist = []
     begin
        @skiplist = open(File.join('conf','genesis', 'skiptestcases.txt')) do |io|
          io.readlines.select {|x| !x.nil? && x =~ /\S+/ && x[0..0] != '#' }.map do |x|
