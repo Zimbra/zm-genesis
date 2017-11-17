@@ -49,28 +49,25 @@ current.setup = [
 # Execution
 #
 current.action = [
-  v(cb("set ldap_url") do
-    ZMLocalconfig.new('-e', "ldap_url=ldap://test.me:389").run
-  end) do |mcaller, data|
-   mcaller.pass = data[0] == 0
+  v(ZMLocalconfig.new('-e', "ldap_url=ldap://test.me:389")) do |mcaller, data|
+    mcaller.pass = data[0] == 0
   end,
 
-	#Get All Servers from ldap
-	v(ZMProv.new('-l', 'gas', '2>&1')) do |mcaller, data|
+ 	#Get All Servers from ldap
+  v(RunCommandOn.new(Model::TARGETHOST.to_s, File.join('/opt/zimbra/', 'bin','zmprov'), Command::ZIMBRAUSER, '-l', 'gas')) do |mcaller, data|
 	 mcaller.pass = data[0] != 0 && data[1].include?('FATAL: failed to initialize LDAP client')
-	end,
+  end,
 
 	#Get All Servers from master ldap
-	v(ZMProv.new('-m', '-l', 'gas')) do |mcaller, data|
-	 mcaller.pass = data[0] == 0
-	end,
-
+  v(ZMProv.new('-m', '-l', 'gas')) do |mcaller, data|
+    mcaller.pass = data[0] == 0
+  end,
 ]
 #
 # Tear Down
 #
 current.teardown = [
-  ZMLocalconfig.new('-e', "ldap_url=\"#{mLdapUrl}\"")
+  ZMLocalconfig.new('-e', "ldap_url=\"#{mLdapUrl}\""),
 ]
 
 if($0 == __FILE__)

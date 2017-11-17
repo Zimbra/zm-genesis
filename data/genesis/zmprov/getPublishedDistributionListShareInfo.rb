@@ -28,7 +28,7 @@ include Action
 #
 current = Model::TestCase.instance()
 current.description = "Test case for gpdlsi(getPublishedDistributionListShareInfo) command"
-
+adminAccount = "admin@"+Model::DOMAIN.to_s
 #
 # Setup
 #
@@ -41,7 +41,7 @@ current.setup = [
 #
 current.action = [
 
- v(ZMProv.new('gpdlsi', 'admin@`zmhostname`')) do |mcaller, data|
+ v(ZMProv.new('gpdlsi', adminAccount)) do |mcaller, data|
    mcaller.pass = data[0] == 2 && data[1].include?('ERROR: account.NO_SUCH_DISTRIBUTION_LIST')
   end,
 

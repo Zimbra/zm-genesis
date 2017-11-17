@@ -52,7 +52,7 @@ current.action = [
   end,
 
   #Get Quota Usage
-  v(ZMProv.new('gqu',Model::TARGETHOST.to_s)) do |mcaller, data|
+  v(ZMProv.new('gqu', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data|
    mcaller.pass = data[0] == 0 && data[1].include?(adminAccount.name)
   end,
 
@@ -80,10 +80,12 @@ current.action = [
   v(ZMProv.new('ca', testAccount.name, testAccount.password)) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
+
   v(ZMProv.new('verifyIndex',testAccount.name)) do |mcaller, data|
-                
-   mcaller.pass = data[0] != 0 && data[1].include?('system failure: mailbox not found for account')
+   mcaller.pass = data[0] != 0 && (data[1].include?('system failure: mailbox not found for account') or \
+                                   data[2].include?('system failure: mailbox not found for account')) 
   end,
+
   cb("setup imap") do
     mimap.object = Net::IMAP.new(Model::TARGETHOST, *Model::TARGETHOST.imap)
   end,

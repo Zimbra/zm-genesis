@@ -20,7 +20,7 @@ require 'action/json/command'
  
 module Action::Json
   class AdminLogin < Action::Json::Command
-    def initialize(cname, host=Model::Host.new(Model::Servers.getServersRunning("mailbox").first),
+    def initialize(cname, host=Model::Host.new(Model::Servers.getServersRunning("proxy").first),
                    port=7071, cmode='https') 
       super
     end
@@ -43,7 +43,7 @@ module Action::Json
   end
   
   class Login < Action::Json::Command
-    def initialize(cname, host=Model::Host.new(Model::Servers.getServersRunning("mailbox").first),
+    def initialize(cname, host=Model::Host.new(Model::Servers.getServersRunning("proxy").first),
                    port=443, cmode='https') 
       super
     end

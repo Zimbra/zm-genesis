@@ -35,7 +35,6 @@ testAccountFive = Model::TARGETHOST.cUser(name+'5', Model::DEFAULTPASSWORD)
 
 include Action
 
-
 #
 # Setup
 #
@@ -153,17 +152,13 @@ current.action = [
 
   # getDistributionListMembership(gdlm) {name@domain|id}
   v(ZMProv.new('gdlm',testAccount)) do |mcaller, data|  
-    mcaller.pass = data[0] == 0 &&
-                   data[1] =~ /distributionList\s+#{testAccount.name}\s+memberCount=1\n/ &&
-                   data[1] =~ /members\n#{testAccountThree.name}\n/
+    mcaller.pass = data[0] == 0 && data[1].include?("distributionList " + testAccount.name + " memberCount=1")
   end,
   v(cb("gdlm id") do
     mId = ZMProv.new('cddl', testAccountFive.name).run[1].chomp
     ZMProv.new('gdlm', mId).run
   end) do |mcaller, data|  
-    mcaller.pass = data[0] == 0 &&
-                   data[1] =~ /distributionList\s+#{testAccountFive.name}\s+memberCount=0\n/ &&
-                   data[1] =~ /members\n$/
+    mcaller.pass = data[0] == 0 && data[1].include?("distributionList " + testAccountFive.name + " memberCount=0")
   end,
 
   # modifyDistributionList(mdl) {list@domain|id} attr1 value1 [attr2 value2...]
@@ -202,13 +197,11 @@ current.action = [
   #rdl list@domain
   #rdl id
   #rdl
-  
 ]
 #
 # Tear Down
 #
 current.teardown = [        
-
 ]
 
 if($0 == __FILE__)
