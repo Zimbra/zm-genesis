@@ -39,7 +39,7 @@ defaultlogfile = '/opt/zimbra/log/zmmailboxd.out'
 outfile = '/tmp/zmthrdump.out'
 logfile = '/tmp/zmthrdump.log'
 outfile = '/tmp/zmthrdump.out'
-result = RunCommand.new('/bin/ps','zimbra', '-ef', '|', 'grep', '-i', 'mailboxd').run[1]
+result = RunCommandOnMailbox.new('/bin/ps','zimbra', '-ef', '|', 'grep', '-i', 'mailboxd').run[1]
 pid = result.match(/zimbra\s+(\d+)\s.*jetty\.xml/)[1]
 timeout = 60
 
@@ -55,10 +55,10 @@ current.setup = [
 #
 current.action = [
 
-  RunCommand.new('/bin/rm','zimbra','-f',logfile),
-  RunCommand.new('/bin/rm','zimbra','-f',outfile),
-  RunCommand.new('/bin/touch','zimbra',logfile),
-  RunCommand.new('/bin/touch','zimbra',outfile),
+  RunCommandOnMailbox.new('/bin/rm','zimbra','-f',logfile),
+  RunCommandOnMailbox.new('/bin/rm','zimbra','-f',outfile),
+  RunCommandOnMailbox.new('/bin/touch','zimbra',logfile),
+  RunCommandOnMailbox.new('/bin/touch','zimbra',outfile),
 
   v(ZMThrdump.new) do |mcaller, data|
     mcaller.pass = (data[0] == 0)&& data[1].include?('VM Periodic Task Thread')
