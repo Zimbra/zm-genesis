@@ -181,7 +181,7 @@ current.action = [
                    data[1].elements['TagActionResponse'].elements['action'].attributes['op'] == "delete"
   end,
     
-  RunCommand.new('/bin/echo', 'root',
+  RunCommandOnMailbox.new('/bin/echo', 'root',
                  "\"{\\\"CreateTagRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraMail\\\"," +
                  "\\\"tag\\\":{\\\"name\\\":\\\"#{tagname1}\\\", \\\"color\\\":\\\"#{tagColor}\\\"}}}\"",
                  '>','/tmp/jsonfile'),
@@ -196,7 +196,7 @@ current.action = [
                    !(tagId = tag.first['id']).nil? &&
                    tag.first['name']  == tagname1 &&
                    tag.first['color'].to_s == tagColor
-    RunCommand.new('/bin/echo', 'root',
+    RunCommandOnMailbox.new('/bin/echo', 'root',
                  "\"{\\\"TagActionRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraMail\\\"," +
                  "\\\"action\\\":{\\\"op\\\":\\\"delete\\\", \\\"id\\\":\\\"#{tagId}\\\"}}}\"",
                  '>','/tmp/jsonfile').run
