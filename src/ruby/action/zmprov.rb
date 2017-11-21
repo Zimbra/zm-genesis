@@ -81,7 +81,7 @@ module Action # :nodoc
       IO.popen(command).close_read
     end
 
-    def createTMP(pattern = ["ca #{@prefix}","@#{@domain} #{@password} zimbraMailHost #{@domain}\n"])
+    def createTMP(pattern = ["ca #{@prefix}","@#{@domain} #{@password}\n"])
       tempFile = Tempfile.new('accounts')
       tempFile.open
       1.upto(@finish) do |i|

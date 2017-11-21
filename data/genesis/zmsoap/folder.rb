@@ -61,7 +61,7 @@ current.action = [
     inboxId = (fResult[1].elements['GetFolderResponse'].get_elements('folder')).first.attributes['id'] rescue 2
   end,
     
-  RunCommand.new('/bin/echo', 'root', "\"{\\\"GetFolderRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraMail\\\", \\\"folder\\\":{\\\"path\\\":\\\"Inbox\\\"}}}\"", '>','/tmp/jsonfile'),
+  RunCommandOnMailbox.new('/bin/echo', 'root', "\"{\\\"GetFolderRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraMail\\\", \\\"folder\\\":{\\\"path\\\":\\\"Inbox\\\"}}}\"", '>','/tmp/jsonfile'),
     
   v(ZMSoap.new('-m', testAccount1.name, '-p', Model::DEFAULTPASSWORD, '--json', '-f', '/tmp/jsonfile')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !(response = JSON.parse(data[1]) rescue nil).nil? &&
@@ -102,7 +102,7 @@ current.action = [
                      details.first.attributes['id'] == fId
   end,
     
-  RunCommand.new('/bin/echo', 'root',
+  RunCommandOnMailbox.new('/bin/echo', 'root',
                  "\"{\\\"CreateFolderRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraMail\\\"," +
                  "\\\"folder\\\":{\\\"name\\\":\\\"#{folder1}\\\", \\\"l\\\":\\\"2\\\"}}}\"",
                  '>','/tmp/jsonfile'),
