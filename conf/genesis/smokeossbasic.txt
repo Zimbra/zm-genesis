@@ -50,7 +50,7 @@ data/server/notificationscheck.rb
 data/server/permisisoncheck.rb
 data/server/zimbraurlscheck.rb
 data/server/security
-data/directory/external/ad
+#data/directory/external/ad FIXME - Add external AD account
 #data/volume P3
 data/sharemessage/basic.rb
 data/sharemessage/distributionlist
