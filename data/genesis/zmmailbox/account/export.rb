@@ -80,13 +80,13 @@ current.action = [
   Action::WaitQueue.new,
   
   #export: zmmailbox -z -m testAccount.name getRestURL "//?fmt=tgz" > mfile.tgz
-  v(RunCommand.new(File.join(Command::ZIMBRAPATH, 'bin', 'zmmailbox'), Command::ZIMBRAUSER, '-z',
+  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH, 'bin', 'zmmailbox'), Command::ZIMBRAUSER, '-z',
                    '-m', testAccount.name, 'getRestURL', "\"//?fmt=tgz\"", '>',
                    tFile = File.join(Command::ZIMBRAPATH, 'data', 'tmp', name + '.tgz'))) do |mcaller, data|  
     mcaller.pass = data[0] == 0       
   end, 
   
-  v(RunCommand.new('tar', 'root', 'tzf', tFile)) do |mcaller, data|
+  v(RunCommandOnMailbox.new('tar', 'root', 'tzf', tFile)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1] !~ /Conversations\/\S+\.meta/
     if(not mcaller.pass)
       class << mcaller
