@@ -53,7 +53,7 @@ mboxid = ''
 
 testSeq = Array.new
 
-RunCommand.new('/bin/ls', 'root', "/opt/zimbra/redolog/archive/*.log").run[1].split(/\n/).grep(/.*-seq.*log/).each do |x|
+RunCommandOnMailbox.new('/bin/ls', 'root', "/opt/zimbra/redolog/archive/*.log").run[1].split(/\n/).grep(/.*-seq.*log/).each do |x|
   testSeq.push   x.match(/.*-seq(\d+)\.log/)[1]
 end
 
@@ -89,9 +89,9 @@ current.setup = [
 #
 current.action = [
 
-  RunCommand.new('/bin/mkdir','root',nMount),
-  RunCommand.new('/bin/chown','root','zimbra:zimbra', nMount),
-  RunCommand.new('/bin/chgrp','root','zimbra', nMount),
+  RunCommandOnMailbox.new('/bin/mkdir','root',nMount),
+  RunCommandOnMailbox.new('/bin/chown','root','zimbra:zimbra', nMount),
+  RunCommandOnMailbox.new('/bin/chgrp','root','zimbra', nMount),
 
   #Create Accounts
   CreateAccounts.new(nameString, Model::TARGETHOST, numberOfUser, Model::DEFAULTPASSWORD),
@@ -127,7 +127,7 @@ current.action = [
 
   time2,
 
-  RunCommand.new('/bin/cp','zimbra','-R', File.join(Command::ZIMBRAPATH ,'redolog'), nMount),
+  RunCommandOnMailbox.new('/bin/cp','zimbra','-R', File.join(Command::ZIMBRAPATH ,'redolog'), nMount),
 
   v(ZMMailboxdctl.new('stop')) do |mcaller, data|
     mcaller.pass = (data[0] == 0)
@@ -144,7 +144,7 @@ current.action = [
   end,
 
   v(cb("Check to see if there is any .bak file under store bug 40841") do
-      RunCommand.new('find', 'zimbra', File.join(Command::ZIMBRAPATH, 'store'), '-name "*.bak"').run
+      RunCommandOnMailbox.new('find', 'zimbra', File.join(Command::ZIMBRAPATH, 'store'), '-name "*.bak"').run
     end) do |mcaller, data|
     mcaller.pass = !data[1].include?('.bak')
   end,
@@ -266,30 +266,25 @@ current.action = [
         data[1].include?("Processing log file") &&
         data[0] == 0
       else
-        data[1].include?("No such file") &&
+        data[1].include?("No such file") or data[2].include?('No such file:') &&
         data[0] == 1
       end
   end,
 
   v(ZMPlayredo.new('--logfiles',"#{nMount}/redolog/bad/*.log")) do |mcaller, data|
-    mcaller.pass = data[0] == 1 && data[1].include?('No such file:')
-  end,
-
-  v(ZMPlayredo.new('--bad')) do |mcaller, data|
-    mcaller.pass = data[0] == 1 && data[1].include?('Unrecognized option: --bad')
+    mcaller.pass = data[0] == 1 && (data[1].include?('No such file:') or data[2].include?('No such file:'))
   end,
 
   v(ZMPlayredo.new('-bad')) do |mcaller, data|
-    mcaller.pass = data[0] == 1 && data[1].include?('Unrecognized option: -bad')
+    mcaller.pass = data[0] == 1 && (data[1].include?('Unrecognized option: -bad') or data[2].include?('Unrecognized option: -bad'))
   end,
 
-
   v(ZMPlayredo.new('--toTime', '123456789')) do |mcaller, data|
-    mcaller.pass =  data[0] == 1 && data[1].include?('Invalid timestamp')
+    mcaller.pass =  data[0] == 1 && (data[1].include?('Invalid timestamp') or data[2].include?('Invalid timestamp'))
   end,
 
   v(ZMPlayredo.new('--fromTime', '123456789')) do |mcaller, data|
-    mcaller.pass =  data[0] == 1 && data[1].include?('Invalid timestamp')
+    mcaller.pass =  data[0] == 1 && (data[1].include?('Invalid timestamp') or data[2].include?('Invalid timestamp'))
   end,
 
   v(ZMPlayredo.new('--toSeq', '123456789')) do |mcaller, data|
