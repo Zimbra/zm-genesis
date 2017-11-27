@@ -107,7 +107,7 @@ current.action = [
 #  end,
 # bad mboxid
   v(ZMBlobchk.new('-m','123456789', 'start')) do |mcaller, data|
-    mcaller.pass = data[0] == 1 && data[1].include?('no such mailbox: 123456789')
+    mcaller.pass = data[0] == 1 && (data[1].include?('no such mailbox: 123456789') or data[2].include?('no such mailbox: 123456789'))
   end,
 
 
@@ -161,7 +161,7 @@ current.action = [
     dirName = File.dirname(oldBlobPath)
     blobName = File.basename(oldBlobPath,".msg").split("-")
     newBlobPath = "#{dirName}/#{blobName.first}-#{blobName.last.next}.msg"
-    RunCommand.new('mv', 'root', oldBlobPath, newBlobPath).run
+    RunCommandOnMailbox.new('mv', 'root', oldBlobPath, newBlobPath).run
   end) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
