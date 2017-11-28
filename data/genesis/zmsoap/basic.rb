@@ -49,7 +49,7 @@ current.setup = [
 #
 current.action = [
 
-  RunCommand.new('/bin/echo','root','test123', '>','/tmp/passfile'),
+  RunCommandOnMailbox.new('/bin/echo','root','test123', '>','/tmp/passfile'),
 
   ['h', '-help'].map do |x|
     v(ZMSoap.new('-' + x)) do |mcaller, data|
@@ -82,7 +82,6 @@ current.action = [
   end,
 
   v(ZMSoap.new('-a',adminAccount,'-u','https://wronghost:7071/service/admin/soap', '-P', '/tmp/passfile', '-m', adminAccount, 'SearchRequest/query=in:inbox')) do |mcaller, data|
-    puts "data: #{data}"
     mcaller.pass = data[0] == 0 && data[1].include?('java.net.UnknownHostException: wronghost')
   end,
 
@@ -96,7 +95,7 @@ current.action = [
                    !isNetwork && data[0] != 0
   end,
     
-  RunCommand.new('/bin/echo', 'root', "\"{\\\"SearchRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraMail\\\", \\\"query\\\":\\\"in:inbox\\\"}}\"", '>','/tmp/jsonfile'),
+  RunCommandOnMailbox.new('/bin/echo', 'root', "\"{\\\"SearchRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraMail\\\", \\\"query\\\":\\\"in:inbox\\\"}}\"", '>','/tmp/jsonfile'),
     
   v(ZMSoap.new('-z', '-m', adminAccount, '--json', '-f', '/tmp/jsonfile')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !(response = JSON.parse(data[1]) rescue nil).nil? &&
@@ -104,7 +103,7 @@ current.action = [
                    response['_jsns'] == 'urn:zimbraMail'
   end,
     
-  RunCommand.new('/bin/echo', 'root', "\"{\\\"GetDeviceStatusRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraSync\\\"}}\"", '>','/tmp/jsonfile'),
+  RunCommandOnMailbox.new('/bin/echo', 'root', "\"{\\\"GetDeviceStatusRequest\\\":{\\\"_jsns\\\":\\\"urn:zimbraSync\\\"}}\"", '>','/tmp/jsonfile'),
 
   v(ZMSoap.new('-z', '-m', adminAccount, '-t', 'mobile', '--json', '-f', '/tmp/jsonfile')) do |mcaller, data|
     isNetwork = ZMControl.new('-v').run[1] =~ /NETWORK/
