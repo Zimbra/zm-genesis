@@ -39,8 +39,8 @@ nameOne = 'imshare1'+File.basename(__FILE__,'.rb')+Time.now.to_i.to_s
 nameTwo = 'imshare2'+File.basename(__FILE__,'.rb')+Time.now.to_i.to_s
 
 origHost = Model::TARGETHOST
-destHost = Model::TARGETHOST.findService(:service)[-1]
-proxy = (Model::TARGETHOST.findService(:imapproxy).first rescue origHost) || origHost
+#destHost = Model::TARGETHOST.findService(:service)[-1]
+#proxy = (Model::TARGETHOST.findService(:imapproxy).first rescue origHost) || origHost
 
 nameOneAccount = origHost.cUser(nameOne, Model::DEFAULTPASSWORD)
 nameTwoAccount = origHost.cUser(nameTwo, Model::DEFAULTPASSWORD)
@@ -70,10 +70,10 @@ current.setup = []
 # Execution
 #
 current.action = [    
-                  Action::CreateAccount.new(nameOneAccount.name,nameOneAccount.password, 'zimbraMailHost', origHost.to_s),
-                  Action::CreateAccount.new(nameTwoAccount.name,nameTwoAccount.password, 'zimbraMailHost', destHost.to_s),
+                  Action::CreateAccount.new(nameOneAccount.name,nameOneAccount.password),
+                  Action::CreateAccount.new(nameTwoAccount.name,nameTwoAccount.password),
                   cb("Set ACL Account Two") {               
-                    mimap2.object = Net::IMAP.new(destHost, *destHost.imap)
+                    mimap2.object = Net::IMAP.new(origHost, *origHost.imap)
                     mimap2.login(nameTwoAccount.name, nameTwoAccount.password)
                     mimap2.create(mailbox)
                     mimap2.method('send_command').call("SETACL %s #{nameOneAccount.name} lrswickxteda"%mailbox)
