@@ -30,12 +30,13 @@ module Model # :nodoc
     POP = 110
     POPSSL = 995
     
-    attr_accessor :name, :domain, :architecture, :proxy, :imap, :pop, :ip    
-    def initialize(name = nil, domain = nil, imapSSL = true)
+    attr_accessor :name, :domain, :architecture, :proxy, :imap, :pop, :ip, :cdomain  
+    def initialize(name = nil, domain = nil, cdomain = nil, imapSSL = true)
       self.name = name     
       self.domain = domain
       self.proxy = true #proxy is mandatory component now, changed it to true 
       self.ip = nil
+      self.cdomain = cdomain
       if(imapSSL)
         self.imap = [IMAPSSL, true]
       else
@@ -46,7 +47,7 @@ module Model # :nodoc
     
     def cUser(name = nil, password = nil)
       user = self.domain.cUser(name)
-      user.name = user.name.gsub(self.domain, self.name + '.' + self.domain)
+      user.name = user.name.gsub(self.domain, self.cdomain)
       user.password = password if password
       user 
     end
