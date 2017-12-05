@@ -330,7 +330,7 @@ current.action = [
     syg1 = ZMProv.new('syg', Model::TARGETHOST,'|', 'grep', 'token').run
     resultbefore = syg1[1][/token\s=\s([^,]*).*/, 1]
     ZMProv.new('ma', testAccountFour.name, 'description', 'tong').run
-    syg2 = ZMProv.new('syg', Model::TARGETHOST,'|', 'grep', 'token').run
+    syg2 = ZMProv.new('syg', Model::DOMAIN.to_s,'|', 'grep', 'token').run
     resultafter = syg2[1][/token\s=\s([^,]*).*/, 1]
     if resultbefore.eql? resultafter
       response = ["Script Failure : syg token is same"]
