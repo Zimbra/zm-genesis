@@ -45,6 +45,7 @@ module Model # :nodoc
     puts "Using remote configuration to execute genesis..."
     puts "Source machine: #{lName}"
     puts "Target machine: #{tName}"
+    puts "Domain: #{domain}"
     HOSTINFORMATION = {'target_machine' => tName, 'name' => lName,  'domain' => domain, 'architecture' => architecture}
   rescue Errno::EACCES => e
     puts "genesis.conf not found."
@@ -91,8 +92,9 @@ module Model # :nodoc
   end
 
   TARGETHOST = begin
-                 myHost, myDomain = HOSTINFORMATION['target_machine'].split('.', 2) 
-                 Host.new(myHost, Domain.new(myDomain))
+                  myHost, myDomain = HOSTINFORMATION['target_machine'].split('.', 2) 
+                  cdomain = HOSTINFORMATION['domain']
+                  Host.new(myHost, Domain.new(myDomain), Domain.new(HOSTINFORMATION['domain']))
                end unless defined?(TARGETHOST)
   
   TARGETHOST.architecture = begin
@@ -114,5 +116,6 @@ module Model # :nodoc
   yahooAccount.host =  Model::Host.new('imap', 'mail.yahoo.com', false)
   DATAPATH = File.join('/opt', 'qa', 'genesis', 'data', 'TestMailRaw')
   DOMAIN = Domain.new(HOSTINFORMATION['domain'])
+ 
 end
 
