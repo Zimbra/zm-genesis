@@ -58,9 +58,9 @@ current.action = [
   end,
 
   # Get domain
-  v(ZMProv.new('gd', Model::TARGETHOST.to_s)) do |mcaller, data|
+  v(ZMProv.new('gd', Model::DOMAIN.to_s)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?('objectClass: zimbraDomain') &&
-    data[1].include?('zimbraDomainName: '+ Model::TARGETHOST)
+    data[1].include?('zimbraDomainName: '+ Model::DOMAIN.to_s)
   end,
 
   # Modify domain
@@ -81,9 +81,9 @@ current.action = [
   end,
 
   # Get domain
-  v(ZMProv.new('gd', Model::TARGETHOST.to_s)) do |mcaller, data|
+  v(ZMProv.new('gd', Model::DOMAIN.to_s)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?('objectClass: zimbraDomain') &&
-    data[1].include?('zimbraDomainName: '+ Model::TARGETHOST)
+    data[1].include?('zimbraDomainName: '+ Model::DOMAIN.to_s)
   end,
 
   # Delete domain
@@ -92,9 +92,9 @@ current.action = [
   end,
 
   # Get domain
-  v(ZMProv.new('gd', Model::TARGETHOST.to_s)) do |mcaller, data|
+  v(ZMProv.new('gd', Model::DOMAIN.to_s)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?('objectClass: zimbraDomain') &&
-    data[1].include?('zimbraDomainName: '+ Model::TARGETHOST)
+    data[1].include?('zimbraDomainName: '+ Model::DOMAIN.to_s)
   end,
 
   # Get domain
