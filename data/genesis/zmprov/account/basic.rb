@@ -263,7 +263,7 @@ current.action = [
   v(ZMProv.new('gsig', testAccountTwo.name)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !data[1].include?('Test Signature1 Modified') && !data[1].include?('Test Signature2 Modified')
   end,
-  v(ZMProv.new('cta', Model::TARGETHOST.to_s)) do |mcaller, data|
+  v(ZMProv.new('cta', Model::DOMAIN.to_s)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?('# of accounts')
   end,
   #Test create, modify, get, delete Identities
