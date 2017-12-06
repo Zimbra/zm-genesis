@@ -51,16 +51,16 @@ current.action = [
   end,
 
   # Auto Complete
-  v(ZMProv.new('acg', Model::TARGETHOST, testAccount.name)) do |mcaller, data|
+  v(ZMProv.new('acg', Model::DOMAIN.to_s, testAccount.name)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(testAccount)
   end,
 
-  v(ZMProv.new('acg', Model::TARGETHOST, name)) do |mcaller, data|
+  v(ZMProv.new('acg', Model::DOMAIN.to_s, name)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(testAccount)
   end,
 
   #Search GAL
-  v(ZMProv.new('sg', Model::TARGETHOST, testAccount.name)) do |mcaller, data|
+  v(ZMProv.new('sg', Model::DOMAIN.to_s, testAccount.name)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(testAccount)
   end,
 
@@ -73,11 +73,11 @@ current.action = [
     mcaller.pass = data[0] != 0 && data[1].include?('searchCalendarResources can only be used with  "zmprov -l/--ldap"')
   end,	
 
-  v(ZMProv.new('-l', 'scr', '-v', Model::TARGETHOST, '2>&1')) do |mcaller, data|
+  v(ZMProv.new('-l', 'scr', '-v', Model::DOMAIN.to_s, '2>&1')) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
  
-  v(ZMProv.new('-l', 'scr', Model::TARGETHOST, '2>&1')) do |mcaller, data|
+  v(ZMProv.new('-l', 'scr', Model::DOMAIN.to_s, '2>&1')) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,		
 
@@ -89,16 +89,16 @@ current.action = [
     mcaller.pass = data[0] == 0
   end,
 
-  v(ZMProv.new('-l', 'scr', '-v', Model::TARGETHOST, '2>&1')) do |mcaller, data|
+  v(ZMProv.new('-l', 'scr', '-v', Model::DOMAIN.to_s, '2>&1')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(testResource1) && data[1].include?(testResource2)
   end,
 
-  v(ZMProv.new('-l', 'scr', Model::TARGETHOST, '2>&1')) do |mcaller, data|
+  v(ZMProv.new('-l', 'scr', Model::DOMAIN.to_s, '2>&1')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(testResource1) && data[1].include?(testResource2)
   end,
   # CalendarResource search case ends here.
 
-  v(ZMProv.new('sg', Model::TARGETHOST, name+'3')) do |mcaller, data|
+  v(ZMProv.new('sg', Model::DOMAIN.to_s, name+'3')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !data[1].include?(testAccount)
   end,
 
