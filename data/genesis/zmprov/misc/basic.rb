@@ -92,7 +92,7 @@ current.action = [
   end,
 
   #Sync GAL
-  v(ZMProv.new('syg', Model::TARGETHOST.to_s)) do |mcaller, data|
+  v(ZMProv.new('syg', Model::DOMAIN.to_s)) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?(adminAccount.name)
   end,
 
