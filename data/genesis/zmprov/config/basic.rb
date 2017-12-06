@@ -69,7 +69,7 @@ current.action = [
 	end,
 	
 	v(ZMProv.new('gcf', 'zimbradefaultdomainname')) do |mcaller, data|
-	 mcaller.pass = 0 && data[1].include?(Model::TARGETHOST)
+	 mcaller.pass = 0 && data[1].include?(Model::DOMAIN.to_s)
   end,
 
   #bug 61278
