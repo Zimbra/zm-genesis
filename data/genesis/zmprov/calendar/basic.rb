@@ -60,11 +60,11 @@ current.action = [
 	 mcaller.pass = data[0] == 0
 	end,
 	
-	v(ZMProv.new('scr', Model::TARGETHOST.to_s)) do |mcaller, data|
+	v(ZMProv.new('scr', Model::DOMAIN.to_s)) do |mcaller, data|
 	 mcaller.pass = data[0] != 0 && data[1].include?("searchCalendarResources can only be used with  \"zmprov -l/--ldap\"")
 	end,
 	
-	v(ZMProv.new('-l','scr', Model::TARGETHOST.to_s)) do |mcaller, data|
+	v(ZMProv.new('-l','scr', Model::DOMAIN.to_s)) do |mcaller, data|
 	 mcaller.pass = data[0] == 0 && !data[1].include?("Exception") && data[1].include?(testAccountThree)
 	end,	
 	#END BUG 10632
