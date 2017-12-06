@@ -38,11 +38,15 @@ current.setup = [
 #
 current.action = [    
    v(ZMProv.new('cd', Model::DOMAIN.to_s)) do |mcaller, data|
+      mcaller.pass = data[0] == 0 or data[1].include?("ERROR: account.DOMAIN_EXISTS")
+   end,
+
+  v(ZMProv.new('mcf', 'zimbraDefaultDomainName', Model::DOMAIN.to_s)) do |mcaller, data|
       mcaller.pass = data[0] == 0
    end,
- 
-   v(ZMProv.new('ca', 'admin@'+Model.DOMAIN.to_s, Model::DEFAULTPASSWORD, 'zimbraIsAdminAccount', 'TRUE')) do |mcaller, data|
-      mcaller.pass = data[0] == 0    
+
+   v(ZMProv.new('ca', 'admin@'+Model::DOMAIN.to_s, Model::DEFAULTPASSWORD, 'zimbraIsAdminAccount', 'TRUE')) do |mcaller, data|
+      mcaller.pass = data[0] == 0 or data[1].include?("ERROR: account.ACCOUNT_EXISTS")
    end,
 ]
 
