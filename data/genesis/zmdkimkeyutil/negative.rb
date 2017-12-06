@@ -60,21 +60,21 @@ current.action = [
   ZMProv.new('cd', domain2),
   
   # remove DKIM signature from domain with no signature
-  v(ZMDkimkeyutil.new("-r", '-d', Model::TARGETHOST.to_s, run_on_mta)) do |mcaller,data|
+  v(ZMDkimkeyutil.new("-r", '-d', Model::DOMAIN.to_s, run_on_mta)) do |mcaller,data|
       mcaller.pass = data[0] != 0 &&
-                     data[1].match("Error: Domain #{Model::TARGETHOST} doesn't have DKIM enabled") 
+                     data[1].match("Error: Domain #{Model::DOMAIN.to_s} doesn't have DKIM enabled") 
   end,
   
   # get no DKIM info for domain
-  v(ZMDkimkeyutil.new("-q", '-d', Model::TARGETHOST.to_s, run_on_mta)) do |mcaller,data|
+  v(ZMDkimkeyutil.new("-q", '-d', Model::DOMAIN.to_s, run_on_mta)) do |mcaller,data|
       mcaller.pass = data[0] = 0 &&
-                     data[1].match("No DKIM Information for domain #{Model::TARGETHOST}")
+                     data[1].match("No DKIM Information for domain #{Model::DOMAIN.to_s}")
   end,
   
   # update DKIM signature on domain with no signature
-  v(ZMDkimkeyutil.new("-u", '-d', Model::TARGETHOST.to_s, run_on_mta)) do |mcaller,data|
+  v(ZMDkimkeyutil.new("-u", '-d', Model::DOMAIN.to_s, run_on_mta)) do |mcaller,data|
       mcaller.pass = data[0] != 0 &&
-                     data[1].match("Error: Domain #{Model::TARGETHOST} doesn't have DKIM enabled") 
+                     data[1].match("Error: Domain #{Model::DOMAIN.to_s} doesn't have DKIM enabled") 
   end,
 
   # add with only selector
@@ -121,7 +121,7 @@ current.action = [
   end,
   
   # key size too low
-  v(ZMDkimkeyutil.new('-a', '-d', Model::TARGETHOST, "-b 512", run_on_mta)) do |mcaller,data|
+  v(ZMDkimkeyutil.new('-a', '-d', Model::DOMAIN.to_s, "-b 512", run_on_mta)) do |mcaller,data|
       mcaller.pass = data[0] != 0 &&
                      data[1].match(/Bit size less than 2048 is not allowed, as it is insecure./) &&
                      data[1].match(/Error: Key generation failed./)
@@ -134,11 +134,11 @@ current.action = [
   end,  
   
   # add DKIM signature - positive
-  v(ZMDkimkeyutil.new('-a', '-d', mDom = Model::TARGETHOST.to_str, '-s', mselector, run_on_mta)) do |mcaller,data|
+  v(ZMDkimkeyutil.new('-a', '-d', mDom = Model::DOMAIN.to_str, '-s', mselector, run_on_mta)) do |mcaller,data|
       mcaller.pass = data[0] = 0 &&
-                     data[1].match("DKIM Data added to LDAP for domain #{Model::TARGETHOST} with selector") &&
+                     data[1].match("DKIM Data added to LDAP for domain #{Model::DOMAIN.to_s} with selector") &&
                      data[1].match("Public signature to enter into DNS:") &&
-                     data[1].match(/Public signature to enter into DNS:.*_domainkey.*IN.*TXT.*v=DKIM1; k=rsa;.*p=.*;.*DKIM key .* for #{Regexp.quote(Model::TARGETHOST)}/m)
+                     data[1].match(/Public signature to enter into DNS:.*_domainkey.*IN.*TXT.*v=DKIM1; k=rsa;.*p=.*;.*DKIM key .* for #{Regexp.quote(Model::DOMAIN.to_s)}/m)
       # catch randomly created UUID
       uuid = data[1].match(/with selector (.*)\n/)[1] if mcaller.pass
   end,
@@ -146,7 +146,7 @@ current.action = [
   # add new DKIM signature to domain with a signature in place
   v(ZMDkimkeyutil.new('-a', '-d', mDom, run_on_mta)) do |mcaller,data|
       mcaller.pass = data[0] != 0 &&
-                     data[1].match("Error: Domain #{Model::TARGETHOST} already has DKIM enabled.") 
+                     data[1].match("Error: Domain #{Model::DOMAIN.to_s} already has DKIM enabled.") 
   end,
   
   # delete by selector
@@ -168,9 +168,9 @@ current.action = [
   end,
   
   # remove DKIM signature - positive
-  v(ZMDkimkeyutil.new("-r", '-d', Model::TARGETHOST.to_s, run_on_mta)) do |mcaller,data|
+  v(ZMDkimkeyutil.new("-r", '-d', Model::DOMAIN.to_s, run_on_mta)) do |mcaller,data|
       mcaller.pass = data[0] = 0 &&
-                     data[1].match("DKIM Data deleted in LDAP for domain #{Model::TARGETHOST}") 
+                     data[1].match("DKIM Data deleted in LDAP for domain #{Model::DOMAIN}") 
   end,
   
 ]
