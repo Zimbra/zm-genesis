@@ -58,12 +58,12 @@ module Action # :nodoc
           begin
             Kernel.sleep(5)
             result = !@mta.any? do |mta|
-              !RunCommand.new(File.join(ZIMBRACOMMON,'sbin','postqueue'), ZIMBRAUSER, '-p').run[1].include?('Mail queue is empty')
+              !RunCommandOnMta.new(File.join(ZIMBRACOMMON,'sbin','postqueue'), ZIMBRAUSER, '-p').run[1].include?('Mail queue is empty')
             end
             if result
               hasMail = false
             else
-              @mta.each { |mta| RunCommand.new(File.join(ZIMBRACOMMON,'sbin','postqueue'), ZIMBRAUSER, '-f').run }
+              @mta.each { |mta| RunCommandOnMta.new(File.join(ZIMBRACOMMON,'sbin','postqueue'), ZIMBRAUSER, '-f').run }
             end
           end while(hasMail)
         end
