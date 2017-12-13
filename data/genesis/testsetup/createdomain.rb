@@ -1,4 +1,4 @@
-i#!/bin/env ruby
+#!/bin/env ruby
 #
 # $File$ 
 # $DateTime$
@@ -45,7 +45,7 @@ current.action = [
       mcaller.pass = data[0] == 0
    end,
 
-   v(ZMProv.new('ca', 'admin@'+Model::DOMAIN.to_s, Model::DEFAULTPASSWORD, 'zimbraIsAdminAccount', 'TRUE')) do |mcaller, data|
+   v(ZMProv.new('ca', 'admin@'+'zmc-proxy.zmc.com', Model::DEFAULTPASSWORD, 'zimbraIsAdminAccount', 'TRUE')) do |mcaller, data|
       mcaller.pass = (data[0] == 0 or data[1].include?("ERROR: account.ACCOUNT_EXISTS"))
    end,
 ]
