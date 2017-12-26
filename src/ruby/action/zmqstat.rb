@@ -40,7 +40,7 @@ module Action # :nodoc
     attr :label, true
     def initialize(*arguments)
       super()
-      @runner = RunCommand.new(File.join(ZIMBRAPATH,'libexec','zmqstat'), 'root', *arguments)
+      @runner = RunCommandOnMta.new(File.join(ZIMBRAPATH,'libexec','zmqstat'), 'root', *arguments)
       @label = ''
       self.timeOut = 2400 #timeout to 40 minutes
     end
