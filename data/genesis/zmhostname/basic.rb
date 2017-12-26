@@ -52,11 +52,8 @@ current.setup = [
 current.action = [
 
  v(RunCommand.new(File.join(Command::ZIMBRAPATH,'bin','zmhostname'),Command::ZIMBRAUSER)) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?(Model::TARGETHOST)
+    mcaller.pass = (data[0] == 0) && data[1].include?(Model::TARGETHOST.to_s.split('.').first)
   end,
-
-
-
 
 ]
 #
