@@ -97,7 +97,7 @@ current.action = [
       mcaller.pass = data[0] == 0 && data[1].empty?
     end,
       
-    v(RunCommand.new(File.join(Command::ZIMBRAPATH, 'libexec', 'zmldapenablereplica'), Command::ZIMBRAUSER)) do |mcaller, data|
+    v(RunCommandOnLdap.new(File.join(Command::ZIMBRAPATH, 'libexec', 'zmldapenablereplica'), Command::ZIMBRAUSER)) do |mcaller, data|
       mcaller.pass = data[0] == 0 && data[1]  =~ /Enabling sync provider on master\.{3}succeeded/
     end,
   ]
