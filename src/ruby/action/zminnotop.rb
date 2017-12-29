@@ -40,7 +40,7 @@ module Action # :nodoc
     attr :label, true
     def initialize(*arguments)
       super()
-      @runner = RunCommand.new(File.join(ZIMBRAPATH,'bin','zminnotop'), ZIMBRAUSER, *arguments)
+      @runner = RunCommandOnMailbox.new(File.join(ZIMBRAPATH,'bin','zminnotop'), ZIMBRAUSER, *arguments)
       @label = ''
       self.timeOut = 2400 #timeout to 40 minutes
     end
