@@ -41,56 +41,54 @@ current.setup = [
 # Execution
 #
 current.action = [     
-	#Get All Config
-	v(ZMProv.new('gacf')) do |mcaller, data|	
-	 mcaller.pass = data[0] == 0 && data[1].include?('zimbraAdminPort:') 
-	end,
-	v(ZMProv.new('getAllConfig')) do |mcaller, data|
-	 mcaller.pass = data[0] == 0 && data[1].include?('zimbraImapServerEnabled') 
-	end,
-	
-	#Get Config
-	v(ZMProv.new('gcf', 'zimbraImapServerEnabled')) do |mcaller, data|
-	 mcaller.pass = data[0] == 0 && ['TRUE', 'FALSE'].any? do |x|
-	   data[1].include?(x)
-	 end 
-	end,
-	
-	#Modify Config
-	v(ZMProv.new('mcf', 'holder', 'whatever')) do |mcaller, data|
-	 mcaller.pass = data[1].include?('INVALID_ATTR_NAME')
-	end, 
+  #Get All Config
+  v(ZMProv.new('gacf')) do |mcaller, data|	
+    mcaller.pass = data[0] == 0 && data[1].include?('zimbraAdminPort:') 
+  end,
 
-	#Adding Verification tests for bug 9439
-    v(ZMProv.new('gcf', 'zimbraVersIonChEckSendNotificationS')) do |mcaller, data|
-	 mcaller.pass = data[0] == 0 && ['TRUE', 'FALSE'].any? do |x|
-	   data[1].include?(x)
-	 end
-	end,
-	
-	v(ZMProv.new('gcf', 'zimbradefaultdomainname')) do |mcaller, data|
-	 mcaller.pass = 0 && data[1].include?(Model::TARGETHOST)
+  v(ZMProv.new('getAllConfig')) do |mcaller, data|
+    mcaller.pass = data[0] == 0 && data[1].include?('zimbraImapServerEnabled') 
+  end,
+  #Get Config
+  v(ZMProv.new('gcf', 'zimbraImapServerEnabled')) do |mcaller, data|
+    mcaller.pass = data[0] == 0 && ['TRUE', 'FALSE'].any? do |x|
+      data[1].include?(x)
+    end 
+  end,
+
+  #Modify Config
+  v(ZMProv.new('mcf', 'holder', 'whatever')) do |mcaller, data|
+    mcaller.pass = data[1].include?('INVALID_ATTR_NAME')
+  end, 
+
+  #Adding Verification tests for bug 9439
+  v(ZMProv.new('gcf', 'zimbraVersIonChEckSendNotificationS')) do |mcaller, data|
+    mcaller.pass = data[0] == 0 && ['TRUE', 'FALSE'].any? do |x|
+      data[1].include?(x)
+    end
+  end,
+
+  v(ZMProv.new('gcf', 'zimbradefaultdomainname')) do |mcaller, data|
+    mcaller.pass = 0 && data[1].include?(Model::TARGETHOST)
   end,
 
   #bug 61278
-
   v(ZMProv.new('gcf', 'zimbraMtaMaxMessageSize ')) do |mcaller, data|
-   mcaller.pass = data[0] == 0 && data[1].include?("10240000")
+    mcaller.pass = data[0] == 0 && data[1].include?("10240000")
   end,
- 
+
   v(ZMProv.new('mcf', 'zimbraMtaMaxMessageSize', '10737419264')) do |mcaller, data|
-   mcaller.pass = data[0] == 0 && (data[1].nil? || data[1].include?(" ") || data[1].include?(""))
+    mcaller.pass = data[0] == 0 && (data[1].nil? || data[1].include?(" ") || data[1].include?(""))
   end,
 
   v(ZMProv.new('mcf', 'zimbraMtaMaxMessageSize', '10240000')) do |mcaller, data|
-   mcaller.pass = data[0] == 0 
+    mcaller.pass = data[0] == 0 
   end,
-  
-  
+
   #Bug 85183
-    
+  
   v(ZMProv.new('mcf', 'zimbraHttpThrottleSafeIPs', '111.222.11.222/32')) do |mcaller, data|
-   mcaller.pass = data[0]==0
+    mcaller.pass = data[0]==0 
   end, 
   
   v(ZMControl.new('restart'))do | mcaller,data|
@@ -98,29 +96,28 @@ current.action = [
   end,
     
   v(ZMProv.new('gcf', 'zimbraHttpThrottleSafeIPs')) do |mcaller, data|
-   mcaller.pass = data[0] == 0 && data[1].include?("111.222.11.222/32")
+    mcaller.pass = data[0] == 0 && data[1].include?("111.222.11.222/32")
   end,
   
   v( ZMProv.new('gas')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?(Model::TARGETHOST)
+    mcaller.pass = data[0] == 0 && data[1].include?(Model::TARGETHOST.to_s.split('.').first)
   end,
   
   v(ZMProv.new('mcf', 'zimbraHttpThrottleSafeIPs', '""')) do |mcaller, data|
-   mcaller.pass = data[0]==0
+    mcaller.pass = data[0]==0
   end, 
   
   v(ZMControl.new('restart'))do | mcaller,data|
-   mcaller.pass = data[0] == 0 && !data[1].include?('failed')
+    mcaller.pass = data[0] == 0 && !data[1].include?('failed')
   end,
     
   v(ZMProv.new('gcf', 'zimbraHttpThrottleSafeIPs')) do |mcaller, data|
-   mcaller.pass = data[0] == 0 && data[1].include?("")
+    mcaller.pass = data[0] == 0 && data[1].include?("")
   end,
   
   v( ZMProv.new('gas')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?(Model::TARGETHOST)
+    mcaller.pass = data[0] == 0 && data[1].include?(Model::TARGETHOST.to_s.split('.').first)
   end,
- 
 ]
 #
 # Tear Down
