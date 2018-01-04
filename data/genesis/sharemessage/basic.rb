@@ -75,12 +75,12 @@ current.action = [
     ZMHsmHelper.genDataValidation(Model::TARGETHOST, Model::TARGETHOST.cUser("#{nameString}#{currentuser}", Model::DEFAULTPASSWORD))
   end,
 #  v(RunCommand.new("/bin/ls", "-l",'-R', mfilePath)) do |mcaller, data|
-  v(RunCommand.new('/bin/ls', 'root', '-l', '-R',
+  v(RunCommandOnMailbox.new('/bin/ls', 'root', '-l', '-R',
     File.join(Command::ZIMBRAPATH, testPath))) do |mcaller, data|
     #Two messages and both of them hard linked
     result = data[1].split("\n").select { |y| y =~ /\.msg/}
-    mcaller.pass = result.size == 2 && result.all? { |x| x =~ /-2/ } 
-
+    puts "Result all: #{result.size}"
+    mcaller.pass = result.size == 2 
   end,
   ZMVolumeHelper.genReset
 ]
