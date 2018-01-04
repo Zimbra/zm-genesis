@@ -91,7 +91,7 @@ current.action = [
     mcaller.pass = data[0] == 0 && data[1] & data[2] == data[2]
   end,
   
-  if RunCommand.new('ls', Command::ZIMBRAUSER, File.join(Command::ZIMBRAPATH, 'data', 'ldap', 'accesslog', 'db')).run[0] != 0
+  if RunCommandOnLdap.new('ls', Command::ZIMBRAUSER, File.join(Command::ZIMBRAPATH, 'data', 'ldap', 'accesslog', 'db')).run[0] != 0
   [
     v(ZMSlapcat.new('-a', mDir)) do |mcaller, data|
       mcaller.pass = data[0] == 0 && data[1].empty?
