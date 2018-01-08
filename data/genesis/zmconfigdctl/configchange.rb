@@ -39,7 +39,7 @@ def collectLdapConfig()
   # Digest::MD5.hexdigest(File.open('/tmp/xxx.txt') { |f| f.read})
   # on MAC : stat -f "%N | %t%Sm" /opt/zimbra/data/ldap/config/cn\=config/*
   # others : stat --format "%y | %n" /opt/zimbra/data/ldap/config/cn=config/*
-  mResult = RunCommand.new('stat', 'root', '--format "%n | %y" /opt/zimbra/data/ldap/config/cn=config/*.ldif').run
+  mResult = RunCommandOnLdap.new('stat', 'root', '--format "%n | %y" /opt/zimbra/data/ldap/config/cn=config/*.ldif').run
   #puts mResult
   return mResult if mResult[0] != 0
   md5Cmd = (Model::TARGETHOST.architecture == 66 ? '/sbin/': '') + 'md5' +

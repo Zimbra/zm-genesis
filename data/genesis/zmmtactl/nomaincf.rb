@@ -36,31 +36,30 @@ current.description = "Test postfix with missing main.cf"
 #
 current.setup = [
 
-
 ]
+
 #
 # Execution
 #
 current.action = [
-
-                  v(ZMMtactl.new('stop')) do |mcaller, data|
-                    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping saslauthd...done.')
-                  end,
+  v(ZMMtactl.new('stop')) do |mcaller, data|
+    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping saslauthd...done.')
+  end,
                   
-                  v(RunCommand.new('rm','root', File.join(Command::ZIMBRACOMMON, 'conf', 'main.cf'))) do |mcaller, data|
-                    mcaller.pass = (data[0] == 0)
-                  end,
+  v(RunCommandOnMta.new('rm','root', File.join(Command::ZIMBRACOMMON, 'conf', 'main.cf'))) do |mcaller, data|
+    mcaller.pass = (data[0] == 0)
+  end,
                   
-                  v(ZMMtactl.new('start'), 240) do |mcaller, data|
-                    mcaller.pass = (data[0] == 0) && data[1].include?('Rewriting configuration files...done.')\
-                    && data[1].include?('Starting saslauthd...done.')
-                  end,
+  v(ZMMtactl.new('start'), 240) do |mcaller, data|
+    mcaller.pass = (data[0] == 0) && data[1].include?('Rewriting configuration files...done.')\
+    && data[1].include?('Starting saslauthd...done.')
+  end,
 
-                  v(RunCommand.new('ls','root', '-l', File.join(Command::ZIMBRACOMMON, 'conf', 'main.cf'))) do |mcaller, data|
-                    mcaller.pass = (data[0] == 0) && data[1].include?('root root')
-                  end,
+  v(RunCommandOnMta.new('ls','root', '-l', File.join(Command::ZIMBRACOMMON, 'conf', 'main.cf'))) do |mcaller, data|
+    mcaller.pass = (data[0] == 0) && data[1].include?('root root')
+  end,
+]
 
-                 ]
 #
 # Tear Down
 #

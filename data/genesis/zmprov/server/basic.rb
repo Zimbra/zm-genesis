@@ -46,51 +46,51 @@ current.setup = [
 # Execution
 #
 current.action = [     
-	#Create Server
-	v(ZMProv.new('cs',name)) do |mcaller, data|	
-	 mcaller.pass = data[0] == 0
-	end,
-	
-	#Get All Server
-	v(ZMProv.new('gas')) do |mcaller, data|	  
-	 mcaller.pass = data[0] == 0 && data[1].include?(name)
-	end,
-	
-	#Get Server
-	v(ZMProv.new('gs', name)) do |mcaller, data|	
-	 mcaller.pass = data[0] == 0 && data[1].include?('zimbraAdminPort') 
-	end,
-	
-	#Modify Server
-	v(ZMProv.new('ms', name, 'cn', name)) do |mcaller, data|
-	 mcaller.pass = data[0] == 0
-	end,
-	
-	#Delete Server
-	v(ZMProv.new('ds',name)) do |mcaller, data|	
-	 mcaller.pass = data[0] == 0  
-	end, 	   
-  
-  #Delete Server that is not empty. Bug #32709
-  v(ZMProv.new('ds', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data| 
-   mcaller.pass = data[0] == 2 && data[1].include?('ERROR: service.INVALID_REQUEST')  
-  end,     
-   
-  # Get All MTA Auth URLs
-    v(ZMProv.new('gamau')) do |mcaller, data| 
-    mcaller.pass = data[0] == 0 && data[1].include?(Model::TARGETHOST.name)
-  end,
-  
-  #getAllReverseProxyURLs(garpu) 
-  # Currently this test is for No Proxy Setup. Need to upgrade for proxy setup later.
-   v(ZMProv.new('garpu')) do |mcaller, data| 
-   mcaller.pass = data[0] == 0 && data[1].include?(':7072/service/extension/nginx-lookup')
+   #Create Server
+   v(ZMProv.new('cs',name)) do |mcaller, data|	
+      mcaller.pass = data[0] == 0
    end,
 
-  #getAllMemcachedServers(gamcs) 
-  # Currently this test is for No Proxy Setup. Need to upgrade for proxy setup later.
+   #Get All Server
+   v(ZMProv.new('gas')) do |mcaller, data|	  
+	  mcaller.pass = data[0] == 0 && data[1].include?(name)
+   end,
+	
+   #Get Server
+   v(ZMProv.new('gs', name)) do |mcaller, data|	
+      mcaller.pass = data[0] == 0 && data[1].include?('zimbraAdminPort') 
+   end,
+	
+   #Modify Server
+   v(ZMProv.new('ms', name, 'cn', name)) do |mcaller, data|
+      mcaller.pass = data[0] == 0
+   end,
+	
+   #Delete Server
+   v(ZMProv.new('ds',name)) do |mcaller, data|	
+      mcaller.pass = data[0] == 0  
+   end, 	   
+  
+   #Delete Server that is not empty. Bug #32709
+   v(ZMProv.new('ds', Model::Servers.getServersRunning("mailbox").first)) do |mcaller, data| 
+      mcaller.pass = data[0] == 2 && data[1].include?('ERROR: service.INVALID_REQUEST')  
+   end,     
+   
+   #Get All MTA Auth URLs
+   v(ZMProv.new('gamau')) do |mcaller, data| 
+      mcaller.pass = data[0] == 0 && data[1].include?(Model::Servers.getServersRunning("mailbox").first)
+   end,
+  
+   #getAllReverseProxyURLs(garpu) 
+   # Currently this test is for No Proxy Setup. Need to upgrade for proxy setup later.
+   v(ZMProv.new('garpu')) do |mcaller, data| 
+      mcaller.pass = data[0] == 0 && data[1].include?(':7072/service/extension/nginx-lookup')
+   end,
+
+   #getAllMemcachedServers(gamcs) 
+   #Currently this test is for No Proxy Setup. Need to upgrade for proxy setup later.
    v(ZMProv.new('gamcs')) do |mcaller, data| 
-   mcaller.pass = data[0] == 0 
+      mcaller.pass = data[0] == 0 
    end
 ]
 #
@@ -101,7 +101,7 @@ current.teardown = [
 ]
 
 if($0 == __FILE__)
-  require 'engine/simple'
-  testCase = Model::TestCase.instance   
-  Engine::Simple.new(Model::TestCase.instance, true).run  
+   require 'engine/simple'
+   testCase = Model::TestCase.instance   
+   Engine::Simple.new(Model::TestCase.instance, true).run  
 end

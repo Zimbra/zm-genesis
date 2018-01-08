@@ -45,13 +45,14 @@ end
 #
 current.setup = [
 ]
+
 #
 # Execution
 #
 current.action = [
 
   v(RunCommand.new(File.join(Command::ZIMBRAPATH,'bin','zmlocalconfig'),Command::ZIMBRAUSER)) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?(Model::TARGETHOST)
+    mcaller.pass = (data[0] == 0) && data[1].include?(Model::TARGETHOST.to_s.split('.').first)
   end,
 
   v(RunCommand.new("cat", 'root', File.join(Command::ZIMBRAPATH, 'conf', 'localconfig.xml'))) do |mcaller, data|
@@ -100,7 +101,7 @@ current.action = [
     mcaller.pass = data[0] == 0 && data[1] =~ /#{File.join(Command::ZIMBRAPATH, 'data', 'tmp')}/
   end,
 
-  v(ZMProv.new('ms', Model::TARGETHOST.to_s, 'zimbraserviceEnabled', 'convertd')) do |mcaller, data|
+  v(ZMProv.new('ms', Model::Servers.getServersRunning('proxy').first.to_s, 'zimbraserviceEnabled', 'convertd')) do |mcaller, data|
     mcaller.pass = data[0] != 0 && data[1].include?('error: cannot replace multi-valued attr value unless -r is specified')
   end,
 ]
