@@ -79,7 +79,6 @@ current.action = [
     File.join(Command::ZIMBRAPATH, testPath))) do |mcaller, data|
     #Two messages and both of them hard linked
     result = data[1].split("\n").select { |y| y =~ /\.msg/}
-    puts "Result all: #{result.size}"
     mcaller.pass = result.size == 2 
   end,
   ZMVolumeHelper.genReset
