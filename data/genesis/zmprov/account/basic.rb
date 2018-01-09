@@ -300,7 +300,7 @@ current.action = [
   v(ZMailAdmin.new('-m', testAccount, 'gaf')) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
-  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccount.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !data[1].empty?
   end,
@@ -308,18 +308,18 @@ current.action = [
   v(ZMProv.new('da', testAccount.name)) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
-  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccount.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].empty?
   end,
-  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccountTwo.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].empty?
   end,
   v(ZMProv.new('DeleteAccount', testAccountTwo.name)) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
-  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccountTwo.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].empty?
   end,
