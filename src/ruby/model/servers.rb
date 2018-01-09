@@ -13,6 +13,7 @@ if($0 == __FILE__)
 end 
 
 require "action/zmprov"
+require "action/zmlocalconfig"
 
 include Action
 module Model # :nodoc
@@ -44,6 +45,16 @@ module Model # :nodoc
         @@serviceList[service]
       end
       
+      #returns the mysql server that is specified in the localconfig of mailbox node
+      def getMysqlServer()
+        if @@serverList.nil?
+          output = RunCommandOnMailbox.new('zmlocalconfig mysql_bind_address').run[1]
+          @@serverList = output.to_s.split('=').last.strip
+        end
+        
+        @@serverList
+      end
+     
       # returns string array of all servers
       # use targethost if want to send request from other server
       def getAllServers(targethost = Model::TARGETHOST)
@@ -71,18 +82,11 @@ module Model # :nodoc
         @@proxy = nil
         @@serviceList = {}
       end
-    
-    
     end
-  end
-  
+  end 
 end
 
 if $0 == __FILE__
   require 'test/unit'  
-  
-
 end
- 
-  
 
