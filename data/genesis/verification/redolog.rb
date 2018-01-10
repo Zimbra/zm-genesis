@@ -43,14 +43,14 @@ current.setup = [
 
 current.action = [  
   v(cb("Redolog check") do
-    mObject = Action::RunCommand.new(File.join(Command::ZIMBRAPATH,'bin','zmjava'),'zimbra', 
+    mObject = Action::RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','zmjava'),'zimbra', 
     'com.zimbra.cs.redolog.util.RedoLogVerify -q redolog').run  
     mObject
   end) do |mcaller, data|  
     mcaller.pass = data[0] == 0 && !data[1].include?('error') 
   end,     
   v(cb("Redolog archive check") do
-    mObject = Action::RunCommand.new(File.join(Command::ZIMBRAPATH,'bin','zmjava'),'zimbra', 
+    mObject = Action::RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','zmjava'),'zimbra', 
     'com.zimbra.cs.redolog.util.RedoLogVerify -q redolog/archive').run  
     mObject
   end) do |mcaller, data|  
