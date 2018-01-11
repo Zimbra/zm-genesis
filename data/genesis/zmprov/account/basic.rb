@@ -14,6 +14,11 @@ if($0 == __FILE__)
   mydata = File.expand_path(__FILE__).reverse.sub(/.*?atad/,"").reverse;$:.unshift(mydata); $:.unshift(File.join(mydata, 'src', 'ruby')) #append library path
 end
 
+mypath = 'data'
+if($0 =~ /data\/genesis/)
+  mypath += '/genesis'
+end
+
 require "model"
 require "action/zmprov"
 require "action/block"
@@ -22,7 +27,7 @@ require "action/verify"
 require "action/json/login"
 require 'model/json/loginrequest'
 require 'action/zmmailbox'
-
+require "#{mypath}/install/utils"
 
 #
 # Global variable declaration
@@ -44,9 +49,10 @@ testAccountFive = Model::TARGETHOST.cUser(name+'6', Model::DEFAULTPASSWORD)
 testAccountSix = Model::TARGETHOST.cUser(name+'7', Model::DEFAULTPASSWORD)
 testAccountSeven = Model::TARGETHOST.cUser(name+'8', Model::DEFAULTPASSWORD)
 adminAccount = Model::TARGETHOST.cUser('admin', Model::DEFAULTPASSWORD)
-
 cidattribute = ['zimbraPrefForwardIncludeOriginalText', 'includeBody']
 sigId1 = nil
+mysqlServer = Model::Servers.getMysqlServer().to_s
+mysqlPort = Utils::getMysqlPort().to_s
 
 #
 # Setup
@@ -300,7 +306,7 @@ current.action = [
   v(ZMailAdmin.new('-m', testAccount, 'gaf')) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
-  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'), Command::ZIMBRAUSER, '-h', mysqlServer, '-P', mysqlPort, '-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccount.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && !data[1].empty?
   end,
@@ -308,18 +314,18 @@ current.action = [
   v(ZMProv.new('da', testAccount.name)) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
-  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER, '-h', mysqlServer , '-P', mysqlPort, '-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccount.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].empty?
   end,
-  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER, '-h', mysqlServer, '-P', mysqlPort, '-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccountTwo.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].empty?
   end,
   v(ZMProv.new('DeleteAccount', testAccountTwo.name)) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
-  v(RunCommandOnMysql.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER,'-e', 
+  v(RunCommandOnMailbox.new(File.join(Command::ZIMBRAPATH,'bin','mysql'),Command::ZIMBRAUSER, '-h', mysqlServer, '-P', mysqlPort, '-e', 
                              "\"select * from zimbra.mailbox where comment like \\\"#{testAccountTwo.name}\\\";\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].empty?
   end,

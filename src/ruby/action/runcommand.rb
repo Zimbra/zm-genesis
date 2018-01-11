@@ -88,15 +88,6 @@ module Action # :nodoc
     end
   end
 
-  class RunCommandOnMysql< Action::RunCommand
-    def initialize(*arguments)
-      unless arguments.last.is_a?(Model::Host)
-        arguments << Model::Host.new(Model::Servers.getMysqlServer())
-      end
-      super(*arguments)
-    end
-  end
-  
   class RunCommandOnLdap < Action::RunCommand
     def initialize(*arguments)
       unless arguments.last.is_a?(Model::Host)

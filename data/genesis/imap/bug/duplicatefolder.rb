@@ -13,15 +13,21 @@
 if($0 == __FILE__)
   mydata = File.expand_path(__FILE__).reverse.sub(/.*?atad/,"").reverse;$:.unshift(mydata); $:.unshift(File.join(mydata, 'src', 'ruby')) #append library path
 end 
+
+mypath = 'data'
+if($0 =~ /data\/genesis/)
+  mypath += '/genesis'
+end
  
 require "model"
-
 require "action/zmprov"
 require "action/proxy" 
 require "action/block"
 require "action/runcommand"
 require 'rexml/document'
 require "net/imap"; require "action/imap" #Patch Net::IMAP library
+require "#{mypath}/install/utils"
+
 
 #
 # Global variable declaration
@@ -35,10 +41,12 @@ testAccount = Model::TARGETHOST.cUser(name, Model::DEFAULTPASSWORD)
 mimap = Net::IMAP.new(Model::TARGETHOST, *Model::TARGETHOST.imap)
 mid = nil
 mgroupid = nil
+
+mysqlServer = Model::Servers.getMysqlServer().to_s
+mysqlPort = Utils::getMysqlPort().to_s
   
 include Action
 
- 
 #
 # Setup
 #
@@ -55,7 +63,7 @@ current.action = [
   #Normal operation
   proxy(mimap.method('create'),"blurdybloop"), 
   RenameVerify.new(mimap, "blurdybloop","Trash/bar"),   
-  v(RunCommandOnMailbox.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, '-X -e "select id,group_id,comment from zimbra.mailbox;"')) do |mcaller, data|
+  v(RunCommandOnMailbox.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, '-h', mysqlServer, '-P', mysqlPort, '-X -e "select id,group_id,comment from zimbra.mailbox;"')) do |mcaller, data|
     mcaller.pass = true 
     xmlData = REXML::Document.new(data[1])
     xmlData.elements['resultset'].elements.each do |node|
@@ -67,10 +75,11 @@ current.action = [
       end
     end
   end,
+  
   v(cb("Duplicate Check") do 
     executeString = ['-e "select count(*) cnt, parent_id, name from mboxgroup', mgroupid, 
       '.mail_item where type=1 and mailbox_id=',mid, ' group by name, parent_id having cnt>1;"'].join('')
-    response = RunCommandOnMailbox.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, executeString).run  
+    response = RunCommandOnMailbox.new('/opt/zimbra/bin/mysql', Command::ZIMBRAUSER, '-h', mysqlServer, '-P', mysqlPort, executeString).run  
   end) do |mcaller, data|
     mcaller.pass = !data[1].include?("name")
   end 
@@ -84,6 +93,7 @@ current.teardown = [
   proxy(mimap.method('disconnect')),  
   DeleteAccount.new(testAccount.name)
 ]
+
 if($0 == __FILE__)
   require 'engine/simple'
   testCase = Model::TestCase.instance   
