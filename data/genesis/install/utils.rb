@@ -134,6 +134,11 @@ module Utils # :nodoc
     res.first == '&nbsp' ? nil : res.first
   end
 
+  def Utils::getMysqlPort()
+    output = RunCommandOnMailbox.new('zmlocalconfig mysql_port').run[1]
+    mysqlport = output.to_s.split('=').last.strip
+    mysqlport
+  end
 end
 
 
