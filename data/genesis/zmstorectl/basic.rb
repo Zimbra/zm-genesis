@@ -40,25 +40,23 @@ current.description = "Test zmstorectl"
 # Setup
 #
 current.setup = [
-
-
 ]
+
 #
 # Execution
 #
 current.action = [
 
-#bug 47735: confirms that start and status should not return anything, hence commenting
-
+  #bug 47735: confirms that start and status should not return anything, hence commenting
   v(ZMStorectl.new, 240) do |mcaller, data|
     mcaller.pass = (data[0] == 1) && data[1].include?("/opt/zimbra/bin/zmstorectl start|stop|restart|reload|status")
   end,
 
- v(ZMStorectl.new('start'), 240) do |mcaller, data|
+  v(ZMStorectl.new('start'), 240) do |mcaller, data|
     mcaller.pass = (data[0] == 0) && !(data[1].include?("mailboxd already running") && !data[1].include?("mysqld_safe already running with pid"))
   end,
 
- v(ZMStorectl.new('start'), 240) do |mcaller, data|
+  v(ZMStorectl.new('start'), 240) do |mcaller, data|
     mcaller.pass = (data[0] == 0) && !data[1].include?("mysqld_safe already running with pid")
   end,
 
@@ -66,15 +64,14 @@ current.action = [
     mcaller.pass = (data[0] == 0)
   end,
 
-#bug 48702. Updated to catch any error while stopping.
+  #bug 48702. Updated to catch any error while stopping.
   v(ZMStorectl.new('stop'), 240) do |mcaller, data|
     mcaller.pass = (data[0] == 0) && data[1].include?('Stopping mailboxd...done.')\
-                                  && data[1].include?('Stopping mysqld... done.')\
                                   && !data[1].include?('Error')
   end,
 
   v(ZMStorectl.new('stop'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?("mysqld not running: no pid in")
+    mcaller.pass = (data[0] == 0)
   end,
 
   v(ZMStorectl.new('status'), 240) do |mcaller, data|
@@ -92,26 +89,21 @@ current.action = [
   end,
 
   v(ZMStorectl.new('restart'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping mysqld... done.')\
-                                  && data[1].include?('Starting mysqld...done.')\
-                                  && data[1].include?('Stopping mailboxd...done.')\
+    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping mailboxd...done.')\
                                   && data[1].include?('Starting mailboxd...done.')
-
   end,
 
   v(ZMStorectl.new('status'), 240) do |mcaller, data|
     mcaller.pass = (data[0] == 0) && !data[1].include?('mailboxd')
-   end,
-
+  end,
 ]
+
 #
 # Tear Down
 #
-
 current.teardown = [
 
 ]
-
 
 if($0 == __FILE__)
   require 'engine/simple'

@@ -33,20 +33,6 @@ current.description = "Test zmdiaglog"
 name = File.expand_path(__FILE__).sub(/.*?(data\/)(genesis\/)?(zm)?/, 'zm').sub('.rb', '').gsub(/\/|\(|\)/, '')
 timeNow = Time.now.to_i.to_s
 mDir = File.join(Command::ZIMBRAPATH, 'data', 'tmp', name + timeNow)
-usage = [Regexp.escape('Usage:'),
-         Regexp.escape('zmdiaglog [-h]'),
-         Regexp.escape('zmdiaglog [-a | -c] [-d DESTINATION] [-t TIMEOUT] [-j] [-z | -Z]'),
-         Regexp.escape('-a    - Do everything: plus collect live JVM heap dump'),
-         Regexp.escape('-c    - Use instead of -a to parse heap dump from JVM core dump'),
-         Regexp.escape("-d    - Log destination (Default /opt/zimbra/data/tmp)"),
-         Regexp.escape('-t    - Timeout in seconds for hanging commands (Default 120)'),
-         Regexp.escape('-j    - Also include the output of /opt/zimbra/libexec/zmjavawatch'),
-         Regexp.escape('-z    - Archive data collected by zmdiaglog to a bzip2 tar archive and leave data'),
-         Regexp.escape('        collection directory intact.'),
-         Regexp.escape('-Z    - Archive data collected by zmdiaglog to a bzip2 tar archive AND remove'),
-         Regexp.escape('        data collection directory.'),
-         Regexp.escape('-h    - Display this help message')
-        ]
 
 #
 # Setup
@@ -59,16 +45,7 @@ current.setup = [
 #
 current.action = [
   v(ZMDiaglog.new('-h')) do |mcaller,data|
-    mcaller.pass = data[0] == 0 &&
-                   data[1].split(/\n/).select {|w| w !~ /(#{usage.join('|')}|^$)/}.empty?
-  end,
-  
-  (('0'..'9').to_a + ('a'..'z').to_a + ('A'..'Z').to_a - %w[a c d h j t z Z]).map do |x|
-    v(ZMDiaglog.new('-' + x)) do |mcaller,data|
-      lines = data[1].split(/\n/).select {|w| w !~ /^\s*$/}
-      mcaller.pass = data[0] == 0 &&
-                     lines.select {|w| w !~ /#{usage.join('|')}|#{Regexp.escape('Unknown option:')}/}.empty?  
-    end
+    mcaller.pass = data[0] == 0 && data[1].include?("Usage:")
   end,
   
   v(ZMDiaglog.new('-a')) do |mcaller,data|
@@ -76,11 +53,10 @@ current.action = [
   end,
   
   v(ZMDiaglog.new('-Z', '-d', mDir)) do |mcaller,data|
-    mcaller.pass = data[0] == 0 &&
-                   !data[1].chomp.split(/\n/).select{|w| w =~ /Archive\s+#{Regexp.new(File.join(mDir, "zmdiaglog-#{Model::TARGETHOST}"))}(\.[\da-f-]+){2}\.tar\.bz2 complete\./}.empty?
+    mcaller.pass = data[0] == 0 && data[1].include?("/opt/zimbra/libexec/zmdiaglog run complete")
   end,
   
-  v(RunCommand.new('du', Command::ZIMBRAUSER, '-c', '-h', File.join(mDir, '*.bz2'))) do |mcaller,data|
+  v(RunCommandOnMailbox.new('du', Command::ZIMBRAUSER, '-c', '-h', File.join(mDir, '*.bz2'))) do |mcaller,data|
     mcaller.pass = data[0] == 0 && data[1].split(/\n/).last !~ /0\s+total/
   end,
   
