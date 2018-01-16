@@ -73,9 +73,9 @@ current.setup = []
 # Execution
 #
 current.action = [    
-                  Action::CreateAccount.new(nameOneAccount.name,nameOneAccount.password, 'zimbraMailHost', origHost.to_s),
-                  Action::CreateAccount.new(nameTwoAccount.name,nameTwoAccount.password, 'zimbraMailHost', destHost.to_s),
-                  Action::CreateAccount.new(nameThreeAccount.name,nameThreeAccount.password, 'zimbraMailHost', origHost.to_s),                   
+                  Action::CreateAccount.new(nameOneAccount.name,nameOneAccount.password),
+                  Action::CreateAccount.new(nameTwoAccount.name,nameTwoAccount.password),
+                  Action::CreateAccount.new(nameThreeAccount.name,nameThreeAccount.password),                   
                   cb("Set ACL Account Two") {               
                     mimap2.object = Net::IMAP.new(origHost, *origHost.imap)
                     mimap2.login(nameTwoAccount.name, nameTwoAccount.password)
