@@ -44,6 +44,7 @@ nameThree = 'imshar3'+File.basename(__FILE__,'.rb')+Time.now.to_i.to_s
 origHost = Model::TARGETHOST
 #destHost = Model::TARGETHOST.findService(:service)[-1]
 #proxy = (Model::TARGETHOST.findService(:imapproxy).first rescue origHost) || origHost
+mta = Model::Servers.getServersRunning('mta').first.to_s
 #mta = (Model::TARGETHOST.findService(:mta).first rescue origHost) || origHost
 
 #runThisTest = (origHost != destHost)
