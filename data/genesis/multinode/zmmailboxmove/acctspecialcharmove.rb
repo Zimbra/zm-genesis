@@ -54,7 +54,7 @@ if(runThisTest)
   current.action = [    
                     # Bug #18025
                     # Create account
-                    CreateAccount.new('"%s"'%testAccount.name, testAccount.password, 'zimbraMailHost', origHost.to_s),  
+                    CreateAccount.new('"%s"'%testAccount.name, testAccount.password),  
                     
                     # Move account to slave host
                     v(cb("Move account to slave host") do    
@@ -66,9 +66,7 @@ if(runThisTest)
                     #Get Account's mailhost after move
                     v(ZMProv.new('ga', '"%s"'%testAccount.name, 'zimbraMailHost')) do |mcaller, data|
                       mcaller.pass = (data[0] == 0) && (data[1].include?(destHost.to_s))
-                    end,
-                   
-                    
+                    end,                  
                     
                    ]
 else
