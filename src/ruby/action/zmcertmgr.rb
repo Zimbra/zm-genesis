@@ -25,7 +25,7 @@ module Action # :nodoc
   #
   # Perform zmcertmgr action
   #
-  class ZMCertmgr < Action::RunCommand
+  class ZMCertmgr < Action::RunCommandOnMailbox
 
     #
     #  Create a zmcertmgr object
