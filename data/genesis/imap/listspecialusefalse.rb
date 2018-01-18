@@ -55,7 +55,7 @@ trflags = [['INBOX/three', [:Haschildren]]]
 trtrflags = [['INBOX/three/three', [:Hasnochildren]]]
 otrtrflags = [["/home/#{testAccountTwo.name}/INBOX/three/three", [:Hasnochildren]]]
 
-ZMLocalconfig.new('-e', 'imap_force_special_use=FALSE').run
+RunCommandOnMailbox.new('zmlocalconfig', Command::ZIMBRAUSER, '-e imap_force_special_use=FALSE').run  
 ZMMailboxdctl.new('restart').run
 Kernel.sleep(20) #wait for imap server to be running
 mimap = Net::IMAP.new(Model::TARGETHOST, Model::IMAPSSL, true)
@@ -112,7 +112,7 @@ current.action = [
 current.teardown = [     
   p(mimap.method('logout')),
   p(mimap.method('disconnect')),
-  ZMLocalconfig.new('-u', 'imap_force_special_use'),
+  RunCommandOnMailbox.new('zmlocalconfig', Command::ZIMBRAUSER, '-u imap_force_special_use'),
   ZMMailboxdctl.new('restart'),
   Action::DeleteAccount.new(testAccount.name),
   Action::DeleteAccount.new(testAccountTwo.name)

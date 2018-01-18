@@ -41,8 +41,6 @@ current.description = "Test zmdomaincertmgr"
 # Setup
 #
 current.setup = [
-
-
 ]
 
 hash_old = ""
@@ -99,7 +97,7 @@ current.action = [
 
    end,
    
-   v(RunCommand.new("sha256sum /opt/zimbra/conf/domaincerts/" +Model::TARGETHOST+".crt"))do |mcaller, data|
+   v(RunCommandOnMailbox.new("sha256sum /opt/zimbra/conf/domaincerts/" +Model::TARGETHOST+".crt"))do |mcaller, data|
      hash_old = data[1].split(" ")[0]
      mcaller.pass = (data[0] == 0)
    end, 
@@ -117,17 +115,17 @@ current.action = [
 
    end, 
      
-   v(RunCommand.new("sha256sum /opt/zimbra/conf/domaincerts/" +Model::TARGETHOST+".crt"))do |mcaller, data|
+   v(RunCommandOnMailbox.new("sha256sum /opt/zimbra/conf/domaincerts/" +Model::TARGETHOST+".crt"))do |mcaller, data|
       hash_new = data[1].split(" ")[0]
       mcaller.pass = (data[0] == 0 && hash_old != hash_new) # Bug 97981
    end,  
      
    
 ]
+
 #
 # Tear Down
 #
-
 current.teardown = [
     ZMProv.new('md', Model::TARGETHOST.to_s,'zimbraVirtualHostName'," ","\"\"") #unset zimbraVirtualHostName 
 ]

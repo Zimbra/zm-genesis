@@ -24,19 +24,14 @@ require "action/zmprov"
 require "model"
 require 'net/smtp'
 
-
-
 module Action # :nodoc
   #
   # Perform zmdomaincertmgr action.  This will invoke some zmdomaincertmgr with some arguments
-
   #
   class ZMDomaincertmgr < Action::Command
-
     #
     #  Create a zmdomaincertmgr object.
     #
-
     attr :label, true
     def initialize(*arguments)
       super()
@@ -70,5 +65,3 @@ if $0 == __FILE__
     end
   end
 end
-
-
