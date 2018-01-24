@@ -67,7 +67,7 @@ current.action = [
 # Tear Down
 #
 current.teardown = [     
- 
+   CapabilityVerify.removeCapability("AUTH=GSSAPI"), #rollback to the initial stage
 ]
 
 if($0 == __FILE__)
