@@ -39,7 +39,7 @@ current.setup = [
 # Execution
 #
 current.action = [    
-     Action::RunCommand.new(File.join(Command::ZIMBRAPATH, 'postfix', 'sbin', 'postsuper'), 'root', '-d ALL')  
+     Action::RunCommandOnMta.new(File.join(Command::ZIMBRAPATH, 'postfix', 'sbin', 'postsuper'), 'root', '-d ALL')  
 ]
 
 #
