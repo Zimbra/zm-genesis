@@ -45,7 +45,7 @@ current.setup = [
 #
 current.action = [  
   cb("Proxy Detection") {
-    checkProxy = RunCommand.new('zmprov', Command::ZIMBRAUSER, "gs #{Model::TARGETHOST} zimbraServiceEnabled").run[1] rescue []
+    checkProxy = RunCommand.new('zmprov', Command::ZIMBRAUSER, "gs #{Model::Servers.getServersRunning('proxy').first.to_s} zimbraServiceEnabled").run[1] rescue []
     # Check to see if it is running proxy mode 
     Model::TARGETHOST.proxy = checkProxy.split(/\n/).any? {|x| x =~/proxy/ }   
     if(Model::TARGETHOST.proxy) #Set monitor if necessary
