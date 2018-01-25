@@ -114,8 +114,7 @@ current.action = [
       mimap.append("INBOX/append", message, [:Answered, :Deleted, :Draft, :Flagged, :Seen])
       end
     ) do |caller, data|
-     caller.pass = (data.class == Net::IMAP::BadResponseError && data.message =~ /maximum literal size exceeded/) ||
-                   (data.class == Net::IMAP::NoResponseError && data.message =~ /maximum message size exceeded/)
+     caller.pass = (data.class == Net::IMAP::BadResponseError && data.message =~ /maximum message size exceeded/)
   end,
   
   cb("Clean up") do
