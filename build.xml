@@ -1,104 +1,134 @@
 <project name="zm-genesis" default="jar" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
   <import file="../zm-zcs/ant-global.xml"/>
 
-    <property name="build.staf.dir"  	location="${build.dir}/staf"/>
-    <property name="build.staf.jars.dir"  		location="${build.dir}/staf/STAF-INF/jars"/>
-    <property name="build.staf.classes.dir"  	location="${build.dir}/staf/STAF-INF/classes"/>
+    <property name="build.staf.dir" location="${build.dir}/staf"/>
+    <property name="build.staf.jars.dir"  location="${build.dir}/staf/STAF-INF/jars"/>
+    <property name="build.staf.classes.dir" location="${build.dir}/staf/STAF-INF/classes"/>
     <property name="server.jars.dir" location="${server.dir}/jars"/>
-    <property name="deployDir"			location="${build.dir}/dist"/> <!-- pass in by Anthill -->
-    <property name="dist.dir.root"      location="${deployDir}"/>
-	
-    <property name="build.customauth.classes.dir"  		location="${build.dir}/customauth/classes"/>
-    <property name="build.storemanager.classes.dir"  		location="${build.dir}/storemanager/classes"/>
-    <property name="build.scalityhttpstore.classes.dir"         location="${build.dir}/scalityhttpstore/classes"/>
+    <property name="deploy.dir" location="${build.dir}/dist"/> <!-- pass in by Anthill -->
+    <property name="dist.dir.root" location="${deploy.dir}"/>
+
+    <property name="data.genesis.dir" location="data/genesis"/>
+    <property name="conf.dir" location="conf"/>
+    <property name="src.ruby.dir" location="src/ruby"/>
+    <property name="src.ruby.data.dir" location="${src.ruby.dir}/data"/>
+    <property name="src.ruby.conf.dir" location="${src.ruby.dir}/conf"/>
+    <property name="src.ruby.conf.genesis.dir" location="${src.ruby.conf.dir}/genesis"/>
+  
+    <property name="build.customauth.classes.dir" location="${build.dir}/customauth/classes"/>
+    <property name="build.storemanager.classes.dir" location="${build.dir}/storemanager/classes"/>
+    <property name="build.scalityhttpstore.classes.dir" location="${build.dir}/scalityhttpstore/classes"/>
+    <property name="zm-network-genesis.dir" location="../zm-network-genesis"/>
 
   <target name="jar" depends="compile" description="Creates the jar file">
     <antcall target="zimbra-jar">
       <param name="implementation.title" value="Zimbra genesis"/>
-    </antcall>
+  </antcall>
+  </target>
+
+  <target name="zm-network-genesis-content" description="Copies network related data and tests">
+    <echo message="Copying network related data and tests..."/>
+    <if> <available file="${zm-network-genesis.dir}" type="dir"/>
+      <then>
+        <copy todir="${src.ruby.conf.genesis.dir}">
+          <fileset dir="${zm-network-genesis.dir}/conf/genesis/"/>
+        </copy>
+        <copy todir="${src.ruby.data.dir}">
+          <fileset dir="${zm-network-genesis.dir}/data/genesis/"/>
+        </copy>
+      </then>
+    </if>
+  </target>
+
+  <target name="ruby-set-up" depends="zm-network-genesis-content">
+    <copy todir="${src.ruby.data.dir}">
+      <fileset dir="${data.genesis.dir}"/>
+    </copy>
+
+    <copy todir="${src.ruby.conf.dir}">
+      <fileset dir="${conf.dir}"/>
+    </copy>
+
+    <copy todir="${src.ruby.data.dir}/TestMailRaw">
+        <fileset dir="data/TestMailRaw"/>
+    </copy>
+
+    <!-- copy todir="src/ruby/lib/">
+      <fileset dir="../ZimbraCommon/jars">
+      </fileset>
+      <fileset dir="${dist.lib.dir}">
+      </fileset>
+    </copy -->
 
   </target>
-	<target name="ruby-set-up">
-		<copy todir="src/ruby/data">
-			<fileset dir="data/genesis"/>
-		</copy>
-		<copy todir="src/ruby/conf">
-			<fileset dir="conf">
-			</fileset>
-		</copy>
-        <copy todir="src/ruby/data/TestMailRaw">
-            <fileset dir="data/TestMailRaw">
-            </fileset>
-        </copy>
-		<!-- copy todir="src/ruby/lib/">
-			<fileset dir="../ZimbraCommon/jars">
-			</fileset>
-			<fileset dir="${dist.lib.dir}">
-			</fileset>
-		</copy -->
-	</target>
 
 
-	<target name="ruby-clean">
-		<delete dir="src/ruby/data"/>
-		<delete dir="src/ruby/lib"/>
-		<delete dir="src/ruby/conf"/>
-	</target>
+  <target name="ruby-clean">
+    <delete dir="${src.ruby.data.dir}"/>
+    <delete dir="${src.ruby.conf.dir}"/>
+  </target>
 
-	<target name="ruby-compile" depends="ruby-set-up">
-		<apply executable="ruby" failonerror="true">
-			<arg value="-c"/>
-		    <fileset dir="src/ruby" includes="**/*.rb"/>
-		</apply>
-	</target>
+  <target name="ruby-compile" depends="ruby-set-up">
+    <apply executable="ruby" failonerror="true">
+      <arg value="-c"/>
+        <fileset dir="${src.ruby.dir}" includes="**/*.rb"/>
+    </apply>
+  </target>
 
 
-	<target name="build-genesis" depends="build-init, ruby-clean,ruby-compile,ruby-set-up">
-		<tar longfile="gnu" destfile="${build.dir}/genesisdos.tar">
-			<tarfileset dir="src/ruby" prefix="genesis" mode="555">
-				<include name="**/*.rb"/>
-				<include name="**/cookie.tgz"/>
-				<include name="**/*.conf"/>
-				<include name="**/Gemfile"/>
-				<!-- supress large account test until test plan logic is implemented -->
-				<exclude name="**/largeaccountcreation.rb"/>
-				<!-- bug 5570 stall test -->
-				<exclude name="**/hsm/concurrent.rb"/>
-			</tarfileset>
-			<!-- tarfileset dir="src/ruby/lib" prefix="genesis/lib" mode = "555">
-				<include name = "**/*"/>
-			</tarfileset -->
-			<tarfileset dir="src/ruby/conf" prefix="genesis/conf" mode="555">
-				<include name = "**/*" />
-			</tarfileset>
-            <tarfileset dir="src/ruby/data/TestMailRaw" prefix="genesis/data/TestMailRaw" mode="555">
-                <include name = "**/*" />
-            </tarfileset>
-			<!-- tarfileset dir="build/generated/src/ruby"
-				prefix="genesis/docs">
-				<include name="**/*"/>
-			</tarfileset -->
-		</tar>
-		<untar src="${build.dir}/genesisdos.tar" dest="${build.dir}/unix"/>
-		<fixcrlf srcdir="${build.dir}/unix/genesis"
-			eol="lf"
-			eof="remove"
-			includes="**/*.rb" />
-		<fixcrlf srcdir="${build.dir}/unix/genesis"
-					eol="lf"
-					eof="remove"
-					includes="**/zimbra.conf" />
-		<tar longfile="gnu" destfile="${build.dir}/genesis.tar">
-			<tarfileset dir="${build.dir}/unix" mode="555">
-					<include name="**/*.rb"/>
-			</tarfileset>
-			<tarfileset dir="${build.dir}/unix">
-					<include name="**/*"/>
-					<exclude name="**/*.rb"/>
-			</tarfileset>
-		</tar>
-		<delete dir="${build.dir}/unix"/>
-	</target>
+  <target name="build-genesis" depends="build-init, ruby-clean,ruby-compile">
+    <tar longfile="gnu" destfile="${build.dir}/genesisdos.tar">
+      <tarfileset dir="${src.ruby.dir}" prefix="genesis" mode="555">
+        <include name="**/*.rb"/>
+        <include name="**/cookie.tgz"/>
+        <include name="**/*.conf"/>
+        <include name="**/Gemfile"/>
+        <!-- supress large account test until test plan logic is implemented -->
+        <exclude name="**/largeaccountcreation.rb"/>
+        <!-- bug 5570 stall test -->
+        <exclude name="**/hsm/concurrent.rb"/>
+      </tarfileset>
 
-	
+      <!-- tarfileset dir="src/ruby/lib" prefix="genesis/lib" mode = "555">
+        <include name = "**/*"/>
+      </tarfileset -->
+      <tarfileset dir="${src.ruby.conf.dir}" prefix="genesis/conf" mode="555">
+        <include name = "**/*" />
+      </tarfileset>
+
+      <tarfileset dir="${src.ruby.data.dir}/TestMailRaw" prefix="genesis/data/TestMailRaw" mode="555">
+          <include name = "**/*" />
+      </tarfileset>
+      <!-- tarfileset dir="build/generated/src/ruby"
+        prefix="genesis/docs">
+        <include name="**/*"/>
+      </tarfileset -->
+    </tar>
+
+    <untar src="${build.dir}/genesisdos.tar" dest="${build.dir}/unix"/>
+    <fixcrlf srcdir="${build.dir}/unix/genesis"
+      eol="lf"
+      eof="remove"
+      includes="**/*.rb" />
+
+    <fixcrlf srcdir="${build.dir}/unix/genesis"
+          eol="lf"
+          eof="remove"
+          includes="**/zimbra.conf" />
+
+    <tar longfile="gnu" destfile="${build.dir}/genesis.tar">
+      <tarfileset dir="${build.dir}/unix" mode="555">
+          <include name="**/*.rb"/>
+      </tarfileset>
+
+      <tarfileset dir="${build.dir}/unix">
+          <include name="**/*"/>
+          <exclude name="**/*.rb"/>
+      </tarfileset>
+    </tar>
+
+    <delete dir="${build.dir}/unix"/>
+  </target>
+
+  
 </project>
