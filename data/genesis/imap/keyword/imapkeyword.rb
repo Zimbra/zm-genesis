@@ -84,7 +84,7 @@ current.action = [
   cb("Tag a message") do 
     result = ZMailAdmin.new('-m', testAccount.name, 's', '-t', 'message', "in:#{mFolder1}").run
     #TBD - use an xml parser for robustness
-    ZMailAdmin.new('-m', testAccount.name, 'tm', result[1][/m .* id="(\d+)"/m, 1], tag).run       
+    ZMailAdmin.new('-m', testAccount.name, 'tm', result[1][/\<m .* id="(\d+)" /m, 1], tag).run       
   end,
 
   v(cb("SELECT 1st folder and FETCH") do

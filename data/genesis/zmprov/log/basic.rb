@@ -48,7 +48,55 @@ current.action = [
 
   # Adding Tests for bug 26545
   v(ZMProv.new('help', 'log')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?("addAccountLogger") 
+    mcaller.pass = data[0] == 0 && 
+                   data[1].include?("addAccountLogger(aal) [-s/--server hostname] {name@domain|id} {logging-category} {trace|debug|info|warn|error}") &&
+                   data[1].include?("getAccountLoggers(gal) [-s/--server hostname] {name@domain|id}") &&
+                   data[1].include?("getAllAccountLoggers(gaal) [-s/--server hostname]")&&
+                   data[1].include?("removeAccountLogger(ral) [-s/--server hostname] [{name@domain|id}] [{logging-category}]") &&
+                   data[1].include?("resetAllLoggers(rlog) [-s/--server hostname]") &&
+                   data[1].include?("Log categories:") &&
+                   data[1].include?("zimbra.account       - Account operations") &&
+                   data[1].include?("zimbra.acl           - ACL operations") &&
+                   data[1].include?("zimbra.activity      - Document operations") &&
+                   data[1].include?("zimbra.autoprov      - Auto provision operations") &&
+                   data[1].include?("zimbra.backup        - Backup and restore") &&
+                   data[1].include?("zimbra.cache         - In-memory cache operations") &&
+                   data[1].include?("zimbra.calendar      - Calendar operations") &&
+                   data[1].include?("zimbra.contactbackup - Contact Backup and restore") &&
+                   data[1].include?("zimbra.datasource    - Data Source operations") &&
+                   data[1].include?("zimbra.dav           - DAV operations") &&
+                   data[1].include?("zimbra.dbconn        - Database connection tracing") &&
+                   data[1].include?("zimbra.doc           - Docs operations") &&
+                   data[1].include?("zimbra.ews           - EWS operations") &&
+                   data[1].include?("zimbra.extensions    - Server extension loading") &&
+                   data[1].include?("zimbra.filter        - Mail filtering") &&
+                   data[1].include?("zimbra.gal           - GAL operations") &&
+                   data[1].include?("zimbra.im            - Instant messaging operations") &&
+                   data[1].include?("zimbra.imap          - IMAP server") &&
+                   data[1].include?("zimbra.imap-client   - IMAP client") &&
+                   data[1].include?("zimbra.index         - Indexing operations") &&
+                   data[1].include?("zimbra.io            - Filesystem operations") &&
+                   data[1].include?("zimbra.ldap          - LDAP operations") &&
+                   data[1].include?("zimbra.lmtp          - LMTP server (incoming mail)") &&
+                   data[1].include?("zimbra.mailbox       - General mailbox operations") &&
+                   data[1].include?("zimbra.mailop        - Changes to mailbox state") &&
+                   data[1].include?("zimbra.milter        - MILTER protocol operations") &&
+                   data[1].include?("zimbra.misc          - Miscellaneous") &&
+                   data[1].include?("zimbra.nginxlookup   - Nginx lookup operations") &&
+                   data[1].include?("zimbra.pop           - POP server") &&
+                   data[1].include?("zimbra.pop-client    - POP client") &&
+                   data[1].include?("zimbra.purge         - Mailbox purge operations") &&
+                   data[1].include?("zimbra.redolog       - Redo log operations") &&
+                   data[1].include?("zimbra.search        - Search operations") &&
+                   data[1].include?("zimbra.security      - Security events") &&
+                   data[1].include?("zimbra.session       - User session tracking") &&
+                   data[1].include?("zimbra.smtp          - SMTP client (outgoing mail)") &&
+                   data[1].include?("zimbra.soap          - SOAP protocol") &&
+                   data[1].include?("zimbra.sqltrace      - SQL tracing") &&
+                   data[1].include?("zimbra.store         - Mail store disk operations") &&
+                   data[1].include?("zimbra.sync          - Sync client operations") &&
+                   data[1].include?("zimbra.system        - Startup/shutdown and other system messages") &&
+                   data[1].include?("zimbra.zimlet        - Zimlet operations") 
   end,
   
   #Create Account

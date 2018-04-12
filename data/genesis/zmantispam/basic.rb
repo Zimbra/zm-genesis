@@ -113,7 +113,7 @@ current.action = [
     end
     #puts YAML.dump(data[1].split(/\n/))
     mcaller.pass = data[0] == 0 && 
-                   data[1].split(/\n/) & (expected = ['Stopping amavisd... done.', 'Starting amavisd...done.', '* Starting antispam mysql server ...done.']) == expected
+                   data[1].split(/\n/) & (expected = ['Starting mysqld for anti-spam...done.', 'Stopping amavisd... done.', 'Stopping amavisd-mc... done.', 'Starting amavisd-mc...done.', 'Starting amavisd...done.']) == expected
     if(not mcaller.pass)
       class << mcaller
         attr :badones, true
@@ -135,7 +135,7 @@ current.action = [
       data[1] = data[1][/Data\s+:\s*([^\s}].*?)\s*\}/m, 1]
     end
     mcaller.pass = data[0] == 0 &&
-                   data[1].split(/\n/) & (expected = ['Stopping amavisd... done.', 'Starting amavisd...done.', 'Stopping mysqld for anti-spam... done.']) == expected
+                   data[1].split(/\n/) & (expected = ['Stopping mysqld for anti-spam... done.', 'Stopping amavisd... done.', 'Stopping amavisd-mc... done.', 'Starting amavisd-mc...done.', 'Starting amavisd...done.']) == expected
   end,
   # to complete cleanup:
   # rm -rf /opt/zimbra/conf/antispam-my.cnf 

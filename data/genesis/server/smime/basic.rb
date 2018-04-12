@@ -128,10 +128,10 @@ current.action = [
     
   Model::Deployment.getServersRunning('*').map do |x|
     v(cb("SMIME signer check") do
-      mResult = RunCommand.new(File.join(Command::ZIMBRACOMMON, '/lib/jvm/openjdk-1.8.0_74-zimbra/', 'bin', 'jarsigner'), 'root', 
+      mResult = RunCommand.new(File.join(Command::ZIMBRACOMMON, '/lib/jvm/openjdk-1.8.0_144-zimbra/', 'bin', 'jarsigner'), 'root',
                                '-verify', File.join(Command::ZIMBRAPATH, 'zimlets-deployed', 'com_zimbra_smime', 'com_zimbra_smime.jarx'), '2>&1', Model::Host.new(x)).run
     end) do |mcaller, data|
-      mcaller.pass = data[0] && data[1].split(/\n/) == ['jar verified.']
+      mcaller.pass = data[0] && data[1].include?("jar verified.")
     end
   end,
 

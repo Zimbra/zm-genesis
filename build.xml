@@ -62,7 +62,6 @@
 
   </target>
 
-
   <target name="ruby-clean">
     <delete dir="${src.ruby.data.dir}"/>
     <delete dir="${src.ruby.conf.dir}"/>
@@ -74,7 +73,6 @@
         <fileset dir="${src.ruby.dir}" includes="**/*.rb"/>
     </apply>
   </target>
-
 
   <target name="build-genesis" depends="build-init, ruby-clean,ruby-compile">
     <tar longfile="gnu" destfile="${build.dir}/genesisdos.tar">
@@ -126,9 +124,7 @@
           <exclude name="**/*.rb"/>
       </tarfileset>
     </tar>
-
     <delete dir="${build.dir}/unix"/>
   </target>
-
   
 </project>
