@@ -45,17 +45,16 @@ current.setup = [
 #
 current.action = [
   ZMProv.new('cd', name,
-             'zimbraGalLdapBindDn', 'administrator@zimbraqa.com',
-             'zimbraGalLdapBindPassword', 'liquidsys',
-             'zimbraGalLdapFilter', '"(cn=gal*)"',
-             'zimbraGalLdapSearchBase', 'OU=CommonUsers,DC=zimbraqa,DC=com',
-             'zimbraGalLdapURL', 'ldap://zqa-003.eng.vmware.com:389',
+             'zimbraGalLdapBindDn', 'uid=zimbra,cn=admins,cn=zimbra',
+             'zimbraGalLdapBindPassword', 'VOfyG5vic',
+             'zimbraGalLdapFilter', '"(cn=%u)"',
+             'zimbraGalLdapSearchBase', 'dc=com',
+             'zimbraGalLdapURL', 'ldap://zqa-096.eng.zimbra.com:389',
              'zimbraGalMode', 'ldap',
              'zimbraGalLdapGroupHandlerClass', 'com.zimbra.cs.account.grouphandler.ADGroupHandler'),
-  
+
   v(ZMProv.new('-l', 'syg', name)) do |mcaller,data|
-    mcaller.pass = data[0] == 0 && (mGroup = data[1][/(name\s+CN=galbug66571-STAFF-\(C\)[^#]+)/, 1]) &&
-                   mGroup.split(/\n/).select {|w| w =~ /member:\s+galaccount/}.length == 2    
+         mcaller.pass = data[0] == 0
   end,
 ]
 #

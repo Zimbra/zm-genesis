@@ -75,9 +75,14 @@ module Action # :nodoc
      iResult.first[/logs<\/A><\/TD><[^>]+>([^<]+)/, 1] rescue ''
    end
     
-    def to_str
+   def to_str
       "Action:buildparser file:#{@filename}"
-    end   
+   end
+
+   def getZimbraVersion()
+      mResult = RunCommand.new(File.join(ZIMBRAPATH,'bin', 'zmcontrol'), ZIMBRAUSER, '-v').run
+      return mResult[1]
+   end
   end  
 end
  

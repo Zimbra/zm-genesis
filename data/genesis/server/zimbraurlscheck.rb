@@ -142,7 +142,7 @@ current.action = [
     mPath = File.join('service', 'zimlet', 'com_zimbra_email', 'img', 'calendar_icon.png')
     genHttpCheck(mUri[:mode] + '://' + mUri[:target] + ':' + mUri[:port] + '/' + mPath).run
   }) do |mcaller, data|
-    mcaller.pass = data[0] != 0 && !data[1][/401 no authtoken cookie/].nil? && !data[1][/Authorization failed/].nil?
+    mcaller.pass = data[0] != 0 && data[1].include?('401 no authtoken cookie') && data[1].include?('Authentication Failed')
   end,
   
 ]

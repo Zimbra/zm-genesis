@@ -109,7 +109,7 @@ current.action = [
                      mcaller.pass =  data[1].attr['BODY[]'] == ''
                   end,
                   FetchVerify.new(mimap, (1..-1),'MODSEQ', '.') do |mcaller, data|
-                     mcaller.pass = data[1].attr['MODSEQ'] == '14'
+                     mcaller.pass = data[1].attr['MODSEQ'] == '10'
                   end,
                   cb("Clean Up") do
                     mimap.logout

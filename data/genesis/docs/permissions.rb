@@ -64,8 +64,8 @@ current.action = [
   end,
 
   v(RunCommand.new('ls', 'root', '-1', '/opt/zimbra/docs')) do |mcaller, data|
-    if BuildParser.instance.baseBuildId =~ /NETWORK/i       
-      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 90 && files.include?("hsm-soap-admin.txt")
+    if BuildParser.instance.getZimbraVersion() =~ /NETWORK/i      
+      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 91 && files.include?("hsm-soap-admin.txt")
     else
       mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 78 && !files.include?("hsm-soap-admin.txt")
     end

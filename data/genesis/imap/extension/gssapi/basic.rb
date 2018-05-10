@@ -29,13 +29,13 @@ require "action/verify"
 current = Model::TestCase.instance()
 current.description = "IMAP GSSAPI"
 
+include Action
+
 name = 'imap'+File.basename(__FILE__,'.rb')+Time.now.to_i.to_s
 testAccount = Model::TARGETHOST.cUser(name, Model::DEFAULTPASSWORD)
 
 m = Net::IMAP.new(Model::TARGETHOST, Model::IMAPSSL, true)
 #m = Net::IMAP.new(Model::TARGETHOST, 7143)
-
-include Action
 
  
 #
@@ -67,7 +67,7 @@ current.action = [
 # Tear Down
 #
 current.teardown = [     
-   CapabilityVerify.removeCapability("AUTH=GSSAPI"), #rollback to the initial stage
+   #CapabilityVerify.removeCapability("AUTH=GSSAPI"), #rollback to the initial stage
 ]
 
 if($0 == __FILE__)
