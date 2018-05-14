@@ -21,13 +21,15 @@ end
 require "model"
 require "action/zmcontrol"
 require "action/zmprov"
+require "action/imap"
+require "action/block"
+require "action/proxy"
 
 #
 # Global variable declaration
 #
 current = Model::TestCase.instance()
 current.description = "IMAP GSSAPI Setup"
-
 
 include Action
 
