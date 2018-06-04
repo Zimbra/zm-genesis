@@ -57,11 +57,6 @@ current.action = [
                   if Model::TARGETHOST.proxy      
                     [
                      Action::ZMProv.new('mcf', 'zimbraReverseProxyPop3StartTlsMode', 'on'),
-                     Action::RunCommand.new('zmproxyctl', Command::ZIMBRAUSER, 'stop'),
-                     Action::RunCommand.new('zmproxyctl', Command::ZIMBRAUSER, 'start'),
-                     cb("sleep 10") { sleep 10 }, #avoid race condition http://bugzilla.zimbra.com/show_bug.cgi?id=56004
-                     Action::RunCommand.new('zmproxyctl', Command::ZIMBRAUSER, 'stop'),
-                     Action::RunCommand.new('zmproxyctl', Command::ZIMBRAUSER, 'start'),
                     ]
                   else 
                     Action::ZMProv.new('ms', Model::TARGETHOST, 'zimbraPop3CleartextLoginEnabled', 'TRUE')  

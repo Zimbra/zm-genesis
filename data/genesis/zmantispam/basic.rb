@@ -61,37 +61,7 @@ current.action = [
     mcaller.pass = (data[0] == 0)
   end,
 
-  v(ZMAntispam.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.')
-  end,
-
-  v(ZMAntispam.new('start'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Starting amavisd...done.')
-  end,
-
-  v(ZMAntispam.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('amavisd is already running.')
-  end,
-
-  v(ZMAntispam.new('reload'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.')&& data[1].include?('Starting amavisd...done.')
-  end,
-
-  v(ZMAntispam.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.')
-  end,
-
-  v(ZMAntispam.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd...amavisd is not running.')
-  end,
-
-  v(ZMAntispam.new('restart'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd...amavisd is not running.') && data[1].include?('Starting amavisd...done.')
-  end,
-
-  v(ZMAntispam.new('restart'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.') && data[1].include?('Starting amavisd...done.')
-  end,
+  
 
   v(ZMAntispam.new) do |mcaller, data|
     mcaller.pass = (data[0] == 1) && data[1].include?('zmantispamctl start|stop|restart|reload|status')
@@ -128,21 +98,6 @@ current.action = [
     mcaller.pass = data[0] == 0 && data[1]  =~ /^\s+Value: ibdata1:10M:autoextend$/ &&
                    data[1]  =~ /^\s+Value: #{File.join(Command::ZIMBRAPATH, 'log', 'mysql-antispam.log')}$/
   end,
-
-  Action::ZMLocalconfig.new('-u', 'antispam_mysql_enabled'),
-  v(ZMAntispam.new('restart'), 240) do |mcaller, data|
-    if(data[1] =~ /Data\s+:/)
-      data[1] = data[1][/Data\s+:\s*([^\s}].*?)\s*\}/m, 1]
-    end
-    mcaller.pass = data[0] == 0 &&
-                   data[1].split(/\n/) & (expected = ['Stopping mysqld for anti-spam... done.', 'Stopping amavisd... done.', 'Stopping amavisd-mc... done.', 'Starting amavisd-mc...done.', 'Starting amavisd...done.']) == expected
-  end,
-  # to complete cleanup:
-  # rm -rf /opt/zimbra/conf/antispam-my.cnf 
-  # rm -rf /opt/zimbra/data/amavisd/mysql/data
-  
-  
-
 ]
 #
 # Tear Down

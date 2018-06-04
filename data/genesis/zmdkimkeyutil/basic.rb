@@ -74,7 +74,7 @@ current.action = [
   end,
   
   # not known command
-  ['stop', 'start', '123', 'please do something'].map do |x|
+  ['start', '123', 'please do something'].map do |x|
     v(ZMDkimkeyutil.new(x)) do |mcaller,data|
       mcaller.pass = data[0] != 0 &&
                      (lines = data[1].split(/\n/).select {|w| w !~ /^\s*$/}).size == usage.size &&

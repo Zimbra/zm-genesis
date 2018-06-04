@@ -65,7 +65,6 @@ current.action = [
   if !mCfg.getServersRunning('proxy').empty?
   [
     ZMProv.new('mcf', 'zimbraReverseProxyAuthWaitInterval', '0s'),
-#    ZMNginxctl.new('restart'),
     v(cb("non existing account login") do
       mStart = DateTime.now
       Kernel.sleep(1)

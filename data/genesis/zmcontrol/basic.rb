@@ -65,18 +65,6 @@ current.action = [
     mcaller.pass = data[0] == 0 && data[1].include?("Running") && !data[1].include?("Stopped")
   end,
 
-  v(ZMControl.new('stop')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?("Stopping") && data[1] !~ /failed/i
-  end,
-
-  v(ZMControl.new('status')) do |mcaller, data|
-    mcaller.pass = data[0] != 0 && data[1].include?("Stopped")
-  end,
-
-  v(ZMControl.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Starting ") && data[1] !~ /failed/i
-  end,
-
   # allow time for all services to start
   v(cb("check status")do
     mResult = nil
@@ -112,11 +100,8 @@ current.action = [
                  data[1].include?("startup                             Start services") &&
                  data[1].include?("status                      Display service status") &&
                  data[1].include?("stop                                 Stop services")
-  end,  
+  end, 
 
-  v(ZMControl.new('restart'))do | mcaller,data|
-   mcaller.pass = data[0] == 0 && data[1] !~ /failed/i
-  end,
   #END Bug 46970
 
 #  v(ZMControl.new('-H','Model::TARGETHOST')) do |mcaller, data|
@@ -129,27 +114,6 @@ current.action = [
 
   v(ZMControl.new()) do |mcaller, data|
     mcaller.pass = data[0] != 0 && data[1].include?("Command in:")
-  end,
-
-  v(ZMControl.new('shutdown')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?("Stopping")
-  end,
-
-  v(ZMControl.new('status')) do |mcaller, data|
-    mcaller.pass = data[0] != 0 && data[1].include?("Stopped")
-  end,
-
-  v(ZMControl.new('startup')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?("Starting")
-  end,
-
-  v(ZMControl.new('status')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?("Running")
-  end,
-
-  # Test case to verify Bug 33604
-  v(ZMControl.new('stop')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] !~ /failed/i
   end,
 
   v(cb("check orphan processes") do
@@ -173,11 +137,6 @@ current.action = [
   end) do |mcaller, data|
     mcaller.pass = data[0] != 0 && !data[1].include?('zimbra')
   end,
-
-  v(ZMControl.new('start')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] !~ /failed/i
-  end,
-  
 ]
 #
 # Tear Down

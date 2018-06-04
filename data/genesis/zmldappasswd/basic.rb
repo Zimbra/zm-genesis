@@ -75,29 +75,13 @@ current.action = [
     mcaller.pass = data[1].include?("Updating local config and LDAP")
   end,
 
-  v(ZMControl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Stopping")
-  end,
-
-  v(ZMControl.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Starting")
-  end,
   #Bug 9268 Steps: Modify ldappassrd , restart server , execute zmprov command .....Expected Result:Should not return AUTH_FAILED
   v(ZMProv.new('-l', 'gaa')) do |mcaller, data|
 	 mcaller.pass = data[0] == 0 && !data[1].include?("AUTH_FAILED")
   end,
   #END Bug 9268
-
-  v(RunCommand.new('/opt/zimbra/bin/postfix','zimbra','stop')) do |mcaller, data|
-        mcaller.pass = data[0] == 0
-  end,
-
-  v(RunCommand.new('/opt/zimbra/bin/postfix','zimbra','start')) do |mcaller, data|
-     mcaller.pass = data[0] == 0
-  end,
-
-
 ]
+
 #
 # Tear Down
 #

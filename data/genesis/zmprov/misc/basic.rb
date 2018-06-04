@@ -128,17 +128,6 @@ current.action = [
                    data[1].include?("task")
   end,
   
-  v(cb("always getting help")do
-    Ldap.new('stop').run
-    sleep(5)
-    mResult = ZMProv.new('help').run
-    Ldap.new('start').run
-    sleep(10)
-    mResult
-  end)do |mcaller,data|
-    mcaller.pass = data[0] == 0 && data[1].include?('Try')
-  end,
-
   v(ZMProv.new('updatePresenceSessionId')) do |mcaller, data|
     mcaller.pass = data[0] == 1 && data[1] =~ /#{Regexp.escape('usage:  updatePresenceSessionId(upsid) {UC service name or id} ' +
                                                                '{app-username} {app-password}')}/

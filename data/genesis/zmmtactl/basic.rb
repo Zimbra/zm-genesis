@@ -61,38 +61,6 @@ current.action = [
     mcaller.pass = (data[0] == 0)
   end,
 
-  v(ZMMtactl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping saslauthd...done.')
-  end,
-
-  v(ZMMtactl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('saslauthd is not running.')
-  end,
-
-  v(ZMMtactl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 1) && data[1].include?('postfix is not running')\
-                                 && data[1].include?('zmsaslauthdctl is not running')
-  end,
-
-  v(ZMMtactl.new('start'), 240) do |mcaller, data|
-   mcaller.pass = (data[0] == 0) && data[1].include?('Rewriting configuration files...done.')\
-                                 && data[1].include?('Starting saslauthd...done.')
-  end,
-
-  v(ZMMtactl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMMtactl.new('reload'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Rewriting configuration files...done.')\
-                                  && data[1].include?('Stopping saslauthd...done.')\
-                                  && data[1].include?('Starting saslauthd...done.')
-  end,
-
-  v(ZMMtactl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-  
   if !Model::Servers.getServersRunning('mta').include?(Model::TARGETHOST.to_s)
   [
     v(RunCommand.new('sed', 'root', '-i.bak', '-e', "\"s/^\\(Defaults[ \\t].*env_reset.*\\)$/\\1, passwd_timeout=1/\"", '/etc/sudoers')) do |mcaller, data|

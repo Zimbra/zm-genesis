@@ -47,47 +47,9 @@ current.action = [
     mcaller.pass = (data[0] == 0)&& data[1].include?('Starting zmconfigd...zmconfigd is already running.')
   end,
 
-  v(ZMConfigdctl.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Starting zmconfigd...zmconfigd is already running.')
-  end,
-
   v(ZMConfigdctl.new('status')) do |mcaller, data|
     mcaller.pass = (data[0] == 0)&& data[1].include?('zmconfigd is running.')
   end,
-
-  v(ZMConfigdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping zmconfigd...done.')
-  end,
-
-  v(ZMConfigdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping zmconfigd...zmconfigd is not running.')
-  end,
-
-  v(ZMConfigdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping zmconfigd...zmconfigd is not running.')&& data[1].include?('Starting zmconfigd...done.')
-  end,
-
-  v(ZMConfigdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('zmconfigd is running.')
-  end,
-
-  v(ZMConfigdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping zmconfigd...done.')&& data[1].include?('Starting zmconfigd...done.')
-  end,
-
-
-  v(ZMConfigdctl.new('kill')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?('Stopping zmconfigd...done')
-  end,
-
-  v(ZMConfigdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping zmconfigd...zmconfigd is not running.')&& data[1].include?('Starting zmconfigd...done.')
-  end,
-
-  v(ZMConfigdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('zmconfigd is running.')
-  end,
-
 ]
 #
 # Tear Down

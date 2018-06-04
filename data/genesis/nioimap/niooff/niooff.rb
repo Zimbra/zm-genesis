@@ -38,17 +38,11 @@ current.setup = [
 #
 # Execution
 #
-current.action = [  
-   #ZMControl.new("stop"),
-   #cb("Sleep 60 seconds", 120) { Kernel.sleep(60)},   
+current.action = [    
    v(RunCommand.new(File.join(Command::ZIMBRAPATH,'bin','zmlocalconfig'), 
     Command::ZIMBRAUSER, '-e', 'nio_imap_enabled=false')) do |mcaller, data|
       mcaller.pass = data[0] == 0
    end, 
-   #ZMControl.new("start"),
-   ZMMailboxdctl.new("restart"),
-   #cb("Sleep 400 seconds", 420) { Kernel.sleep(400)},
-   ZMMailboxdctl.waitForJetty
 ]
 
 #

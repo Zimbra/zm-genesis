@@ -60,14 +60,6 @@ if hasSnmp
       mcaller.pass = (data[0] == 1) && data[1].include?('/opt/zimbra/bin/zmswatchctl start|stop|restart|reload|status')
     end,
 
-    v(ZMSwatchctl.new('stop')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0) && data[1].include?('Stopping swatch...done.')
-    end,
-
-    v(ZMSwatchctl.new('start')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0) && data[1].include?('Starting swatch...done.')
-    end,
-
     v(ZMSwatchctl.new('start')) do |mcaller, data|
       mcaller.pass = (data[0] == 0)&& data[1].include?('Starting swatch...swatch is already running.')
     end,
@@ -76,33 +68,6 @@ if hasSnmp
       mcaller.pass = (data[0] == 0)&& data[1].include?('swatch is running.')
     end,
 
-    v(ZMSwatchctl.new('stop')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0) && data[1].include?('Stopping swatch...done.')
-    end,
-
-    v(ZMSwatchctl.new('stop')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping swatch...swatch is not running.')
-    end,
-
-    v(ZMSwatchctl.new('status')) do |mcaller, data|
-      mcaller.pass = (data[0] == 1)&& data[1].include?('swatch is not running.')
-    end,
-
-    v(ZMSwatchctl.new('start')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0)&& data[1].include?('Starting swatch...done.')
-    end,
-
-    v(ZMSwatchctl.new('status')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0)&& data[1].include?('swatch is running.')
-    end,
-
-    v(ZMSwatchctl.new('reload')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0)&& data[1].include?('Reloading swatch...done.')
-    end,
-
-    v(ZMSwatchctl.new('status')) do |mcaller, data|
-      mcaller.pass = (data[0] == 0)&& data[1].include?('swatch is running.')
-    end,
       
     v(ZMProv.new('CreateAccount', testAccount1.name, testAccount1.password)) do |mcaller, data|
       mcaller.pass = data[0] == 0
@@ -111,11 +76,7 @@ if hasSnmp
     v(ZMLocalconfig.new('-e', "smtp_destination=#{testAccount1.name}")) do |mcaller, data|
       mcaller.pass = data[0] == 0 && data[1].empty?
     end,
-      
-    v(ZMSwatchctl.new('restart')) do |mcaller, data|
-      mcaller.pass = data[0] == 0 && data[1].include?('Starting swatch...done.')
-    end,
-      
+    
     # check conf/swatchrc
     # TODO: stop a service, check notification, start service
     v(RunCommand.new('grep', 'root',  "#{testAccount1.name}", '/opt/zimbra/conf/swatchrc')) do |mcaller, data|
@@ -125,12 +86,8 @@ if hasSnmp
     v(ZMLocalconfig.new('-e', "smtp_destination=#{smtpDest}")) do |mcaller, data|
       mcaller.pass = data[0] == 0 && data[1].empty?
     end,
-      
-    v(ZMSwatchctl.new('restart')) do |mcaller, data|
-      mcaller.pass = data[0] == 0 && data[1].include?('Starting swatch...done.')
-    end,
-
   ]
+  
 else
   current.action = []
 end

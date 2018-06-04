@@ -45,56 +45,8 @@ current.setup = [
 #
 current.action = [
   if(Model::TARGETHOST.proxy == true)
-    [
+    [    
       v(ZMProxyctl.new('start')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('start')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('status')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('restart')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('stop')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('status')) do |mcaller, data|
-        mcaller.pass = (data[0] == 1)
-      end,
-
-      v(ZMProxyctl.new('restart')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('status')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('stop')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('status')) do |mcaller, data|
-        mcaller.pass = (data[0] == 1)
-      end,
-
-      v(ZMProxyctl.new('stop')) do |mcaller, data|
-        mcaller.pass = (data[0] == 0)
-      end,
-
-      v(ZMProxyctl.new('status')) do |mcaller, data|
-        mcaller.pass = (data[0] == 1)
-      end,
-
-      v(ZMProxyctl.new('restart')) do |mcaller, data|
         mcaller.pass = (data[0] == 0)
       end,
 

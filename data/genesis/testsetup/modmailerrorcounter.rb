@@ -44,8 +44,8 @@ current.action = [
   # see bug #67663 and bug #51171
   RunCommandOnMailbox.new('zmlocalconfig -e imap_max_consecutive_error=0'),
   RunCommandOnMailbox.new('zmlocalconfig -e pop3_max_consecutive_error=0'),
-  ZMMailboxdctl.new("restart"),
-  cb("wait") {sleep(5)},
+  #ZMMailboxdctl.new("restart"),
+  #cb("wait") {sleep(5)},
      
 ]
 

@@ -53,39 +53,6 @@ current.action = [
   v(ZMArchivectl.new('status')) do |mcaller, data|
     mcaller.pass = (data[0] == 0) && data[1].include?('amavisd is running.')
   end,
-
-  v(ZMArchivectl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.') 
-  end,
-
-  v(ZMArchivectl.new('start'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Starting amavisd...done.") 
-  end,
-
-  v(ZMArchivectl.new('start'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Starting amavisd...amavisd is already running.")
-  end,
-
-  v(ZMArchivectl.new('reload'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Stopping amavisd... done.")&& data[1].include?("Starting amavisd...done.")
-  end,
-
-  v(ZMArchivectl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.') 
-  end,
-
-  v(ZMArchivectl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd...amavisd is not running.')
-  end,
-
-  v(ZMArchivectl.new('restart'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Stopping amavisd...amavisd is not running.")&& data[1].include?("Starting amavisd...done.")
-  end,
-
-  v(ZMArchivectl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('amavisd is running.')
-  end,
-
 ]
 #
 # Tear Down

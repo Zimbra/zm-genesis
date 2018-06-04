@@ -63,39 +63,6 @@ current.action = [
   v(ZMStorectl.new('status'), 240) do |mcaller, data|
     mcaller.pass = (data[0] == 0)
   end,
-
-  #bug 48702. Updated to catch any error while stopping.
-  v(ZMStorectl.new('stop'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping mailboxd...done.')\
-                                  && !data[1].include?('Error')
-  end,
-
-  v(ZMStorectl.new('stop'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMStorectl.new('status'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 1)
-  end,
-
-  v(ZMStorectl.new('start'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && !data[1].include?('Starting zmmtaconfig...done.')\
-                                  && !data[1].include?('Starting mysqld...done.')\
-                                  && !data[1].include?('Starting mailboxd...done.')
-  end,
-
-  v(ZMStorectl.new('status'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && !data[1].include?('mailboxd.')
-  end,
-
-  v(ZMStorectl.new('restart'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping mailboxd...done.')\
-                                  && data[1].include?('Starting mailboxd...done.')
-  end,
-
-  v(ZMStorectl.new('status'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && !data[1].include?('mailboxd')
-  end,
 ]
 
 #

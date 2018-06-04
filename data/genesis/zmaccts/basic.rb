@@ -64,39 +64,6 @@ current.action = [
   v(ZMAmavisd.new('status')) do |mcaller, data|
     mcaller.pass = (data[0] == 0) && data[1].include?('amavisd is running.')
   end,
-
-  v(ZMAmavisd.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.')
-  end,
-
-  v(ZMAmavisd.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Starting amavisd...done.')
-  end,
-
-  v(ZMAmavisd.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Starting amavisd...amavisd is already running.')
-  end,
-
-  v(ZMAmavisd.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.') && data[1].include?('Starting amavisd...done.')
-  end,
-
-  v(ZMAmavisd.new('kill')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd... done.')
-  end,
-
-  v(ZMAmavisd.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd...amavisd is not running.')
-  end,
-
-  v(ZMAmavisd.new('kill')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd...amavisd is not running.')
-  end,
-
-   v(ZMAmavisd.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('Stopping amavisd...amavisd is not running.') && data[1].include?('Starting amavisd...done.')
-  end,
-
 ]
 #
 # Tear Down

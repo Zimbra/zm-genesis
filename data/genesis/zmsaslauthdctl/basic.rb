@@ -52,10 +52,6 @@ current.action = [
     mcaller.pass = (data[0] == 1) && data[1].include?("Usage: /opt/zimbra/bin/zmsaslauthdctl start|stop|kill|restart|reload|status")
   end,
 
- v(ZMSaslauthdctl.new('start'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
   v(ZMSaslauthdctl.new('start'), 240) do |mcaller, data|
     mcaller.pass = (data[0] == 0)
   end,
@@ -63,35 +59,6 @@ current.action = [
   v(ZMSaslauthdctl.new('status')) do |mcaller, data|
     mcaller.pass = (data[0] == 0) && data[1].include?('saslauthd is running')
   end,
-
-  v(ZMSaslauthdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSaslauthdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSaslauthdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 1) && data[1].include?("saslauthd is not running")
-  end,
-
-  v(ZMSaslauthdctl.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSaslauthdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('saslauthd is running')
-  end,
-
-  v(ZMSaslauthdctl.new('restart'), 240) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSaslauthdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('saslauthd is running')
-  end,
-
 ]
 #
 # Tear Down

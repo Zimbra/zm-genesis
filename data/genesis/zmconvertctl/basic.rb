@@ -55,59 +55,6 @@ current.action = [
   v(ZMConvertctl.new('status')) do |mcaller, data|
     mcaller.pass = (data[0] == 0)
   end,
-
-  v(ZMConvertctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  # Adding tests for bug 10692 Verifying exact status of command.
-  v(ZMConvertctl.new('stop')) do |mcaller, data|
-	mcaller.pass = data[0] == 0 && !data[1].include?("failed") && data[1].include?("Stopping convertd...done.") || data[1].include?("convertd is not running")
-  end,
-  
-  v(ZMConvertctl.new('start')) do |mcaller, data|
-	mcaller.pass = data[0] == 0 && !data[1].include?("failed") && data[1].include?("Starting convertd...done.")
-  end,
-  
-  v(ZMConvertctl.new('start')) do |mcaller, data|
-	mcaller.pass = data[0] == 0 && data[1].include?("already running")
-  end,  
-  
-  v(ZMConvertctl.new('reload')) do |mcaller, data|
-	mcaller.pass = data[0] == 0 && !data[1].include?("failed") && data[1].include?("Reloading convertd...done.")
-  end,
-  
-  v(ZMConvertctl.new('restart')) do |mcaller, data|
-	mcaller.pass = data[0] == 0 && !data[1].include?("failed") && data[1].include?("Stopping convertd...done.") && data[1].include?("Starting convertd...done.")
-  end,
-  
-  v(ZMConvertctl.new('graceful')) do |mcaller, data|
-	mcaller.pass = data[0] == 0 && !data[1].include?("failed") && data[1].include?("Reloading convertd...done.")
-  end,
-  
-  v(ZMConvertctl.new('status')) do |mcaller, data|
-	mcaller.pass = data[0] == 0 && !data[1].include?("failed") && data[1].include?("convertd is running.")
-  end,
-  # END Adding tests for bug 10692
-  
-  # kill does same job as stop but returns 1 on success. Need to confirm. Bug 27854
-  v(ZMConvertctl.new('reload')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMConvertctl.new('reload')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMConvertctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMConvertctl.new('graceful')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-
 ]
 #
 # Tear Down

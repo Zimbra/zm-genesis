@@ -235,10 +235,6 @@ current.action = [
         mcaller.pass = data[0] == 0
       end,
 
-      ZMProxyctl.new('restart')do |mcaller, data|
-        mcaller.pass = data[0] == 0
-      end,
-
       v(ZMProxyconfgen.new('-s',Model::TARGETHOST.to_s)) do |mcaller, data|
         mcaller.pass = data[0] == 0 && data[1].include?('WARN: No available nginx lookup handlers could be found') \
                                     && data[1].include?('WARN: Configuration is not valid because no route lookup handlers exist, or because no HTTP/HTTPS upstream servers were found') \
@@ -246,10 +242,6 @@ current.action = [
       end,
 
       ZMProv.new('ms', Model::TARGETHOST,'zimbraReverseProxyLookupTarget', 'TRUE')do |mcaller, data|
-        mcaller.pass = data[0] == 0
-      end,
-
-      ZMProxyctl.new('restart')do |mcaller, data|
         mcaller.pass = data[0] == 0
       end,
         

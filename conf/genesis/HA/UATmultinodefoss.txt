@@ -84,14 +84,10 @@ data/volume/basic.rb
 data/wsdl/basic.rb
 data/zmantivirus/basic.rb
 data/zmapachectl/basic.rb
-data/zmarchivectl/basic.rb
-data/zmclamdctl/basic.rb
 data/zmcheckversion/basic.rb
 data/zmconfigure/basic.rb
 data/zmcpustat/basic.rb
 data/zmexplainslow/basic.rb
-data/zmloggerctl/basic.rb
-data/zmlogswatchctl/basic.rb
 data/zmmailboxdctl/basic.rb
 data/zmsaslauthdctl/basic.rb
 data/zmsetservername/basic.rb

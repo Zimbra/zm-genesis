@@ -61,44 +61,6 @@ current.action = [
     mcaller.pass = (data[0] == 0)&& data[1].include?('mailboxd is running.')
   end,
 
-  v(ZMMailboxdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping mailboxd...done.')
-  end,
-
-  v(ZMMailboxdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 1)&& data[1].include?('mailboxd is not running.')
-  end,
-
-  v(ZMMailboxdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping mailboxd...mailboxd is not running.')
-  end,
-
-  v(ZMMailboxdctl.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?("Starting mailboxd...done.") && !data[1].include?("No such file or directory")
-  end,
-
-  v(ZMMailboxdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping mailboxd...done.')\
-                                 && data[1].include?('Starting mailboxd...done.')
-  end,
-
-  v(ZMMailboxdctl.new('kill')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping mailboxd...done.')
-  end,
-
-  v(ZMMailboxdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 1)&& data[1].include?('mailboxd is not running.')
-  end,
-
-  v(ZMMailboxdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping mailboxd...mailboxd is not running.')\
-                                 && data[1].include?('Starting mailboxd...done.')
-  end,
-
-  v(ZMMailboxdctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0) && data[1].include?('mailboxd is running.')
-  end,
-
 # bug 50481
 
    v(RunCommand.new("cat", 'root', File.join(Command::ZIMBRAPATH, 'conf', 'localconfig.xml'))) do |mcaller, data|
@@ -115,25 +77,12 @@ current.action = [
   v(ZMLocalconfig.new('-e', "\"#{lcKey}=#{lcTestVal}\"")) do |mcaller, data|
     mcaller.pass = data[0] == 0
   end,
-
-  v(ZMMailboxdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping mailboxd...done.')\
-                                 && data[1].include?('Starting mailboxd...done.')
-  end,
                  
   cb("Resetting to original value") do
     if(lcVal != 'UNKNOWN')
       ZMLocalconfig.new('-e', "\"#{lcKey}=#{lcVal}\"").run
     end
   end,
-
-  v(ZMMailboxdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?('Stopping mailboxd...done.')\
-                                 && data[1].include?('Starting mailboxd...done.')
-  end,
-
-
-
 ]
 #
 # Tear Down

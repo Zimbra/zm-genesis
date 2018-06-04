@@ -52,43 +52,9 @@ current.action = [
     mcaller.pass = data[0] == 0 && 
                    (data[1].include?("Starting clamd...done.") || data[1].include?("Starting clamd...clamd is already running."))
   end,
-
-  v(ZMClamdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] !~ /failed/i && data[1].include?("Stopping clamd...done.")
-  end,
-  
-  v(ZMClamdctl.new('status')) do |mcaller, data|
-    mcaller.pass = data[0] != 0 && data[1].include?("clamd is not runnning")
-  end,
-  
-  v(ZMClamdctl.new('start')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] !~ /failed/i &&
-          (data[1].include?("Starting clamd...done.") || data[1].include?("Starting clamd...clamd is already running."))
-  end,
   
   v(ZMClamdctl.new('status')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1] !~ /failed/i && data[1].include?("clamd is running.")
-  end,
-  
-  # Kill -> Status
-   
-  v(ZMClamdctl.new('kill')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1] !~ /failed/i
-  end,  
-  
-  v(ZMClamdctl.new('status')) do |mcaller, data|
-    mcaller.pass = data[0] != 0 && data[1].include?("clamd is not runnning")
-  end,
-  
-  # restart -> status
-  
-  v(ZMClamdctl.new('restart')) do |mcaller, data|
-    mcaller.pass = data[0] == 0 && data[1].include?("Stopping clamd...clamd is not running.") &&
-                   data[1].include?("Starting clamd...done.")
-  end,
-
-  v(ZMClamdctl.new('status')) do |mcaller, data|
-    mcaller.pass = data[0] == 0
   end,
 ]
 

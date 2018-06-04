@@ -129,10 +129,6 @@ current.action = [
 
   RunCommandOnMailbox.new('/bin/cp','zimbra','-R', File.join(Command::ZIMBRAPATH ,'redolog'), nMount),
 
-  v(ZMMailboxdctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
   if(testSeq[1])
     v(ZMPlayredo.new('--fromSeq', testSeq[1] )) do |mcaller, data|
       mcaller.pass = data[0] == 0 && data[1].include?("mailboxd is not running.") &&

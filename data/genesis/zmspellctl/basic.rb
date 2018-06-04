@@ -63,40 +63,8 @@ current.action = [
   v(ZMSpellctl.new('status')) do |mcaller, data|
     mcaller.pass = (data[0] == 0)
   end,
-
-  v(ZMSpellctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSpellctl.new('stop')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSpellctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 1)&& data[1].include?("zmapachectl is not running")
-  end,
-
-  v(ZMSpellctl.new('reload')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)&& data[1].include?("Reloading apache")
-  end,
-
-  v(ZMSpellctl.new('start')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSpellctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSpellctl.new('reload')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
-  v(ZMSpellctl.new('status')) do |mcaller, data|
-    mcaller.pass = (data[0] == 0)
-  end,
-
 ]
+
 #
 # Tear Down
 #
