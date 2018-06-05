@@ -1,30 +1,15 @@
-<project name="zm-genesis" default="jar" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="zm-genesis" default="build-genesis" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
   <import file="../zm-zcs/ant-global.xml"/>
 
-    <property name="build.staf.dir" location="${build.dir}/staf"/>
-    <property name="build.staf.jars.dir"  location="${build.dir}/staf/STAF-INF/jars"/>
-    <property name="build.staf.classes.dir" location="${build.dir}/staf/STAF-INF/classes"/>
-    <property name="server.jars.dir" location="${server.dir}/jars"/>
-    <property name="deploy.dir" location="${build.dir}/dist"/> <!-- pass in by Anthill -->
-    <property name="dist.dir.root" location="${deploy.dir}"/>
-
-    <property name="data.genesis.dir" location="data/genesis"/>
-    <property name="conf.dir" location="conf"/>
-    <property name="src.ruby.dir" location="src/ruby"/>
-    <property name="src.ruby.data.dir" location="${src.ruby.dir}/data"/>
-    <property name="src.ruby.conf.dir" location="${src.ruby.dir}/conf"/>
-    <property name="src.ruby.conf.genesis.dir" location="${src.ruby.conf.dir}/genesis"/>
-  
-    <property name="build.customauth.classes.dir" location="${build.dir}/customauth/classes"/>
-    <property name="build.storemanager.classes.dir" location="${build.dir}/storemanager/classes"/>
-    <property name="build.scalityhttpstore.classes.dir" location="${build.dir}/scalityhttpstore/classes"/>
-    <property name="zm-network-genesis.dir" location="../zm-network-genesis"/>
-
-  <target name="jar" depends="compile" description="Creates the jar file">
-    <antcall target="zimbra-jar">
-      <param name="implementation.title" value="Zimbra genesis"/>
-  </antcall>
-  </target>
+  <property name="build.dir" location="build" />
+  <property name="dist.dir" location="${build.dir}/dist"/>
+  <property name="data.genesis.dir" location="data/genesis"/>
+  <property name="conf.dir" location="conf"/>
+  <property name="src.ruby.dir" location="src/ruby"/>
+  <property name="src.ruby.data.dir" location="${src.ruby.dir}/data"/>
+  <property name="src.ruby.conf.dir" location="${src.ruby.dir}/conf"/>
+  <property name="src.ruby.conf.genesis.dir" location="${src.ruby.conf.dir}/genesis"/>
+  <property name="zm-network-genesis.dir" location="../zm-network-genesis"/>
 
   <target name="zm-network-genesis-content" description="Copies network related data and tests">
     <echo message="Copying network related data and tests..."/>
@@ -40,6 +25,21 @@
     </if>
   </target>
 
+  <target name="jar" depends="compile" description="Creates the jar file">
+    <antcall target="zimbra-jar">
+      <param name="implementation.title" value="Zimbra genesis"/>
+    </antcall>
+  </target>
+
+  <target name="build-init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${dist.dir}"/>
+  </target>
+
+  <target name="clean" description="Deletes build and dist directories">
+    <delete dir="${build.dir}"/>
+  </target>
+
   <target name="ruby-set-up" depends="zm-network-genesis-content">
     <copy todir="${src.ruby.data.dir}">
       <fileset dir="${data.genesis.dir}"/>
@@ -50,16 +50,8 @@
     </copy>
 
     <copy todir="${src.ruby.data.dir}/TestMailRaw">
-        <fileset dir="data/TestMailRaw"/>
+      <fileset dir="data/TestMailRaw"/>
     </copy>
-
-    <!-- copy todir="src/ruby/lib/">
-      <fileset dir="../ZimbraCommon/jars">
-      </fileset>
-      <fileset dir="${dist.lib.dir}">
-      </fileset>
-    </copy -->
-
   </target>
 
   <target name="ruby-clean">
@@ -74,7 +66,7 @@
     </apply>
   </target>
 
-  <target name="build-genesis" depends="build-init, ruby-clean,ruby-compile">
+  <target name="build-genesis" description="Builds genesis tars" depends="build-init, ruby-clean,ruby-compile">
     <tar longfile="gnu" destfile="${build.dir}/genesisdos.tar">
       <tarfileset dir="${src.ruby.dir}" prefix="genesis" mode="555">
         <include name="**/*.rb"/>
@@ -104,27 +96,42 @@
     </tar>
 
     <untar src="${build.dir}/genesisdos.tar" dest="${build.dir}/unix"/>
-    <fixcrlf srcdir="${build.dir}/unix/genesis"
-      eol="lf"
-      eof="remove"
-      includes="**/*.rb" />
-
-    <fixcrlf srcdir="${build.dir}/unix/genesis"
-          eol="lf"
-          eof="remove"
-          includes="**/zimbra.conf" />
+    <fixcrlf srcdir="${build.dir}/unix/genesis" eol="lf" eof="remove" includes="**/*.rb" />
+    <fixcrlf srcdir="${build.dir}/unix/genesis" eol="lf" eof="remove" includes="**/zimbra.conf" />
 
     <tar longfile="gnu" destfile="${build.dir}/genesis.tar">
       <tarfileset dir="${build.dir}/unix" mode="555">
-          <include name="**/*.rb"/>
+        <include name="**/*.rb"/>
       </tarfileset>
 
       <tarfileset dir="${build.dir}/unix">
-          <include name="**/*"/>
-          <exclude name="**/*.rb"/>
+        <include name="**/*"/>
+        <exclude name="**/*.rb"/>
       </tarfileset>
     </tar>
     <delete dir="${build.dir}/unix"/>
   </target>
-  
+
+  <target name="compress-move">
+    <apply executable="gzip" parallel="false" failonerror="true">
+      <arg value="-k"/>
+      <arg value="-v"/>
+      <fileset dir="${build.dir}" includes="*.tar"/>
+    </apply>
+    <copy todir="${dist.dir}" verbose="true" overwrite="true">
+      <fileset dir="${build.dir}" includes="*.tar.gz"/>
+        <mapper type="glob" from="*.tar.gz" to="*.tgz"/>
+    </copy>      
+    <checksum>
+      <fileset dir="${dist.dir}">
+        <include name="*.tgz"/>
+      </fileset>
+    </checksum>
+    <delete>
+      <fileset dir="${build.dir}" includes="*.tar.gz"/>
+    </delete>
+  </target>
+
+  <target name="build-testware" description="Builds genesis testwares." depends="clean,build-genesis,compress-move"/>
+   
 </project>
