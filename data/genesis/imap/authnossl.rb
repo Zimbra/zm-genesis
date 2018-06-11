@@ -49,7 +49,7 @@ current.setup = [
 #
 current.action = [
   if Model::TARGETHOST.proxy
-    [Action::ZMProv.new('mcf', 'zimbraReverseProxyImapStartTlsMode', 'on'),
+    [Action::ZMProv.new('mcf', 'zimbraReverseProxyImapStartTlsMode', 'on')
     ]
   else
     Action::ZMProv.new('ms', Model::TARGETHOST, 'zimbraImapCleartextLoginEnabled', 'TRUE')
