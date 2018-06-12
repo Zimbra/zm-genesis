@@ -77,30 +77,7 @@ current.action = [
     v(ZMProv.new('-l', 'cto', x)) do |mcaller, data|
       mcaller.pass = data[0] == 0 && data[1] =~ /^\d+$/
     end 
-  end,
-  
-# Do setup for counting ucservice
-  v(ZMProv.new('mcf', 'zimbraUCProviderEnabled', "\"#{providerOne}\"")) do |mcaller, data|  
-    mcaller.pass = data[0] == 0 && data[1].empty?
-  end,
-  
-  v(ZMProv.new('cucs', "\"#{serviceOne}\"", 'zimbraUCProvider', "\"#{providerOne}\"")) do |mcaller, data|  
-    mcaller.pass = data[0] == 0 && data[1] =~ /^[\da-f\-]{36}$/
-  end,
-
-  ['accountOnUCService', 'cosOnUCService', 'domainOnUCService'].map do |x|
-    v(ZMProv.new('cto', x, '-u', "\"#{serviceOne}\"")) do |mcaller, data|
-      mcaller.pass = data[0] == 0 && data[1] =~ /^\d+$/
-    end 
-  end,
-
-  ['accountOnUCService', 'cosOnUCService', 'domainOnUCService'].map do |x|
-    v(ZMProv.new('cto', x)) do |mcaller, data|
-      mcaller.pass = data[0] != 0 && data[1].include?("ERROR: service.INVALID_REQUEST")
-    end 
-  end,
-
-
+  end
 ]
 #
 # Tear Down
