@@ -74,7 +74,6 @@ data/nioimap/nioon/nioon.rb
 data/pop/setup.rb
 data/pop/basic.rb
 data/zmprov/cos/basic.rb
-data/zmprov/objects/basic.rb
 data/zmmailbox/tag/basic.rb
 data/zmmailbox/account/basic.rb
 data/zmmailbox/filter/basic.rb
@@ -94,8 +93,6 @@ data/zmsetservername/basic.rb
 data/zmspellctl/basic.rb
 data/zmstorectl/basic.rb
 data/zmswatchctl/basic.rb
-data/zmmypasswd/basic.rb
-data/zmmysqlstatus/basic.rb
 data/zmdumpenv/basic.rb
 data/zmhostname/basic.rb
 data/zmtrainsa/basic.rb
