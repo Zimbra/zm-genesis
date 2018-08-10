@@ -83,6 +83,11 @@ module Action # :nodoc
       mResult = RunCommand.new(File.join(ZIMBRAPATH,'bin', 'zmcontrol'), ZIMBRAUSER, '-v').run
       return mResult[1]
    end
+   def checkNGinstalledornot()
+	  mResultng = RunCommand.new("/bin/ls", "root", "-l", File::join(Command::ZIMBRAPATH, 'zimlets')).run
+	  is_ng_enabled = mResultng[1].include?("com_zextras_zextras")
+      return is_ng_enabled
+   end
   end  
 end
  
