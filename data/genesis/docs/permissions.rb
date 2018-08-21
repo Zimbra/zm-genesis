@@ -60,20 +60,28 @@ v(cb("/opt/zimbra/docs Permission Check") do
   end) do |mcaller, data|
     mcaller.pass = data[0] == 0 &&
                    data[1][/#{Regexp.new("drwxr-xr-x.*(\s+#{Command::ZIMBRAUSER}){2}.*/opt/zimbra/docs")}/]
-  end,
+ end,
  v(RunCommand.new('ls', 'root', '-1', '/opt/zimbra/docs')) do |mcaller, data|
     if BuildParser.instance.getZimbraVersion() =~ /NETWORK/i
-    if BuildParser.instance.checkNGinstalledornot() == true
-      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 91 && files.include?("hsm-soap-admin.txt")
-	else
-      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 90 && files.include?("hsm-soap-admin.txt")
+		if BuildParser.instance.checkNGinstalledornot() == true
+			mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 91 && files.include?("hsm-soap-admin.txt")
+		else
+			mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 90 && files.include?("hsm-soap-admin.txt")
+		end
+		else
+			mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 78 && !files.include?("hsm-soap-admin.txt")
 	end
-    else
-      mcaller.pass = data[0] == 0 && (files = data[1].split(/\n/)).size == 78 && !files.include?("hsm-soap-admin.txt")
-    end
-  end,
-
-
+end,
+ v(cb("Docs Ownership and Permission Check Files") do
+    mObject = Action::RunCommand.new('find','root', "/opt/zimbra/docs",
+                                     "-user zimbra",
+                                     "-group zimbra",
+                                     "-type f",
+                                     "! -perm 444",
+                                     printOption).run
+  end) do |mcaller, data|
+    mcaller.pass = data[0] == 0 && !data[1].include?('/opt/zimbra/docs')
+ end,
 ]
 #
 # Tear Down
