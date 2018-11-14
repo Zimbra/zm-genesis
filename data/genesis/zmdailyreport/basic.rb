@@ -73,8 +73,8 @@ current.action = [
   
   #Wait a bit for system to send mail 
   WaitQueue.new,    
-
-  v(ZMSoap.new('-z', '-m', adminAccount, 'SearchRequest/query=in:inbox')) do |mcaller, data|
+  #v(ZMSoap.new('-z', '-m', adminAccount, 'SearchRequest/query=in:inbox')) do |mcaller, data|
+  v(ZMSoap.new('-z', '-m', 'admin@`zmhostname`', 'SearchRequest/query=in:inbox')) do |mcaller, data|
     mcaller.pass = data[0] == 0 && data[1].include?('SearchResponse') &&
                    data[1].include?(searchsubject)
   end,
@@ -86,7 +86,7 @@ current.action = [
     
   v(ZMDailyreport.new('--mail', '--user', testAccount.name)) do |mcaller,data|
     mcaller.pass = data[0] == 0
-  end,
+ end,
   
   #Wait a bit for system to send mail 
   WaitQueue.new,    
