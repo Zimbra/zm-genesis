@@ -79,7 +79,8 @@ module Model # :nodoc
         myIp = nil
       end
       lName = hostArray.join('.')
-      lHost, lDomain = hostArray
+      lDomain = lName
+      lHost = hostArray
       result =  {'target_machine' => lName, 'name' => lHost,  'domain' => lDomain, 'architecture' => 1}
       server = XMLRPC::Client.new2("http://%s/xmlrpc/api"%PTMS)
       callresult = YAML.load(server.call("machine.Gethostinformation", lHost, lDomain))
