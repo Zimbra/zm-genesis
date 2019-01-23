@@ -40,7 +40,7 @@ entry_type = ['account','alias','distributionList','cos','globalConfig','domain'
               'server','mimeEntry','zimletEntry','calendarResource','identity',
               'dataSource','pop3DataSource','imapDataSource','rssDataSource',
               'liveDataSource','galDataSource','signature','xmppComponent',
-              'aclTarget','group','shareLocator','ucService', 'alwaysOnCluster']
+              'aclTarget','group','shareLocator','ucService', 'alwaysOnCluster', 'addressList', 'habGroup', 'oauth2DataSource']
 object_class = ['account','cos','domain','server']
 
 
@@ -72,10 +72,10 @@ current.action = [
     mcaller.pass = data[0] != 0
   end,
 
-  v(ZMProv.new('describe', 'help'))do |mcaller,data|
-    mcaller.pass = data[0] != 0 &&
-                   !(eType = data[1][/^Valid entry types: (.*)$/, 1]).empty? &&
-                   eType.split(/\s*,\s*/).sort == entry_type.sort
+ v(ZMProv.new('describe', 'help'))do |mcaller,data|
+   mcaller.pass = data[0] != 0 &&
+   mcaller.pass = !(eType = data[1][/^Valid entry types: (.*)$/, 1]).empty? &&
+                  eType.split(/\s*,\s*/).sort == entry_type.sort
   end,
   
   object_class.collect! do |x|
