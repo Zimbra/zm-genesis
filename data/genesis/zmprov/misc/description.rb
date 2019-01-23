@@ -74,7 +74,7 @@ current.action = [
 
  v(ZMProv.new('describe', 'help'))do |mcaller,data|
    mcaller.pass = data[0] != 0 &&
-   mcaller.pass = !(eType = data[1][/^Valid entry types: (.*)$/, 1]).empty? &&
+		!(eType = data[1][/^Valid entry types: (.*)$/, 1]).empty? &&
                   eType.split(/\s*,\s*/).sort == entry_type.sort
   end,
   
