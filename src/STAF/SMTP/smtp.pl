@@ -18,7 +18,7 @@ use MIME::Base64 ();
 
 my $origdir = getcwd;
 my $smtpDir = File::Spec->catfile('/opt','qa','smtpservice','bin');
-my @jarFile = qw(zimbracommon.jar zimbrastore.jar javamail-1.4.3.jar commons-httpclient-3.0.jar commons-cli-1.2.jar log4j-1.2.8.jar commons-logging.jar dom4j-1.5.jar activation.jar);
+my @jarFile = qw(zimbracommon.jar zimbrastore.jar javamail-1.4.3.jar commons-httpclient-3.0.jar commons-cli-1.2.jar log4j-core-2.17.1.jar log4j-api-2.17.1.jar commons-logging.jar dom4j-1.5.jar activation.jar);
 
 # Can't use getopt for trapping -m.. roll a customer processor
 

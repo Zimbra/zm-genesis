@@ -43,7 +43,7 @@ my $global_conf_file="$ZIMBRAQA_ROOT/conf/global.properties";
 
 # TODO: How to differentiate running between windows, linux, etc.
 # For now, since Win32::OLE is only available on windows, hard code to windows classpath style
-my $zimbra_class_path = "$ZIMBRAQA_ROOT/build/dist/zimbra-0.5.0/lib/zimbraqa.jar;$ZMROOT/lib/zimbrastore.jar;$ZMROOT/lib/commons-cli-2.0.jar;$ZMROOT/lib/dom4j-1.5.jar;$ZMROOT/lib/log4j-1.2.8.jar;$ZMROOT/lib/commons-httpclient-2.0.1.jar;$ZMROOT/lib/commons-logging.jar;$ZMROOT/lib/jaxen-1.1-beta-3.jar;$ZMROOT/lib/ical4j-0.9.16-patched.jar;$ZMROOT/lib/javamail-1.4.3.jar;$ZMROOT/lib/activation.jar";
+my $zimbra_class_path = "$ZIMBRAQA_ROOT/build/dist/zimbra-0.5.0/lib/zimbraqa.jar;$ZMROOT/lib/zimbrastore.jar;$ZMROOT/lib/commons-cli-2.0.jar;$ZMROOT/lib/dom4j-1.5.jar;$ZMROOT/lib/log4j-core-2.17.1.jar;$ZMROOT/lib/log4j-api-2.17.1.jar;$ZMROOT/lib/commons-httpclient-2.0.1.jar;$ZMROOT/lib/commons-logging.jar;$ZMROOT/lib/jaxen-1.1-beta-3.jar;$ZMROOT/lib/ical4j-0.9.16-patched.jar;$ZMROOT/lib/javamail-1.4.3.jar;$ZMROOT/lib/activation.jar";
 
 my $java_args = "-cp $zimbra_class_path com.zimbra.qa.soap.SoapTestCore -l $log4j_conf_file -d -p $global_conf_file";
 

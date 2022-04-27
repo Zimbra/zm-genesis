@@ -412,7 +412,7 @@ expected = {
              '^libthrift-.*'         => {'approved' => '0.6.1', #bug 58590, 67353
                                          'proc' => Proc.new() {|ar| ar[/libthrift-(.*)\.jar/, 1]}
                                         },
-             '^log4j.*'              => {'approved' => '1.2.16', #bug 51197
+             '^log4j.*'              => {'approved' => '2.17.1', #bug 51197
                                          'proc' => Proc.new() {|ar| VersionExtractor.new(File.join('lib', 'jars', File.basename(ar))).run.last}
                                         },
              '^lucene.*'             => {'approved' => '3.5.0', #bug 71946
@@ -485,7 +485,7 @@ expected = {
                                                      ver.last
                                                    end
                                         },
-             '^slf4j.*'              => {'approved' => '1.6.4', #bug 71882
+             '^slf4j.*'              => {'approved' => '1.7.36', #bug 71882
                                          'proc' => Proc.new() {|ar| VersionExtractor.new(File.join('lib', 'jars', File.basename(ar))).run.last}
                                         },
                                           

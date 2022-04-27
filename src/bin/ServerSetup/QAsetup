@@ -28,7 +28,7 @@ $ZMLMTPINJECT_COM="$ZIMBRAINSTALL_ROOT/bin/zmlmtpinject";
 $ZMLMTPINJECT_SENDER='foo@foo.com';
 $ZMLMTPINJECT_FILE="/tmp/setup_server_zmlmtpinject.txt";
 
-$SOAPTESTCORE_COM="$ZIMBRAINSTALL_ROOT/java/bin/java -cp $ZIMBRAQA_ROOT/build/classes:$ZIMBRAINSTALL_ROOT/lib/zimbrastore.jar:$ZIMBRAINSTALL_ROOT/lib/commons-cli-1.2.jar:$ZIMBRAINSTALL_ROOT/lib/dom4j-1.5.jar:$ZIMBRAINSTALL_ROOT/lib/log4j-1.2.8.jar:$ZIMBRAINSTALL_ROOT/lib/commons-httpclient-2.0.1.jar:$ZIMBRAINSTALL_ROOT/lib/commons-logging.jar:$ZIMBRAINSTALL_ROOT/lib/jaxen-1.1-beta-3.jar com.zimbra.qa.soap.SoapTestCore -l $ZIMBRAQA_ROOT/conf/log4j.properties -d -p $ZIMBRAQA_ROOT/conf/global.properties";
+$SOAPTESTCORE_COM="$ZIMBRAINSTALL_ROOT/java/bin/java -cp $ZIMBRAQA_ROOT/build/classes:$ZIMBRAINSTALL_ROOT/lib/zimbrastore.jar:$ZIMBRAINSTALL_ROOT/lib/commons-cli-1.2.jar:$ZIMBRAINSTALL_ROOT/lib/dom4j-1.5.jar:$ZIMBRAINSTALL_ROOT/lib/log4j-core-2.17.1.jar:$ZIMBRAINSTALL_ROOT/jars/log4j-api-2.17.1.jar:$ZIMBRAINSTALL_ROOT/lib/commons-httpclient-2.0.1.jar:$ZIMBRAINSTALL_ROOT/lib/commons-logging.jar:$ZIMBRAINSTALL_ROOT/lib/jaxen-1.1-beta-3.jar com.zimbra.qa.soap.SoapTestCore -l $ZIMBRAQA_ROOT/conf/log4j.properties -d -p $ZIMBRAQA_ROOT/conf/global.properties";
 $SOAPTESTCORE_FILE="/tmp/setup_server_soaptestcore.txt";
 
 $PROPS_FILE="$ZIMBRAQA_ROOT/conf/global.properties";

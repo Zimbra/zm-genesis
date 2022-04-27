@@ -50,7 +50,7 @@ INSTALL_LIB=$INSTALL_ROOT/lib/jars
 
 # Java Settings
 #
-ZIMBRA_CLASS_PATH="$QA_ROOT/build/classes:$INSTALL_LIB/zimbracommon.jar:$INSTALL_LIB/zimbrastore.jar:$INSTALL_LIB/commons-cli-1.2.jar:$INSTALL_LIB/dom4j-1.5.jar:$INSTALL_LIB/log4j-1.2.8.jar:$INSTALL_LIB/commons-httpclient-2.0.1.jar:$INSTALL_LIB/commons-logging.jar:$INSTALL_LIB/jaxen-1.1-beta-3.jar:$INSTALL_LIB/ical4j-0.9.16-patched.jar:$INSTALL_LIB/javamail-1.4.3.jar:$INSTALL_LIB/activation.jar"
+ZIMBRA_CLASS_PATH="$QA_ROOT/build/classes:$INSTALL_LIB/zimbracommon.jar:$INSTALL_LIB/zimbrastore.jar:$INSTALL_LIB/commons-cli-1.2.jar:$INSTALL_LIB/dom4j-1.5.jar:$INSTALL_LIB/log4j-core-2.17.1.jar:$INSTALL_LIB/log4j-api-2.17.1.jar:$INSTALL_LIB/commons-httpclient-2.0.1.jar:$INSTALL_LIB/commons-logging.jar:$INSTALL_LIB/jaxen-1.1-beta-3.jar:$INSTALL_LIB/ical4j-0.9.16-patched.jar:$INSTALL_LIB/javamail-1.4.3.jar:$INSTALL_LIB/activation.jar"
 LOG4J_CONF_FILE="$QA_ROOT/conf/log4j.properties"
 GLOBAL_CONF_FILE="$QA_ROOT/conf/global.properties"
 
